@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cooking Recipes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍳 Cooking Recipes</h1>
+            <p>Discover delicious recipes from around the world</p>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-btn active" data-view="recipes">Recipes</button>
+            <button class="nav-btn" data-view="shopping">Shopping List</button>
+            <button class="nav-btn" data-view="forecast">Weekly Forecast</button>
+            <button class="nav-btn" data-view="allergies">Allergy Information</button>
+        </nav>
+
+        <!-- Recipes View -->
+        <div id="recipes-view" class="view-section">
+            <div id="recipe-list" class="recipe-grid">
+                <!-- Recipes will be dynamically loaded here -->
+            </div>
+
+            <div id="recipe-detail" class="recipe-detail hidden">
+                <button id="back-btn" class="back-btn">← Back to Recipes</button>
+                <div id="detail-content"></div>
+            </div>
+        </div>
+
+        <!-- Shopping List View -->
+        <div id="shopping-view" class="view-section hidden">
+            <div class="shopping-container">
+                <h2 class="section-title">🛒 Shopping List</h2>
+                <div class="add-item-section">
+                    <input type="text" id="grocery-input" class="grocery-input" placeholder="Add grocery item...">
+                    <button id="add-grocery-btn" class="add-btn">Add</button>
+                </div>
+                <ul id="grocery-list" class="grocery-list">
+                    <!-- Grocery items will be added here -->
+                </ul>
+                <button id="clear-list-btn" class="clear-btn">Clear All</button>
+            </div>
+        </div>
+
+        <!-- Weekly Forecast View -->
+        <div id="forecast-view" class="view-section hidden">
+            <div class="forecast-container">
+                <h2 class="section-title">📅 Weekly Cooking Forecast</h2>
+                <p class="section-description">See what you can cook with your shopping list items and what you need to buy for next week</p>
+                
+                <div id="forecast-content" class="forecast-content">
+                    <!-- Forecast results will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Allergy Information View -->
+        <div id="allergies-view" class="view-section hidden">
+            <div class="allergy-container">
+                <h2 class="section-title">⚠️ Allergy Information</h2>
+                
+                <div class="allergy-search-section">
+                    <h3>Find Replacement Ingredients</h3>
+                    <p class="section-description">Type in an ingredient you're allergic to and find suitable replacements</p>
+                    <div class="search-box">
+                        <input type="text" id="allergy-search-input" class="allergy-input" placeholder="Enter ingredient (e.g., milk, eggs, nuts)...">
+                        <button id="search-allergy-btn" class="search-btn">Search</button>
+                    </div>
+                    <div id="replacement-result" class="replacement-result hidden"></div>
+                </div>
+
+                <div class="allergy-list-section">
+                    <h3>Common Allergies & Information</h3>
+                    <p class="section-description">Learn about common food allergies and their symptoms</p>
+                    <div id="allergy-list" class="allergy-list">
+                        <!-- Allergy information will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
