@@ -1117,6 +1117,43 @@ header p {
     font-size: 4rem;
 }
 
+.mini-flag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.recipe-image .mini-flag {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+.flag-safe {
+    background: #00C853;
+}
+
+.flag-changes {
+    background: #FF6D00;
+}
+
+.flag-avoid {
+    background: #D32F2F;
+}
+
+.recipe-suitability .mini-flag {
+    margin-right: 8px;
+}
+
 .recipe-badge {
     position: absolute;
     bottom: 10px;
