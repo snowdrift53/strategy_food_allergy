@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
     PROFILES: 'userProfiles',
     ACTIVE_PROFILE_ID: 'activeProfileId',
     PROFILE_LOGS: 'profileLogs',
+    LOCAL_RECIPES: 'localRecipes',
 };
 
 const Storage = {
@@ -157,42 +158,164 @@ const commonAllergies = [
  ************************************/
 
 function loadState() {
+    // Load legacy data for migration
+    const legacyShoppingList = Storage.load(STORAGE_KEYS.GROCERY, []);
+    const legacyLocalRecipes = Storage.load(STORAGE_KEYS.LOCAL_RECIPES, []);
+    const legacyUserProfiles = (() => {
+        const loaded = Storage.load(STORAGE_KEYS.PROFILES, []);
+        // Normalize allergies for all existing profiles
+        loaded.forEach(profile => {
+            if (profile.allergies && Array.isArray(profile.allergies)) {
+                profile.allergies = normalizeUserAllergies(profile.allergies);
+            }
+        });
+        return loaded;
+    })();
+    const legacyActiveProfileId = Storage.load(STORAGE_KEYS.ACTIVE_PROFILE_ID, null);
+    const legacyProfileLogs = Storage.load(STORAGE_KEYS.PROFILE_LOGS, {});
+    
+    // Load new profile-owned state structure (using storage prefix)
+    const savedProfiles = Storage.load('profileOwnedState', null);
+    const savedActiveProfileId = Storage.load('profileActiveId', null);
+    
+    // Initialize profile-owned state
+    let profileOwnedState = savedProfiles || {};
+    const activeProfileId = savedActiveProfileId || 'default';
+    
+    // Migrate legacy shopping list data ONCE if profiles are empty and legacy data exists
+    // Use the active user profile ID as the key, or "default" if no user profile exists
+    const migrationProfileId = legacyActiveProfileId || (legacyUserProfiles.length > 0 ? legacyUserProfiles[0].id : 'default');
+    
+    if (!profileOwnedState[migrationProfileId] && legacyShoppingList.length > 0) {
+        const activeUserProfile = legacyUserProfiles.find(p => p.id === legacyActiveProfileId) || legacyUserProfiles[0];
+        // Create new array (not shared by reference) - use spread operator for deep copy
+        profileOwnedState[migrationProfileId] = {
+            localRecipes: legacyLocalRecipes.length > 0 ? [...legacyLocalRecipes] : [],
+            shoppingList: legacyShoppingList.map(item => ({ ...item })), // Deep copy array items
+            allergyFilters: activeUserProfile?.allergies ? [...(activeUserProfile.allergies)] : [],
+            symptomLog: legacyActiveProfileId && legacyProfileLogs[legacyActiveProfileId] ? [...legacyProfileLogs[legacyActiveProfileId]] : []
+        };
+        // Delete old localStorage key to avoid future collisions
+        try {
+            const prefixedKey = `${APP_META.storagePrefix}_${STORAGE_KEYS.GROCERY}`;
+            localStorage.removeItem(prefixedKey);
+        } catch (e) {
+            console.warn('Failed to remove legacy groceryList key', e);
+        }
+    }
+    
+    // Ensure all existing user profiles have corresponding profile-owned state entries
+    legacyUserProfiles.forEach(userProfile => {
+        if (!profileOwnedState[userProfile.id]) {
+            profileOwnedState[userProfile.id] = {
+                localRecipes: [],
+                shoppingList: [],
+                allergyFilters: userProfile.allergies ? [...userProfile.allergies] : [],
+                symptomLog: legacyProfileLogs[userProfile.id] ? [...legacyProfileLogs[userProfile.id]] : []
+            };
+        }
+    });
+    
+    // Ensure default profile exists if no user profiles
+    if (legacyUserProfiles.length === 0 && !profileOwnedState.default) {
+        profileOwnedState.default = {
+            localRecipes: legacyLocalRecipes.length > 0 ? [...legacyLocalRecipes] : [],
+            shoppingList: legacyShoppingList.length > 0 ? legacyShoppingList.map(item => ({ ...item })) : [],
+            allergyFilters: [],
+            symptomLog: []
+        };
+    }
+    
+    // Sync activeProfileId with userActiveProfileId if user profile exists
+    const finalActiveProfileId = legacyActiveProfileId && legacyUserProfiles.find(p => p.id === legacyActiveProfileId) 
+        ? legacyActiveProfileId 
+        : (activeProfileId || (legacyUserProfiles.length > 0 ? legacyUserProfiles[0].id : 'default'));
+    
     return {
-        shoppingList: Storage.load(STORAGE_KEYS.GROCERY, []),
-        profiles: (() => {
-            const loaded = Storage.load(STORAGE_KEYS.PROFILES, []);
-            // Normalize allergies for all existing profiles
-            loaded.forEach(profile => {
-                if (profile.allergies && Array.isArray(profile.allergies)) {
-                    profile.allergies = normalizeUserAllergies(profile.allergies);
-                }
-            });
-            return loaded;
-        })(),
-        activeProfileId: Storage.load(STORAGE_KEYS.ACTIVE_PROFILE_ID, null),
-        profileLogs: Storage.load(STORAGE_KEYS.PROFILE_LOGS, {}),
+        activeProfileId: finalActiveProfileId,
+        profiles: profileOwnedState,
+        localRecipes: profileOwnedState[finalActiveProfileId]?.localRecipes || [],
+        userProfiles: legacyUserProfiles,
+        userActiveProfileId: legacyActiveProfileId,
+        profileLogs: legacyProfileLogs,
     };
 }
 
 function saveState() {
-    Storage.save(STORAGE_KEYS.GROCERY, state.shoppingList);
-    Storage.save(STORAGE_KEYS.PROFILES, state.profiles);
-    Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, state.activeProfileId);
+    // Save profile-owned state (using storage prefix via Storage.save)
+    Storage.save('profileOwnedState', state.profiles);
+    Storage.save('profileActiveId', state.activeProfileId);
+    
+    // Keep legacy saves for backward compatibility (except GROCERY - now stored in profiles only)
+    const activeProfile = getActiveProfile();
+    if (activeProfile) {
+        Storage.save(STORAGE_KEYS.LOCAL_RECIPES, activeProfile.localRecipes);
+    }
+    Storage.save(STORAGE_KEYS.PROFILES, state.userProfiles);
+    Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, state.userActiveProfileId || null);
     Storage.save(STORAGE_KEYS.PROFILE_LOGS, state.profileLogs);
+}
+
+// Helper functions for profile-owned state
+function getActiveProfile() {
+    return state.profiles[state.activeProfileId] || null;
+}
+
+function getProfileShoppingList() {
+    const profile = getActiveProfile();
+    return profile ? profile.shoppingList : [];
+}
+
+function setProfileShoppingList(list) {
+    const profile = getActiveProfile();
+    if (profile) {
+        profile.shoppingList = list;
+    }
+}
+
+function addShoppingItem(item) {
+    const profile = getActiveProfile();
+    if (profile) {
+        if (!profile.shoppingList) {
+            profile.shoppingList = [];
+        }
+        profile.shoppingList.push({ id: Date.now(), text: item, checked: false });
+    }
+}
+
+function removeShoppingItem(id) {
+    const profile = getActiveProfile();
+    if (profile && profile.shoppingList) {
+        profile.shoppingList = profile.shoppingList.filter(item => item.id !== id);
+    }
+}
+
+function getProfileLocalRecipes() {
+    const profile = getActiveProfile();
+    return profile ? profile.localRecipes : [];
+}
+
+function setProfileLocalRecipes(list) {
+    const profile = getActiveProfile();
+    if (profile) {
+        profile.localRecipes = list;
+    }
 }
 
 const state = loadState();
 
 // Legacy AppState for backward compatibility during transition
 const AppState = {
-    get groceryList() { return state.shoppingList; },
-    set groceryList(value) { state.shoppingList = value; },
-    get profiles() { return state.profiles; },
-    set profiles(value) { state.profiles = value; },
-    get activeProfileId() { return state.activeProfileId; },
-    set activeProfileId(value) { state.activeProfileId = value; },
+    get groceryList() { return getProfileShoppingList(); },
+    set groceryList(value) { setProfileShoppingList(value); },
+    get profiles() { return state.userProfiles; },
+    set profiles(value) { state.userProfiles = value; },
+    get activeProfileId() { return state.userActiveProfileId; },
+    set activeProfileId(value) { state.userActiveProfileId = value; },
     get profileLogs() { return state.profileLogs; },
     set profileLogs(value) { state.profileLogs = value; },
+    get localRecipes() { return getProfileLocalRecipes(); },
+    set localRecipes(value) { setProfileLocalRecipes(value); },
 };
 
 
@@ -209,10 +332,43 @@ function ensureDefaultProfile() {
         };
         AppState.profiles.push(defaultProfile);
         AppState.activeProfileId = defaultProfile.id;
+        // Create corresponding profile-owned state with fresh empty arrays
+        state.activeProfileId = defaultProfile.id;
+        if (!state.profiles[defaultProfile.id]) {
+            state.profiles[defaultProfile.id] = {
+                localRecipes: [],
+                shoppingList: [],
+                allergyFilters: [],
+                symptomLog: []
+            };
+        }
         saveState();
     } else if (!AppState.activeProfileId || !AppState.profiles.find(p => p.id === AppState.activeProfileId)) {
         AppState.activeProfileId = AppState.profiles[0].id;
+        // Sync profile-owned state
+        state.activeProfileId = AppState.profiles[0].id;
+        // Ensure profile-owned state exists
+        if (!state.profiles[AppState.profiles[0].id]) {
+            state.profiles[AppState.profiles[0].id] = {
+                localRecipes: [],
+                shoppingList: [],
+                allergyFilters: [],
+                symptomLog: []
+            };
+        }
         saveState();
+    } else {
+        // Ensure current active profile has profile-owned state
+        if (!state.profiles[AppState.activeProfileId]) {
+            state.profiles[AppState.activeProfileId] = {
+                localRecipes: [],
+                shoppingList: [],
+                allergyFilters: [],
+                symptomLog: []
+            };
+        }
+        // Sync state.activeProfileId with AppState.activeProfileId
+        state.activeProfileId = AppState.activeProfileId;
     }
 }
 
@@ -281,6 +437,17 @@ const Profiles = {
 
     switchProfile(profileId) {
         AppState.activeProfileId = profileId;
+        // Sync profile-owned state activeProfileId with user profile ID
+        state.activeProfileId = profileId;
+        // Ensure profile-owned state exists for this profile
+        if (!state.profiles[profileId]) {
+            state.profiles[profileId] = {
+                localRecipes: [],
+                shoppingList: [],
+                allergyFilters: [],
+                symptomLog: []
+            };
+        }
         saveState();
         renderApp();
     },
@@ -297,6 +464,16 @@ const Profiles = {
         };
         AppState.profiles.push(newProfile);
         AppState.activeProfileId = newProfile.id;
+        
+        // Create corresponding profile-owned state with fresh empty arrays (not shared by reference)
+        state.activeProfileId = newProfile.id;
+        state.profiles[newProfile.id] = {
+            localRecipes: [],
+            shoppingList: [],
+            allergyFilters: [],
+            symptomLog: []
+        };
+        
         saveState();
         input.value = '';
         renderApp();
@@ -324,12 +501,30 @@ const Profiles = {
 
         if (!confirm('Are you sure you want to delete this profile?')) return;
 
+        const deletedProfileId = AppState.activeProfileId;
         AppState.profiles = AppState.profiles.filter(p => p.id !== AppState.activeProfileId);
+        
+        // Delete corresponding profile-owned state
+        if (state.profiles[deletedProfileId]) {
+            delete state.profiles[deletedProfileId];
+        }
         
         if (AppState.profiles.length > 0) {
             AppState.activeProfileId = AppState.profiles[0].id;
+            // Sync profile-owned state
+            state.activeProfileId = AppState.profiles[0].id;
+            // Ensure profile-owned state exists
+            if (!state.profiles[AppState.profiles[0].id]) {
+                state.profiles[AppState.profiles[0].id] = {
+                    localRecipes: [],
+                    shoppingList: [],
+                    allergyFilters: [],
+                    symptomLog: []
+                };
+            }
         } else {
             AppState.activeProfileId = null;
+            state.activeProfileId = 'default';
         }
 
         saveState();
@@ -1188,20 +1383,21 @@ const ShoppingList = {
         const item = input.value.trim();
         if (!item) return;
 
-        AppState.groceryList.push({ id: Date.now(), text: item, checked: false });
+        addShoppingItem(item);
         input.value = '';
         this.save();
         renderApp();
     },
 
     removeItem(id) {
-        AppState.groceryList = AppState.groceryList.filter(item => item.id !== id);
+        removeShoppingItem(id);
         this.save();
         renderApp();
     },
 
     toggleItem(id) {
-        const item = AppState.groceryList.find(i => i.id === id);
+        const shoppingList = getProfileShoppingList();
+        const item = shoppingList.find(i => i.id === id);
         if (!item) return;
 
         item.checked = !item.checked;
@@ -1212,7 +1408,7 @@ const ShoppingList = {
     clearAll() {
         if (!confirm('Are you sure you want to clear all items?')) return;
 
-        AppState.groceryList = [];
+        setProfileShoppingList([]);
         this.save();
         renderApp();
     },
@@ -1220,11 +1416,8 @@ const ShoppingList = {
     resetDemoData() {
         if (!confirm('Reset all demo data? This will clear your shopping list and refresh the forecast.')) return;
 
-        // Clear app-specific localStorage keys
-        localStorage.removeItem(`${APP_META.storagePrefix}_${STORAGE_KEYS.GROCERY}`);
-
-        // Reset app state
-        AppState.groceryList = [];
+        // Reset shopping list in active profile
+        setProfileShoppingList([]);
 
         // Refresh UI
         renderApp();
@@ -1234,12 +1427,13 @@ const ShoppingList = {
         const listContainer = $('#grocery-list');
         listContainer.innerHTML = '';
 
-        if (AppState.groceryList.length === 0) {
+        const shoppingList = getProfileShoppingList();
+        if (shoppingList.length === 0) {
             listContainer.innerHTML = '<li class="empty-message">Your shopping list is empty. Add items to get started!</li>';
             return;
         }
 
-        AppState.groceryList.forEach(item => {
+        shoppingList.forEach(item => {
             const li = document.createElement('li');
             li.className = `grocery-item ${item.checked ? 'checked' : ''}`;
 
@@ -1439,15 +1633,16 @@ const Forecast = {
     },
 
     addSuggestedItem(ingredient) {
-        AppState.groceryList.push({ id: Date.now(), text: ingredient, checked: false });
+        addShoppingItem(ingredient);
         ShoppingList.save();
         renderApp();
     },
 
     render() {
         const forecastContent = $('#forecast-content');
+        const shoppingList = getProfileShoppingList();
 
-        if (AppState.groceryList.length === 0) {
+        if (shoppingList.length === 0) {
             forecastContent.innerHTML = `
                 <div class="forecast-empty">
                     <p>Your shopping list is empty. Add items to your shopping list to see recommended recipes!</p>
@@ -1462,7 +1657,7 @@ const Forecast = {
             return;
         }
 
-        const shoppingItems = AppState.groceryList.filter(item => !item.checked).map(item => item.text);
+        const shoppingItems = shoppingList.filter(item => !item.checked).map(item => item.text);
         const recipeAnalyses = recipes.map(recipe => this.analyzeRecipe(recipe, shoppingItems));
 
         const recommendedRecipes = recipeAnalyses
