@@ -249,23 +249,29 @@ const recipes = [
     }
 ];
 
-const allergyReplacements = {
-    'milk': ['Almond milk', 'Soy milk', 'Oat milk', 'Coconut milk', 'Rice milk'],
-    'dairy': ['Almond milk', 'Soy milk', 'Oat milk', 'Coconut milk', 'Cashew milk'],
-    'eggs': ['Flaxseed eggs (1 tbsp ground flaxseed + 3 tbsp water)', 'Chia eggs (1 tbsp chia seeds + 3 tbsp water)', 'Applesauce (1/4 cup per egg)', 'Banana (1/2 mashed banana per egg)', 'Commercial egg replacer'],
-    'wheat': ['Almond flour', 'Coconut flour', 'Rice flour', 'Oat flour', 'Gluten-free flour blend'],
-    'gluten': ['Almond flour', 'Coconut flour', 'Rice flour', 'Oat flour (certified GF)', 'Quinoa flour'],
-    'nuts': ['Sunflower seeds', 'Pumpkin seeds', 'Roasted chickpeas', 'Soy nuts', 'Pretzels (for texture)'],
-    'peanuts': ['Sunflower seed butter', 'Soy nut butter', 'Almond butter (if not allergic to tree nuts)', 'Tahini'],
-    'soy': ['Coconut aminos (instead of soy sauce)', 'Tempeh alternatives', 'Lentils (for protein)', 'Chickpeas'],
-    'fish': ['Tofu', 'Tempeh', 'Mushrooms', 'Eggplant', 'Plant-based alternatives'],
-    'shellfish': ['Tofu', 'Tempeh', 'Mushrooms', 'Chicken', 'Turkey'],
-    'sesame': ['Sunflower seeds', 'Pumpkin seeds', 'Hemp seeds', 'Poppy seeds'],
-    'tomatoes': ['Red bell peppers', 'Beets', 'Carrots', 'Pumpkin puree'],
-    'garlic': ['Asafoetida (hing)', 'Garlic-infused oil (if not allergic to garlic)', 'Chives', 'Shallots'],
-    'onions': ['Fennel', 'Celery', 'Leeks (if tolerated)', 'Asafoetida'],
-    'corn': ['Rice', 'Potatoes', 'Quinoa', 'Millet'],
-    'chicken': ['Turkey', 'Tofu', 'Tempeh', 'Lentils', 'Chickpeas']
+const SUBSTITUTION_RULES = {
+    gluten: {
+        rules: [
+            { match: ["spaghetti", "pasta", "noodle", "penne", "macaroni", "fettuccine", "linguine"], suggest: ["Gluten-free pasta (rice/corn)", "Lentil pasta", "Chickpea pasta", "Buckwheat/soba (100%)", "Quinoa pasta"] },
+            { match: ["bread", "bun", "roll", "crouton", "toast"], suggest: ["Gluten-free bread", "Corn tortillas", "Rice cakes"] },
+            { match: ["flour", "wheat", "semolina"], suggest: ["Gluten-free flour blend", "Rice flour", "Oat flour (certified GF)", "Buckwheat flour"] }
+        ],
+        fallback: ["Gluten-free alternative (certified)"]
+    },
+    eggs: {
+        rules: [
+            { match: ["egg", "eggs", "yolk", "white", "mayonnaise", "mayo"], suggest: ["Flax egg (1 tbsp flax + 3 tbsp water)", "Chia egg (1 tbsp chia + 3 tbsp water)", "Applesauce (1/4 cup per egg)", "Commercial egg replacer"] }
+        ],
+        fallback: ["Egg replacer"]
+    },
+    dairy: {
+        rules: [
+            { match: ["cheese", "parmesan", "pecorino"], suggest: ["Dairy-free hard cheese alternative", "Nutritional yeast (umami topping)"] },
+            { match: ["milk", "cream"], suggest: ["Oat milk", "Soy milk", "Coconut milk", "Oat cream"] },
+            { match: ["butter"], suggest: ["Plant-based butter", "Olive oil"] }
+        ],
+        fallback: ["Dairy-free alternative"]
+    }
 };
 
 const ALLERGEN_KEYWORDS = {
@@ -787,7 +793,7 @@ const Recipes = {
 
         // Check if ALL individually matched allergies have replacement options
         const allHaveReplacements = Array.from(matchedAllergies).every(allergy => {
-            return allergyReplacements.hasOwnProperty(allergy);
+            return SUBSTITUTION_RULES.hasOwnProperty(allergy.toLowerCase());
         });
 
         if (allHaveReplacements) {
@@ -796,6 +802,27 @@ const Recipes = {
 
         // If matches exist but not all have replacements, recipe is not suitable
         return 'UNSAFE';
+    },
+
+    getSubstitutionsForProblem(allergen, ingredientText) {
+        const allergenLower = allergen.toLowerCase();
+        if (!SUBSTITUTION_RULES.hasOwnProperty(allergenLower)) {
+            return [];
+        }
+
+        const rules = SUBSTITUTION_RULES[allergenLower];
+        const normalizedIngredient = this.normalizeIngredient(ingredientText);
+
+        // Check each rule for matches
+        for (const rule of rules.rules) {
+            const hasMatch = rule.match.some(keyword => normalizedIngredient.includes(keyword.toLowerCase()));
+            if (hasMatch) {
+                return rule.suggest;
+            }
+        }
+
+        // Return fallback if no rule matches
+        return rules.fallback || [];
     },
 
     getUnsafeRecipeDetails(recipe) {
@@ -807,7 +834,8 @@ const Recipes = {
         const allergies = activeProfile.allergies;
         const triggeredAllergies = new Set();
         const problemIngredients = new Set();
-        const allergenToIngredients = {};
+        const ingredientToAllergens = {};
+        const ingredientToSubstitutions = {};
 
         // Check each ingredient individually against each allergy using keyword matching
         recipe.ingredients.forEach(ingredient => {
@@ -817,27 +845,34 @@ const Recipes = {
                     triggeredAllergies.add(allergyLower);
                     problemIngredients.add(ingredient);
                     
-                    if (!allergenToIngredients[allergyLower]) {
-                        allergenToIngredients[allergyLower] = [];
+                    if (!ingredientToAllergens[ingredient]) {
+                        ingredientToAllergens[ingredient] = [];
                     }
-                    if (!allergenToIngredients[allergyLower].includes(ingredient)) {
-                        allergenToIngredients[allergyLower].push(ingredient);
+                    if (!ingredientToAllergens[ingredient].includes(allergyLower)) {
+                        ingredientToAllergens[ingredient].push(allergyLower);
+                    }
+
+                    // Get context-aware substitutions for this ingredient and allergen
+                    const substitutions = this.getSubstitutionsForProblem(allergyLower, ingredient);
+                    if (substitutions.length > 0) {
+                        if (!ingredientToSubstitutions[ingredient]) {
+                            ingredientToSubstitutions[ingredient] = [];
+                        }
+                        // Merge substitutions, avoiding duplicates
+                        substitutions.forEach(sub => {
+                            if (!ingredientToSubstitutions[ingredient].includes(sub)) {
+                                ingredientToSubstitutions[ingredient].push(sub);
+                            }
+                        });
                     }
                 }
             });
         });
 
-        const allergensWithReplacements = {};
-        Array.from(triggeredAllergies).forEach(allergy => {
-            if (allergyReplacements.hasOwnProperty(allergy)) {
-                allergensWithReplacements[allergy] = allergyReplacements[allergy];
-            }
-        });
-
         return {
             triggeredAllergies: Array.from(triggeredAllergies),
             problemIngredients: Array.from(problemIngredients),
-            allergensWithReplacements: allergensWithReplacements
+            ingredientToSubstitutions: ingredientToSubstitutions
         };
     },
 
@@ -944,21 +979,25 @@ const Recipes = {
                             </ul>
                         </div>
                         <div class="guidance-section">
-                            <strong>If you still want to try it, remove:</strong>
+                            <strong>If you still want to try it, omit:</strong>
                             <ul class="guidance-list">
                                 ${unsafeDetails.problemIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
                             </ul>
                         </div>
                 `;
                 
-                if (Object.keys(unsafeDetails.allergensWithReplacements).length > 0) {
+                if (Object.keys(unsafeDetails.ingredientToSubstitutions).length > 0) {
                     guidanceHtml += `
                         <div class="guidance-section">
                             <strong>Possible substitutions:</strong>
                             <ul class="guidance-list">
-                                ${Object.entries(unsafeDetails.allergensWithReplacements).map(([allergy, replacements]) => 
-                                    `<li><strong>${this.escapeHtml(allergy)}</strong>: ${replacements.map(r => this.escapeHtml(r)).join(', ')}</li>`
-                                ).join('')}
+                                ${unsafeDetails.problemIngredients.map(ing => {
+                                    const substitutions = unsafeDetails.ingredientToSubstitutions[ing];
+                                    if (substitutions && substitutions.length > 0) {
+                                        return `<li><strong>${this.escapeHtml(ing)}</strong>: ${substitutions.map(s => this.escapeHtml(s)).join(', ')}</li>`;
+                                    }
+                                    return '';
+                                }).filter(html => html.length > 0).join('')}
                             </ul>
                         </div>
                     `;
@@ -1132,17 +1171,39 @@ const AllergyInfo = {
 
         let replacements = null;
 
-        for (const [allergy, replacementList] of Object.entries(allergyReplacements)) {
-            if (allergy.includes(searchTerm) || searchTerm.includes(allergy)) {
-                replacements = replacementList;
+        // Check SUBSTITUTION_RULES for matching allergen
+        for (const [allergen, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
+            if (allergen.includes(searchTerm) || searchTerm.includes(allergen)) {
+                // Get all suggestions from all rules plus fallback
+                replacements = [];
+                ruleData.rules.forEach(rule => {
+                    rule.suggest.forEach(s => {
+                        if (!replacements.includes(s)) replacements.push(s);
+                    });
+                });
+                if (ruleData.fallback) {
+                    ruleData.fallback.forEach(s => {
+                        if (!replacements.includes(s)) replacements.push(s);
+                    });
+                }
                 break;
             }
         }
 
         if (!replacements) {
-            for (const [allergy, replacementList] of Object.entries(allergyReplacements)) {
-                if (allergy.includes(searchTerm) || searchTerm.split(' ').some(word => allergy.includes(word))) {
-                    replacements = replacementList;
+            for (const [allergen, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
+                if (allergen.includes(searchTerm) || searchTerm.split(' ').some(word => allergen.includes(word))) {
+                    replacements = [];
+                    ruleData.rules.forEach(rule => {
+                        rule.suggest.forEach(s => {
+                            if (!replacements.includes(s)) replacements.push(s);
+                        });
+                    });
+                    if (ruleData.fallback) {
+                        ruleData.fallback.forEach(s => {
+                            if (!replacements.includes(s)) replacements.push(s);
+                        });
+                    }
                     break;
                 }
             }
