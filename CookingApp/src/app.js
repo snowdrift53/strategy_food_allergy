@@ -302,6 +302,13 @@ function setProfileLocalRecipes(list) {
     }
 }
 
+function isRecipeLiked(recipeId) {
+    if (!recipeId) return false;
+    const localRecipes = getProfileLocalRecipes();
+    const recipeIdStr = String(recipeId);
+    return localRecipes.some(r => String(r.id) === recipeIdStr);
+}
+
 const state = loadState();
 
 // Legacy AppState for backward compatibility during transition
@@ -948,8 +955,21 @@ const Recipes = {
             });
         }
 
-        // Initialize with local recipes
-        this.currentRecipes = Array.isArray(recipes) ? [...recipes] : [];
+        // Initialize with local recipes (merge base recipes + liked recipes)
+        const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
+        const likedRecipes = getProfileLocalRecipes();
+        const allLocalRecipes = [...baseRecipes];
+        
+        // Add liked recipes, avoiding duplicates by ID
+        const existingIds = new Set(baseRecipes.map(r => String(r.id)));
+        likedRecipes.forEach(likedRecipe => {
+            if (!existingIds.has(String(likedRecipe.id))) {
+                allLocalRecipes.push(likedRecipe);
+                existingIds.add(String(likedRecipe.id));
+            }
+        });
+        
+        this.currentRecipes = allLocalRecipes;
         this.renderList();
     },
 
@@ -965,11 +985,25 @@ const Recipes = {
     },
 
     searchLocal(query) {
+        // Merge local recipes from state with base recipes
+        const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
+        const likedRecipes = getProfileLocalRecipes();
+        const allLocalRecipes = [...baseRecipes];
+        
+        // Add liked recipes, avoiding duplicates by ID
+        const existingIds = new Set(baseRecipes.map(r => String(r.id)));
+        likedRecipes.forEach(likedRecipe => {
+            if (!existingIds.has(String(likedRecipe.id))) {
+                allLocalRecipes.push(likedRecipe);
+                existingIds.add(String(likedRecipe.id));
+            }
+        });
+
         if (!query) {
-            this.currentRecipes = Array.isArray(recipes) ? [...recipes] : [];
+            this.currentRecipes = allLocalRecipes;
         } else {
             const queryLower = query.toLowerCase();
-            this.currentRecipes = (Array.isArray(recipes) ? recipes : []).filter(recipe => {
+            this.currentRecipes = allLocalRecipes.filter(recipe => {
                 const titleMatch = recipe.title && recipe.title.toLowerCase().includes(queryLower);
                 const descMatch = recipe.description && recipe.description.toLowerCase().includes(queryLower);
                 return titleMatch || descMatch;
@@ -1214,6 +1248,12 @@ const Recipes = {
             badgeHtml = '<div class="mini-flag flag-avoid">AVOID</div>';
         }
 
+        // Check if this is an online recipe (ID starts with "online-")
+        const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
+        const isLiked = isOnlineRecipe && isRecipeLiked(recipe.id);
+        const likeButtonClass = isOnlineRecipe ? (isLiked ? 'like-btn liked' : 'like-btn') : '';
+        const likeButtonHtml = isOnlineRecipe ? '<button class="' + likeButtonClass + '" data-recipe-id="' + recipe.id + '" title="' + (isLiked ? 'Remove from My Recipes' : 'Add to My Recipes') + '">❤️</button>' : '';
+
         card.innerHTML = `
             <div class="${imageClass}">
                 <img src="${imageUrl}" alt="${recipe.title}" onerror="this.style.display='none'; this.parentElement.innerHTML='${fallbackEmoji}';">
@@ -1227,8 +1267,21 @@ const Recipes = {
                     <span>👥 ${recipe.servings} servings</span>
                     <span>⭐ ${recipe.difficulty}</span>
                 </div>
+                ${likeButtonHtml}
             </div>
         `;
+
+        // Attach like button event handler for online recipes
+        if (isOnlineRecipe) {
+            const likeBtn = card.querySelector('.like-btn');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleLikeRecipe(recipe);
+                });
+            }
+        }
+
         return card;
     },
 
@@ -1354,6 +1407,31 @@ const Recipes = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    toggleLikeRecipe(recipe) {
+        if (!recipe || !recipe.id) return;
+        
+        const localRecipes = getProfileLocalRecipes();
+        const recipeId = String(recipe.id);
+        
+        // Check if already liked
+        const existingIndex = localRecipes.findIndex(r => String(r.id) === recipeId);
+        
+        if (existingIndex >= 0) {
+            // Remove from localRecipes (unlike)
+            localRecipes.splice(existingIndex, 1);
+        } else {
+            // Add recipe to localRecipes (like)
+            const recipeCopy = { ...recipe };
+            localRecipes.push(recipeCopy);
+        }
+        
+        setProfileLocalRecipes(localRecipes);
+        
+        // Persist and re-render
+        saveState();
+        renderApp();
     }
 };
 
