@@ -24,7 +24,8 @@ const STORAGE_KEYS = {
 const Storage = {
     load(key, fallback) {
         try {
-            const raw = localStorage.getItem(key);
+            const prefixedKey = `${APP_META.storagePrefix}_${key}`;
+            const raw = localStorage.getItem(prefixedKey);
             return raw ? JSON.parse(raw) : fallback;
         } catch (e) {
             console.warn(`Storage.load failed for key "${key}"`, e);
@@ -33,7 +34,8 @@ const Storage = {
     },
     save(key, value) {
         try {
-            localStorage.setItem(key, JSON.stringify(value));
+            const prefixedKey = `${APP_META.storagePrefix}_${key}`;
+            localStorage.setItem(prefixedKey, JSON.stringify(value));
         } catch (e) {
             console.warn(`Storage.save failed for key "${key}"`, e);
         }
@@ -151,23 +153,46 @@ const commonAllergies = [
 
 
 /************************************
- * 3) APP STATE
+ * 3) STATE + STORAGE
  ************************************/
 
+function loadState() {
+    return {
+        shoppingList: Storage.load(STORAGE_KEYS.GROCERY, []),
+        profiles: (() => {
+            const loaded = Storage.load(STORAGE_KEYS.PROFILES, []);
+            // Normalize allergies for all existing profiles
+            loaded.forEach(profile => {
+                if (profile.allergies && Array.isArray(profile.allergies)) {
+                    profile.allergies = normalizeUserAllergies(profile.allergies);
+                }
+            });
+            return loaded;
+        })(),
+        activeProfileId: Storage.load(STORAGE_KEYS.ACTIVE_PROFILE_ID, null),
+        profileLogs: Storage.load(STORAGE_KEYS.PROFILE_LOGS, {}),
+    };
+}
+
+function saveState() {
+    Storage.save(STORAGE_KEYS.GROCERY, state.shoppingList);
+    Storage.save(STORAGE_KEYS.PROFILES, state.profiles);
+    Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, state.activeProfileId);
+    Storage.save(STORAGE_KEYS.PROFILE_LOGS, state.profileLogs);
+}
+
+const state = loadState();
+
+// Legacy AppState for backward compatibility during transition
 const AppState = {
-    groceryList: Storage.load(STORAGE_KEYS.GROCERY, []),
-    profiles: (() => {
-        const loaded = Storage.load(STORAGE_KEYS.PROFILES, []);
-        // Normalize allergies for all existing profiles
-        loaded.forEach(profile => {
-            if (profile.allergies && Array.isArray(profile.allergies)) {
-                profile.allergies = normalizeUserAllergies(profile.allergies);
-            }
-        });
-        return loaded;
-    })(),
-    activeProfileId: Storage.load(STORAGE_KEYS.ACTIVE_PROFILE_ID, null),
-    profileLogs: Storage.load(STORAGE_KEYS.PROFILE_LOGS, {}),
+    get groceryList() { return state.shoppingList; },
+    set groceryList(value) { state.shoppingList = value; },
+    get profiles() { return state.profiles; },
+    set profiles(value) { state.profiles = value; },
+    get activeProfileId() { return state.activeProfileId; },
+    set activeProfileId(value) { state.activeProfileId = value; },
+    get profileLogs() { return state.profileLogs; },
+    set profileLogs(value) { state.profileLogs = value; },
 };
 
 
@@ -184,11 +209,10 @@ function ensureDefaultProfile() {
         };
         AppState.profiles.push(defaultProfile);
         AppState.activeProfileId = defaultProfile.id;
-        Storage.save(STORAGE_KEYS.PROFILES, AppState.profiles);
-        Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, AppState.activeProfileId);
+        saveState();
     } else if (!AppState.activeProfileId || !AppState.profiles.find(p => p.id === AppState.activeProfileId)) {
         AppState.activeProfileId = AppState.profiles[0].id;
-        Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, AppState.activeProfileId);
+        saveState();
     }
 }
 
@@ -257,7 +281,7 @@ const Profiles = {
 
     switchProfile(profileId) {
         AppState.activeProfileId = profileId;
-        Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, AppState.activeProfileId);
+        saveState();
         this.render();
         if (typeof Log !== 'undefined' && Log.render) {
             Log.render();
@@ -279,8 +303,7 @@ const Profiles = {
         };
         AppState.profiles.push(newProfile);
         AppState.activeProfileId = newProfile.id;
-        Storage.save(STORAGE_KEYS.PROFILES, AppState.profiles);
-        Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, AppState.activeProfileId);
+        saveState();
         input.value = '';
         this.render();
     },
@@ -294,7 +317,7 @@ const Profiles = {
         const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         if (activeProfile) {
             activeProfile.allergies = allergies;
-            Storage.save(STORAGE_KEYS.PROFILES, AppState.profiles);
+            saveState();
             if (typeof Recipes !== 'undefined' && Recipes.renderList) {
                 Recipes.renderList();
             }
@@ -317,8 +340,7 @@ const Profiles = {
             AppState.activeProfileId = null;
         }
 
-        Storage.save(STORAGE_KEYS.PROFILES, AppState.profiles);
-        Storage.save(STORAGE_KEYS.ACTIVE_PROFILE_ID, AppState.activeProfileId);
+        saveState();
         this.render();
     },
 
@@ -437,7 +459,7 @@ const Log = {
         };
         logs.push(entry);
         AppState.profileLogs[profileId] = logs;
-        Storage.save(STORAGE_KEYS.PROFILE_LOGS, AppState.profileLogs);
+        saveState();
 
         textarea.value = '';
         this.render();
@@ -448,7 +470,7 @@ const Log = {
         if (!profileId || !AppState.profileLogs[profileId]) return;
 
         AppState.profileLogs[profileId] = AppState.profileLogs[profileId].filter(entry => entry.id !== entryId);
-        Storage.save(STORAGE_KEYS.PROFILE_LOGS, AppState.profileLogs);
+        saveState();
         this.render();
     },
 
@@ -1166,7 +1188,7 @@ const ShoppingList = {
     },
 
     save() {
-        Storage.save(STORAGE_KEYS.GROCERY, AppState.groceryList);
+        saveState();
     },
 
     addItem() {
@@ -1207,7 +1229,7 @@ const ShoppingList = {
         if (!confirm('Reset all demo data? This will clear your shopping list and refresh the forecast.')) return;
 
         // Clear app-specific localStorage keys
-        localStorage.removeItem(STORAGE_KEYS.GROCERY);
+        localStorage.removeItem(`${APP_META.storagePrefix}_${STORAGE_KEYS.GROCERY}`);
 
         // Reset app state
         AppState.groceryList = [];
