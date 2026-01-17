@@ -1,6 +1,6 @@
 const recipes = [
     {
-        id: 1,
+        id: "1",
         title: "Classic Spaghetti Carbonara",
         description: "A traditional Italian pasta dish with eggs, cheese, pancetta, and black pepper.",
         photo: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800&h=600&fit=crop",
@@ -28,7 +28,7 @@ const recipes = [
         ]
     },
     {
-        id: 2,
+        id: "2",
         title: "Chicken Tikka Masala",
         description: "Creamy and flavorful Indian curry with tender chicken pieces in a rich tomato-based sauce.",
         photo: "https://images.unsplash.com/photo-1562967914-608f82629710?w=800&h=600&fit=crop",
@@ -64,7 +64,7 @@ const recipes = [
         ]
     },
     {
-        id: 3,
+        id: "3",
         title: "Chocolate Chip Cookies",
         description: "Soft, chewy cookies loaded with chocolate chips - the perfect homemade treat.",
         photo: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800&h=600&fit=crop",
@@ -96,7 +96,7 @@ const recipes = [
         ]
     },
     {
-        id: 4,
+        id: "4",
         title: "Beef Stir-Fry",
         description: "Quick and healthy stir-fry with tender beef, fresh vegetables, and a savory sauce.",
         photo: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=800&h=600&fit=crop",
@@ -130,7 +130,7 @@ const recipes = [
         ]
     },
     {
-        id: 5,
+        id: "5",
         title: "Caesar Salad",
         description: "Crisp romaine lettuce with homemade Caesar dressing, croutons, and parmesan cheese.",
         photo: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop",
@@ -162,7 +162,7 @@ const recipes = [
         ]
     },
     {
-        id: 6,
+        id: "6",
         title: "Beef Tacos",
         description: "Flavorful ground beef tacos with fresh toppings and warm tortillas.",
         photo: "https://images.unsplash.com/photo-1565299585323-38174c0b0b0a?w=800&h=600&fit=crop",

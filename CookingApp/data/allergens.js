@@ -10,12 +10,9 @@ const ALLERGEN_CANONICAL = {
 };
 
 const ALLERGEN_KEYWORDS = {
-    'gluten': ['gluten', 'wheat', 'flour', 'semolina', 'durum', 'pasta', 'spaghetti', 'noodles', 'breadcrumbs', 'bread', 'croutons', 'couscous', 'bulgur', 'barley', 'rye'],
-    'wheat': ['wheat', 'flour', 'semolina', 'durum', 'pasta', 'spaghetti', 'noodles', 'breadcrumbs', 'bread', 'croutons', 'couscous', 'bulgur'],
-    'eggs': ['egg', 'eggs', 'yolk', 'albumen', 'mayonnaise', 'mayo'],
-    'milk': ['milk', 'cream', 'butter', 'cheese', 'whey', 'casein', 'yogurt', 'parmesan', 'pecorino'],
-    'dairy': ['milk', 'cream', 'butter', 'cheese', 'whey', 'casein', 'yogurt', 'parmesan', 'pecorino'],
-    'cheese': ['cheese', 'parmesan', 'pecorino', 'cheddar', 'mozzarella']
+    'dairy': ['milk', 'cheese', 'butter', 'yogurt', 'cream', 'whey', 'casein'],
+    'gluten': ['gluten', 'wheat', 'flour', 'bread', 'pasta', 'spaghetti', 'semolina'],
+    'eggs': ['egg', 'eggs', 'yolk', 'white', 'mayonnaise']
 };
 
 const SUBSTITUTION_RULES = {

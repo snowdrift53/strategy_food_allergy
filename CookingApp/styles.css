@@ -1139,15 +1139,15 @@ header p {
 }
 
 .flag-safe {
-    background: #00C853;
+    background: #00E676;
 }
 
 .flag-changes {
-    background: #FF6D00;
+    background: #FF8C00;
 }
 
 .flag-avoid {
-    background: #D32F2F;
+    background: #FF1744;
 }
 
 .recipe-suitability .mini-flag {

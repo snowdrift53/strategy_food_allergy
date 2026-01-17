@@ -549,107 +549,109 @@ const AllergyEngine = {
     },
 
     detectAllergens(recipeIngredients, allergies) {
-        const hits = [];
-        const uniqueAllergens = new Set();
+        const hitIngredients = [];
+        const detectedAllergens = new Set();
         
         if (!Array.isArray(recipeIngredients) || !Array.isArray(allergies)) {
-            return { hits: [], uniqueAllergens: [] };
+            return { hitIngredients: [], detectedAllergens: [] };
         }
 
         const normalizedAllergies = this.parseAllergies(allergies);
+        
+        // Map user allergies to canonical allergen keys
+        const activeAllergenKeys = new Set();
+        normalizedAllergies.forEach(allergy => {
+            const canonical = ALLERGEN_CANONICAL[allergy] || allergy;
+            // Check if it's a direct key or should be mapped
+            if (ALLERGEN_KEYWORDS.hasOwnProperty(canonical)) {
+                activeAllergenKeys.add(canonical);
+            } else {
+                // Check if allergy is a keyword for an allergen key
+                for (const [key, keywords] of Object.entries(ALLERGEN_KEYWORDS)) {
+                    if (keywords.includes(allergy) || keywords.includes(canonical)) {
+                        activeAllergenKeys.add(key);
+                        break;
+                    }
+                }
+            }
+        });
 
+        // For each ingredient line, check against allergen trigger keywords
         recipeIngredients.forEach(ingredientLine => {
             if (!ingredientLine || typeof ingredientLine !== 'string') return;
             
-            const normalizedIngredient = this.normalizeText(ingredientLine);
+            const normalizedIngredient = ingredientLine.toLowerCase();
+            let ingredientHit = false;
+            const allergensForThisIngredient = new Set();
 
-            normalizedAllergies.forEach(allergy => {
-                // Check direct match
-                if (normalizedIngredient.includes(allergy)) {
-                    hits.push({ allergen: allergy, ingredientLine: ingredientLine });
-                    uniqueAllergens.add(allergy);
-                    return;
-                }
-
-                // Check canonical mapping
-                const canonical = ALLERGEN_CANONICAL[allergy] || allergy;
-                if (canonical !== allergy && normalizedIngredient.includes(canonical)) {
-                    hits.push({ allergen: allergy, ingredientLine: ingredientLine });
-                    uniqueAllergens.add(allergy);
-                    return;
-                }
-
-                // Check keyword synonyms
-                if (ALLERGEN_KEYWORDS.hasOwnProperty(canonical)) {
-                    const keywords = ALLERGEN_KEYWORDS[canonical];
-                    const hasKeywordMatch = keywords.some(keyword => normalizedIngredient.includes(keyword));
-                    if (hasKeywordMatch) {
-                        hits.push({ allergen: allergy, ingredientLine: ingredientLine });
-                        uniqueAllergens.add(allergy);
-                        return;
-                    }
-                }
-
-                // Also check if allergy is a keyword for another allergen
-                for (const [key, keywords] of Object.entries(ALLERGEN_KEYWORDS)) {
-                    if (keywords.includes(allergy) && normalizedIngredient.includes(key)) {
-                        hits.push({ allergen: allergy, ingredientLine: ingredientLine });
-                        uniqueAllergens.add(allergy);
-                        return;
+            // Check each active allergen key
+            activeAllergenKeys.forEach(allergenKey => {
+                if (ALLERGEN_KEYWORDS.hasOwnProperty(allergenKey)) {
+                    const triggers = ALLERGEN_KEYWORDS[allergenKey];
+                    // Check if ANY trigger keyword is contained in the ingredient line
+                    const hasMatch = triggers.some(trigger => normalizedIngredient.includes(trigger));
+                    if (hasMatch) {
+                        ingredientHit = true;
+                        allergensForThisIngredient.add(allergenKey);
+                        detectedAllergens.add(allergenKey);
                     }
                 }
             });
+
+            if (ingredientHit) {
+                hitIngredients.push(ingredientLine);
+            }
         });
 
         return {
-            hits: hits,
-            uniqueAllergens: Array.from(uniqueAllergens)
+            hitIngredients: hitIngredients,
+            detectedAllergens: Array.from(detectedAllergens)
         };
     },
 
-    getSubstitutionsForAllergen(allergen) {
-        if (!allergen || typeof allergen !== 'string') return null;
-        const allergyLower = allergen.toLowerCase();
-        const canonical = ALLERGEN_CANONICAL[allergyLower] || allergyLower;
+    getSubstitutionsForAllergen(allergenKey) {
+        if (!allergenKey || typeof allergenKey !== 'string') return null;
+        const key = allergenKey.toLowerCase();
         
-        if (allergyReplacements.hasOwnProperty(canonical)) {
-            return allergyReplacements[canonical];
+        // Direct lookup by allergen key (dairy, gluten, eggs)
+        if (allergyReplacements.hasOwnProperty(key)) {
+            return allergyReplacements[key];
         }
-        if (allergyReplacements.hasOwnProperty(allergyLower)) {
-            return allergyReplacements[allergyLower];
-        }
+        
         return null;
     },
 
     classifyRecipe(recipe, allergies) {
         if (!recipe || !recipe.ingredients || !Array.isArray(recipe.ingredients)) {
-            return { status: 'safe', hits: [], substitutionsByAllergen: {} };
+            return { status: 'safe', hitIngredients: [], detectedAllergens: [], substitutionsByAllergen: {} };
         }
 
+        const totalIngredients = recipe.ingredients.length;
         const detection = this.detectAllergens(recipe.ingredients, allergies);
-        const hits = detection.hits;
-        const uniqueAllergens = detection.uniqueAllergens;
+        const hitIngredients = detection.hitIngredients;
+        const detectedAllergens = detection.detectedAllergens;
 
-        if (hits.length === 0) {
-            return { status: 'safe', hits: [], substitutionsByAllergen: {} };
+        // Ratio-based severity rule (no substitution gating)
+        if (hitIngredients.length === 0) {
+            return { status: 'safe', hitIngredients: [], detectedAllergens: [], substitutionsByAllergen: {} };
         }
 
-        const substitutionsByAllergen = {};
-        let hasSubstitutions = false;
+        const hitRatio = hitIngredients.length / totalIngredients;
 
-        uniqueAllergens.forEach(allergen => {
-            const substitutions = this.getSubstitutionsForAllergen(allergen);
+        // Generate substitutions by allergen key
+        const substitutionsByAllergen = {};
+        detectedAllergens.forEach(allergenKey => {
+            const substitutions = this.getSubstitutionsForAllergen(allergenKey);
             if (substitutions) {
-                substitutionsByAllergen[allergen] = substitutions;
-                hasSubstitutions = true;
+                substitutionsByAllergen[allergenKey] = substitutions;
             }
         });
 
-        if (hasSubstitutions) {
-            return { status: 'substitutable', hits: hits, substitutionsByAllergen: substitutionsByAllergen };
+        if (hitRatio <= 0.60) {
+            return { status: 'substitutable', hitIngredients: hitIngredients, detectedAllergens: detectedAllergens, substitutionsByAllergen: substitutionsByAllergen };
         }
 
-        return { status: 'not_recommended', hits: hits, substitutionsByAllergen: {} };
+        return { status: 'avoid', hitIngredients: hitIngredients, detectedAllergens: detectedAllergens, substitutionsByAllergen: substitutionsByAllergen };
     }
 };
 
@@ -857,35 +859,21 @@ const Recipes = {
         }
 
         const allergies = activeProfile.allergies;
-        const matchedAllergies = new Set();
+        const detection = AllergyEngine.detectAllergens(recipe.ingredients, allergies);
+        const hitIngredients = detection.hitIngredients;
+        const totalIngredients = recipe.ingredients.length;
 
-        // Check each ingredient individually against each allergy using keyword matching
-        recipe.ingredients.forEach(ingredient => {
-            allergies.forEach(allergy => {
-                if (this.checkAllergenMatch(ingredient, allergy)) {
-                    // Store canonical form
-                    const allergyLower = allergy.toLowerCase();
-                    const canonical = ALLERGEN_CANONICAL[allergyLower] || allergyLower;
-                    matchedAllergies.add(canonical);
-                }
-            });
-        });
-
-        // If no matches found, recipe is SAFE
-        if (matchedAllergies.size === 0) {
+        // Ratio-based severity rule (no substitution gating)
+        if (hitIngredients.length === 0) {
             return 'SAFE';
         }
 
-        // Check if ALL individually matched allergies have replacement options
-        const allHaveReplacements = Array.from(matchedAllergies).every(allergy => {
-            return SUBSTITUTION_RULES.hasOwnProperty(allergy);
-        });
+        const hitRatio = hitIngredients.length / totalIngredients;
 
-        if (allHaveReplacements) {
+        if (hitRatio <= 0.60) {
             return 'REPLACEABLE';
         }
 
-        // If matches exist but not all have replacements, recipe is not suitable
         return 'UNSAFE';
     },
 
@@ -1000,11 +988,11 @@ const Recipes = {
         const suitability = this.checkRecipeSuitability(recipe);
         let badgeHtml = '';
         if (suitability === 'SAFE') {
-            badgeHtml = '<div class="mini-flag flag-safe">Safe</div>';
+            badgeHtml = '<div class="mini-flag flag-safe">OK</div>';
         } else if (suitability === 'REPLACEABLE') {
-            badgeHtml = '<div class="mini-flag flag-changes">Changes</div>';
+            badgeHtml = '<div class="mini-flag flag-changes">ADAPT</div>';
         } else if (suitability === 'UNSAFE') {
-            badgeHtml = '<div class="mini-flag flag-avoid">Avoid</div>';
+            badgeHtml = '<div class="mini-flag flag-avoid">AVOID</div>';
         }
 
         card.innerHTML = `
@@ -1026,7 +1014,7 @@ const Recipes = {
     },
 
     renderDetail(recipeId) {
-        const recipe = this.currentRecipes.find(r => r.id === recipeId);
+        const recipe = this.currentRecipes.find(r => String(r.id) === String(recipeId));
         if (!recipe) return;
 
         const recipeList = $('#recipe-list');
@@ -1046,76 +1034,60 @@ const Recipes = {
         const classification = AllergyEngine.classifyRecipe(recipe, activeAllergies);
         
         let suitabilityHtml = '';
-        let debugHtml = '';
-        
-        if (DEBUG_ALLERGY) {
-            const parsedAllergies = AllergyEngine.parseAllergies(activeAllergies);
-            const detectedAllergens = classification.hits.length > 0 ? AllergyEngine.detectAllergens(recipe.ingredients, activeAllergies).uniqueAllergens : [];
-            const substitutionsKeys = Object.keys(classification.substitutionsByAllergen);
-            const substitutionsCounts = substitutionsKeys.map(key => `${key}: ${classification.substitutionsByAllergen[key].length}`).join(', ');
-            
-            debugHtml = `
-                <pre style="font-size: 0.8rem; background: #f5f5f5; padding: 8px; margin: 10px 0; border-radius: 4px; overflow-x: auto;">
-Active allergies: ${parsedAllergies.join(', ') || 'none'}
-Detected allergens: ${detectedAllergens.join(', ') || 'none'}
-Substitutions: ${substitutionsKeys.length > 0 ? substitutionsCounts : 'none'}
-                </pre>
-            `;
-        }
         
         if (classification.status === 'safe') {
             suitabilityHtml = `
                 <div class="recipe-suitability recipe-suitability-safe">
-                    <span class="mini-flag flag-safe">Safe</span>
-                    <span class="recipe-suitability-text">Suitable for your profile</span>
+                    <span class="mini-flag flag-safe">OK</span>
+                    <span class="recipe-suitability-text">OK for your profile</span>
                 </div>
             `;
         } else if (classification.status === 'substitutable') {
-            const uniqueIngredients = [...new Set(classification.hits.map(hit => hit.ingredientLine))];
+            const uniqueIngredients = [...new Set(classification.hitIngredients)];
             const substitutionsKeys = Object.keys(classification.substitutionsByAllergen);
             
             suitabilityHtml = `
                 <div class="recipe-suitability recipe-suitability-replaceable">
                     <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <span class="mini-flag flag-changes">Changes</span>
-                        <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Minor substitutions needed</span>
+                        <span class="mini-flag flag-changes">ADAPT</span>
+                        <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Adaptable with substitutions</span>
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="margin-bottom: 8px;">
                             <strong>Problem ingredients:</strong>
-                            <ul style="margin: 4px 0; padding-left: 20px;">
+                            <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
                                 ${uniqueIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
                             </ul>
                         </div>
                         <div>
                             <strong>Suggested substitutions:</strong>
-                            <ul style="margin: 4px 0; padding-left: 20px;">
-                                ${substitutionsKeys.map(allergen => {
-                                    const subs = classification.substitutionsByAllergen[allergen];
-                                    return `<li><strong>${this.escapeHtml(allergen)}</strong>: ${subs.map(s => this.escapeHtml(s)).join(', ')}</li>`;
+                            <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                ${substitutionsKeys.map(allergenKey => {
+                                    const subs = classification.substitutionsByAllergen[allergenKey];
+                                    return `<li><strong>${this.escapeHtml(allergenKey)}</strong>: ${subs.map(s => this.escapeHtml(s)).join(', ')}</li>`;
                                 }).join('')}
                             </ul>
                         </div>
                     </div>
                 </div>
             `;
-        } else if (classification.status === 'not_recommended') {
-            const uniqueIngredients = [...new Set(classification.hits.map(hit => hit.ingredientLine))];
+        } else if (classification.status === 'avoid') {
+            const uniqueIngredients = [...new Set(classification.hitIngredients)];
             
             suitabilityHtml = `
                 <div class="recipe-suitability recipe-suitability-unsafe">
                     <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <span class="mini-flag flag-avoid">Avoid</span>
-                        <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Not recommended</span>
+                        <span class="mini-flag flag-avoid">AVOID</span>
+                        <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Avoid (too many conflicts)</span>
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="margin-bottom: 8px;">
                             <strong>Problem ingredients:</strong>
-                            <ul style="margin: 4px 0; padding-left: 20px;">
+                            <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
                                 ${uniqueIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
                             </ul>
                         </div>
-                        <div>No suitable substitutions found</div>
+                        <div style="font-size: 1.1rem; line-height: 1.5;">No suitable substitutions found</div>
                     </div>
                 </div>
             `;
@@ -1138,7 +1110,6 @@ Substitutions: ${substitutionsKeys.length > 0 ? substitutionsCounts : 'none'}
                     <div class="detail-meta-item"><span>⭐</span><span>${recipe.difficulty}</span></div>
                 </div>
                 ${suitabilityHtml}
-                ${debugHtml}
                 <p class="detail-description">${recipe.fullDescription}</p>
             </div>
 
@@ -1179,6 +1150,7 @@ const ShoppingList = {
             if (e.key === 'Enter') this.addItem();
         });
         $('#clear-list-btn').addEventListener('click', () => this.clearAll());
+        $('#reset-demo-btn').addEventListener('click', () => this.resetDemoData());
 
         this.render();
     },
@@ -1219,6 +1191,24 @@ const ShoppingList = {
         AppState.groceryList = [];
         this.save();
         this.render();
+    },
+
+    resetDemoData() {
+        if (!confirm('Reset all demo data? This will clear your shopping list and refresh the forecast.')) return;
+
+        // Clear app-specific localStorage keys
+        localStorage.removeItem(STORAGE_KEYS.GROCERY);
+
+        // Reset app state
+        AppState.groceryList = [];
+
+        // Refresh UI
+        this.render();
+
+        // Refresh forecast if it exists
+        if (typeof Forecast !== 'undefined' && Forecast.render) {
+            Forecast.render();
+        }
     },
 
     render() {
@@ -1578,7 +1568,7 @@ const Forecast = {
         // Make ready-cards clickable (open recipe detail and switch view)
         $$('.ready-card', forecastContent).forEach(card => {
             card.addEventListener('click', () => {
-                const recipeId = parseInt(card.getAttribute('data-recipe-id'), 10);
+                const recipeId = card.getAttribute('data-recipe-id');
                 if (!recipeId) return;
 
                 Recipes.renderDetail(recipeId);
