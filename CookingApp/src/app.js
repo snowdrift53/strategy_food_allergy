@@ -1,4 +1,14 @@
 /************************************
+ * APP METADATA
+ ************************************/
+
+const APP_META = {
+    name: "Cooking Recipes",
+    tagline: "Discover delicious recipes from around the world",
+    storagePrefix: "cookingapp"
+};
+
+/************************************
  * 1) CONFIG + HELPERS
  ************************************/
 
