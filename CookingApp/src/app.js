@@ -282,13 +282,7 @@ const Profiles = {
     switchProfile(profileId) {
         AppState.activeProfileId = profileId;
         saveState();
-        this.render();
-        if (typeof Log !== 'undefined' && Log.render) {
-            Log.render();
-        }
-        if (typeof Recipes !== 'undefined' && Recipes.renderList) {
-            Recipes.renderList();
-        }
+        renderApp();
     },
 
     addProfile() {
@@ -305,7 +299,7 @@ const Profiles = {
         AppState.activeProfileId = newProfile.id;
         saveState();
         input.value = '';
-        this.render();
+        renderApp();
     },
 
     saveAllergies() {
@@ -318,9 +312,7 @@ const Profiles = {
         if (activeProfile) {
             activeProfile.allergies = allergies;
             saveState();
-            if (typeof Recipes !== 'undefined' && Recipes.renderList) {
-                Recipes.renderList();
-            }
+            renderApp();
         }
     },
 
@@ -341,7 +333,7 @@ const Profiles = {
         }
 
         saveState();
-        this.render();
+        renderApp();
     },
 
     render() {
@@ -462,7 +454,7 @@ const Log = {
         saveState();
 
         textarea.value = '';
-        this.render();
+        renderApp();
     },
 
     deleteEntry(entryId) {
@@ -471,7 +463,7 @@ const Log = {
 
         AppState.profileLogs[profileId] = AppState.profileLogs[profileId].filter(entry => entry.id !== entryId);
         saveState();
-        this.render();
+        renderApp();
     },
 
     formatTimestamp(ts) {
@@ -1199,13 +1191,13 @@ const ShoppingList = {
         AppState.groceryList.push({ id: Date.now(), text: item, checked: false });
         input.value = '';
         this.save();
-        this.render();
+        renderApp();
     },
 
     removeItem(id) {
         AppState.groceryList = AppState.groceryList.filter(item => item.id !== id);
         this.save();
-        this.render();
+        renderApp();
     },
 
     toggleItem(id) {
@@ -1214,7 +1206,7 @@ const ShoppingList = {
 
         item.checked = !item.checked;
         this.save();
-        this.render();
+        renderApp();
     },
 
     clearAll() {
@@ -1222,7 +1214,7 @@ const ShoppingList = {
 
         AppState.groceryList = [];
         this.save();
-        this.render();
+        renderApp();
     },
 
     resetDemoData() {
@@ -1235,12 +1227,7 @@ const ShoppingList = {
         AppState.groceryList = [];
 
         // Refresh UI
-        this.render();
-
-        // Refresh forecast if it exists
-        if (typeof Forecast !== 'undefined' && Forecast.render) {
-            Forecast.render();
-        }
+        renderApp();
     },
 
     render() {
@@ -1454,8 +1441,7 @@ const Forecast = {
     addSuggestedItem(ingredient) {
         AppState.groceryList.push({ id: Date.now(), text: ingredient, checked: false });
         ShoppingList.save();
-        ShoppingList.render();
-        this.render();
+        renderApp();
     },
 
     render() {
@@ -1612,7 +1598,35 @@ const Forecast = {
 
 
 /************************************
- * 11) APP BOOTSTRAP
+ * 11) RENDER ENTRY POINT
+ ************************************/
+
+function renderApp() {
+    // Render all UI components that depend on state
+    if (typeof Profiles !== 'undefined' && Profiles.render) {
+        Profiles.render();
+    }
+    if (typeof Log !== 'undefined' && Log.render) {
+        Log.render();
+    }
+    if (typeof Recipes !== 'undefined' && Recipes.renderList) {
+        Recipes.renderList();
+    }
+    if (typeof ShoppingList !== 'undefined' && ShoppingList.render) {
+        ShoppingList.render();
+    }
+    // Forecast render is conditional - only if forecast view is active
+    const forecastView = $('#forecast-view');
+    if (forecastView && !forecastView.classList.contains('hidden')) {
+        if (typeof Forecast !== 'undefined' && Forecast.render) {
+            Forecast.render();
+        }
+    }
+}
+
+
+/************************************
+ * 12) APP BOOTSTRAP
  ************************************/
 
 const App = {
