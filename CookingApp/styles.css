@@ -1031,6 +1031,58 @@ header p {
     margin-bottom: 20px;
 }
 
+.recipe-search-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    align-items: center;
+}
+
+.recipe-search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #E6D3B3;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #5C4033;
+    background: white;
+}
+
+.recipe-search-input:focus {
+    outline: none;
+    border-color: #8B7355;
+}
+
+.recipe-search-btn {
+    padding: 12px 24px;
+    border: 2px solid #8B7355;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #8B7355;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.recipe-search-btn:hover {
+    background: #6B4E3D;
+    border-color: #6B4E3D;
+    transform: translateY(-2px);
+}
+
+.recipe-loading,
+.recipe-error,
+.recipe-empty {
+    text-align: center;
+    padding: 40px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #8B7355;
+    font-size: 1.1rem;
+}
+
 .recipe-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

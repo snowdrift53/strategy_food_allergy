@@ -22,6 +22,11 @@
 
         <!-- Recipes View -->
         <div id="recipes-view" class="view-section">
+            <div class="recipe-search-section">
+                <input type="text" id="recipe-search-input" class="recipe-search-input" placeholder="Search recipes...">
+                <button id="recipe-search-local-btn" class="recipe-search-btn">Local</button>
+                <button id="recipe-search-online-btn" class="recipe-search-btn">Online</button>
+            </div>
             <div id="recipe-list" class="recipe-grid">
                 <!-- Recipes will be dynamically loaded here -->
             </div>
@@ -85,6 +90,9 @@
         </div>
     </div>
 
+    <script src="data/allergens.js"></script>
+    <script src="data/recipes.local.js"></script>
+    <script src="data/providers.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
