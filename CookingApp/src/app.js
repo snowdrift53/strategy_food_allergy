@@ -1219,6 +1219,25 @@ const Recipes = {
             recipeDetail.classList.add('hidden');
         }
 
+        // Refresh currentRecipes from active profile when in local mode
+        if (this.searchMode === 'local') {
+            const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
+            const p = getActiveProfile();
+            const likedRecipes = p ? p.localRecipes : [];
+            const allLocalRecipes = [...baseRecipes];
+            
+            // Add liked recipes, avoiding duplicates by ID
+            const existingIds = new Set(baseRecipes.map(r => String(r.id)));
+            likedRecipes.forEach(likedRecipe => {
+                if (!existingIds.has(String(likedRecipe.id))) {
+                    allLocalRecipes.push(likedRecipe);
+                    existingIds.add(String(likedRecipe.id));
+                }
+            });
+            
+            this.currentRecipes = allLocalRecipes;
+        }
+
         if (this.currentRecipes.length === 0) {
             recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
             return;
@@ -1736,7 +1755,23 @@ const Forecast = {
         }
 
         const shoppingItems = shoppingList.filter(item => !item.checked).map(item => item.text);
-        const recipeAnalyses = recipes.map(recipe => this.analyzeRecipe(recipe, shoppingItems));
+        
+        // Get all recipes (base + liked from active profile)
+        const p = getActiveProfile();
+        const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
+        const likedRecipes = p ? p.localRecipes : [];
+        const allRecipes = [...baseRecipes];
+        
+        // Add liked recipes, avoiding duplicates by ID
+        const existingIds = new Set(baseRecipes.map(r => String(r.id)));
+        likedRecipes.forEach(likedRecipe => {
+            if (!existingIds.has(String(likedRecipe.id))) {
+                allRecipes.push(likedRecipe);
+                existingIds.add(String(likedRecipe.id));
+            }
+        });
+        
+        const recipeAnalyses = allRecipes.map(recipe => this.analyzeRecipe(recipe, shoppingItems));
 
         const recommendedRecipes = recipeAnalyses
             .filter(analysis => analysis.matchPercentage > 0)
