@@ -1339,9 +1339,13 @@ const Recipes = {
             
             suitabilityHtml = `
                 <div class="recipe-suitability recipe-suitability-replaceable">
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <span class="mini-flag flag-changes">ADAPT</span>
-                        <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Adaptable with substitutions</span>
+                    <div class="adapt-flag" style="display: inline-block; margin-bottom: 12px;">
+                        <div style="margin-bottom: 4px;">
+                            <span class="mini-flag flag-changes">ADAPT</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #6B4E3D; line-height: 1.3; text-align: left;">
+                            Adapt &<br>enjoy!
+                        </div>
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="margin-bottom: 8px;">
