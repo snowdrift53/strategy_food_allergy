@@ -409,7 +409,10 @@ const Profiles = {
                 </div>
                 <div class="profile-section">
                     <label for="profile-allergies-input">Allergies</label>
-                    <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
+                    <div class="profile-allergies-input-wrapper">
+                        <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
+                        <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                    </div>
                 </div>
                 <div class="profile-section">
                     <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
@@ -426,8 +429,43 @@ const Profiles = {
         $('#profile-name-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addProfile();
         });
-        $('#profile-allergies-input').addEventListener('blur', () => this.saveAllergies());
         $('#profile-delete-btn').addEventListener('click', () => this.deleteProfile());
+        
+        const allergiesInput = $('#profile-allergies-input');
+        const clearBtn = $('#profile-allergies-clear-btn');
+        
+        if (allergiesInput) {
+            // Update clear button visibility on input change
+            const updateClearButton = () => {
+                if (clearBtn) {
+                    clearBtn.style.display = allergiesInput.value.trim().length > 0 ? 'block' : 'none';
+                }
+            };
+
+            allergiesInput.addEventListener('input', updateClearButton);
+            allergiesInput.addEventListener('blur', () => {
+                this.saveAllergies();
+                updateClearButton();
+            });
+
+            // Clear button click handler
+            if (clearBtn) {
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+                    if (activeProfile) {
+                        activeProfile.allergies = [];
+                        allergiesInput.value = '';
+                        saveState();
+                        updateClearButton();
+                        renderApp();
+                    }
+                });
+            }
+
+            // Initial state
+            updateClearButton();
+        }
     },
 
     toggleWidget() {
@@ -554,10 +592,17 @@ const Profiles = {
         });
 
         const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+        const clearBtn = $('#profile-allergies-clear-btn');
+        
         if (activeProfile) {
             allergiesInput.value = activeProfile.allergies.join(', ');
         } else {
             allergiesInput.value = '';
+        }
+
+        // Update clear button visibility
+        if (clearBtn) {
+            clearBtn.style.display = allergiesInput.value.trim().length > 0 ? 'block' : 'none';
         }
 
         const deleteBtn = $('#profile-delete-btn');

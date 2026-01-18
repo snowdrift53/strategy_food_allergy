@@ -139,6 +139,12 @@ header p {
     gap: 6px;
 }
 
+.profile-allergies-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .profile-input {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     flex: 1;
@@ -150,9 +156,40 @@ header p {
     background: white;
 }
 
+.profile-allergies-input-wrapper .profile-input {
+    padding-right: 80px;
+}
+
 .profile-input:focus {
     outline: none;
     border-color: #8B7355;
+}
+
+.profile-allergies-clear-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 1px solid #D0D0D0;
+    color: #6B6B6B;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.profile-allergies-clear-btn:hover {
+    background: #F0F0F0;
+    border-color: #B0B0B0;
+    color: #5C4033;
+}
+
+.profile-allergies-clear-btn:active {
+    background: #E0E0E0;
 }
 
 .profile-btn {
