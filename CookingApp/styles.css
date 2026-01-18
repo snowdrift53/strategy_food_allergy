@@ -959,8 +959,6 @@ header p {
 
 .add-missing-btn {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #DAA520;
-    color: white;
     border: none;
     width: 28px;
     height: 28px;
@@ -974,10 +972,45 @@ header p {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: white;
 }
 
-.add-missing-btn:hover {
-    background: #B8860B;
+/* Default grey state for add buttons */
+.add-btn {
+    background: #B0B0B0;
+    color: white;
+}
+
+.add-btn:hover:not(:disabled):not(.added) {
+    background: #909090;
+}
+
+/* Active colored state when ingredient is already added */
+.add-btn.added {
+    background: #6B8E23;
+    color: white;
+}
+
+.add-btn.added:hover {
+    background: #6B8E23;
+    transform: none;
+}
+
+/* Disabled state */
+.add-btn[disabled],
+.add-btn.added {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.add-btn[disabled]:hover,
+.add-btn.added:hover {
+    transform: none;
+    background: #6B8E23;
+}
+
+/* Specific hover for add-missing-btn when not disabled/added */
+.add-missing-btn.add-btn:hover:not(:disabled):not(.added) {
     transform: scale(1.1);
 }
 
@@ -1022,9 +1055,39 @@ header p {
     font-weight: 500;
 }
 
-.add-suggestion-btn:hover {
+.add-suggestion-btn:hover:not(:disabled):not(.added) {
     background: #6B4E3D;
     transform: scale(1.05);
+}
+
+/* Apply base add-btn styles to suggestion buttons */
+.add-suggestion-btn.add-btn {
+    background: #B0B0B0;
+}
+
+.add-suggestion-btn.add-btn:hover:not(:disabled):not(.added) {
+    background: #909090;
+}
+
+.add-suggestion-btn.add-btn.added {
+    background: #6B8E23;
+}
+
+.add-suggestion-btn.add-btn.added:hover {
+    background: #6B8E23;
+    transform: none;
+}
+
+.add-suggestion-btn[disabled],
+.add-suggestion-btn.add-btn.added {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.add-suggestion-btn[disabled]:hover,
+.add-suggestion-btn.add-btn.added:hover {
+    transform: none;
+    background: #6B8E23;
 }
 
 .forecast-empty {

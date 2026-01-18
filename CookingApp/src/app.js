@@ -1829,7 +1829,40 @@ const Forecast = {
         return suggestions;
     },
 
+    /**
+     * Check if an ingredient is already in the active profile's shopping list.
+     * Uses normalization for case-insensitive matching.
+     * 
+     * @param {string} ingredient - The ingredient to check
+     * @returns {boolean} True if ingredient is already in shopping list (checked or unchecked)
+     */
+    isIngredientInShoppingList(ingredient) {
+        if (!ingredient || typeof ingredient !== 'string') {
+            return false;
+        }
+
+        const shoppingList = getProfileShoppingList();
+        if (!Array.isArray(shoppingList) || shoppingList.length === 0) {
+            return false;
+        }
+
+        const normalizedIngredient = this.normalizeIngredient(ingredient);
+
+        // Check if any shopping list item matches this ingredient
+        return shoppingList.some(item => {
+            if (!item || !item.text) return false;
+            const normalizedItem = this.normalizeIngredient(item.text);
+            return normalizedItem === normalizedIngredient || 
+                   this.checkIngredientMatch(item.text, ingredient);
+        });
+    },
+
     addSuggestedItem(ingredient) {
+        // Prevent duplicate adds
+        if (this.isIngredientInShoppingList(ingredient)) {
+            return;
+        }
+        
         addShoppingItem(ingredient);
         ShoppingList.save();
         renderApp();
@@ -1947,12 +1980,18 @@ const Forecast = {
                                         <strong>⚠️ Missing Ingredients (${analysis.missingIngredients.length}):</strong>
                                     </div>
                                     <ul class="missing-ingredients-list">
-                                        ${analysis.missingIngredients.map(ing => `
+                                        ${analysis.missingIngredients.map(ing => {
+                                            const isAdded = this.isIngredientInShoppingList(ing);
+                                            const btnClass = isAdded ? 'add-missing-btn add-btn added' : 'add-missing-btn add-btn';
+                                            const btnTitle = isAdded ? 'Already in shopping list' : 'Add to shopping list';
+                                            const btnDisabled = isAdded ? 'disabled' : '';
+                                            return `
                                             <li>
                                                 <span>${ing}</span>
-                                                <button class="add-missing-btn" data-ingredient="${ing.replace(/"/g, '&quot;')}" title="Add to shopping list">+</button>
+                                                <button class="${btnClass}" data-ingredient="${ing.replace(/"/g, '&quot;')}" title="${btnTitle}" ${btnDisabled}>+</button>
                                             </li>
-                                        `).join('')}
+                                        `;
+                                        }).join('')}
                                     </ul>
                                 </div>
                             </div>
@@ -1969,12 +2008,18 @@ const Forecast = {
                     <p class="section-description">Add these missing ingredients to cook more recipes:</p>
                     <div class="shopping-suggestions">
                         <ul class="suggested-items-list">
-                            ${Array.from(allMissingIngredients).map(ingredient => `
+                            ${Array.from(allMissingIngredients).map(ingredient => {
+                                const isAdded = this.isIngredientInShoppingList(ingredient);
+                                const btnClass = isAdded ? 'add-suggestion-btn add-btn added' : 'add-suggestion-btn add-btn';
+                                const btnTitle = isAdded ? 'Already in shopping list' : 'Add to shopping list';
+                                const btnDisabled = isAdded ? 'disabled' : '';
+                                return `
                                 <li>
                                     <span>${ingredient}</span>
-                                    <button class="add-suggestion-btn" data-ingredient="${ingredient.replace(/"/g, '&quot;')}">+ Add to List</button>
+                                    <button class="${btnClass}" data-ingredient="${ingredient.replace(/"/g, '&quot;')}" title="${btnTitle}" ${btnDisabled}>+ Add to List</button>
                                 </li>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </ul>
                     </div>
                 </div>
@@ -1987,6 +2032,10 @@ const Forecast = {
         $$('.add-suggestion-btn, .add-missing-btn', forecastContent).forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // Don't add if button is disabled (already in list)
+                if (btn.disabled || btn.classList.contains('added')) {
+                    return;
+                }
                 const ingredient = btn.getAttribute('data-ingredient');
                 this.addSuggestedItem(ingredient);
             });
