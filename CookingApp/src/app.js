@@ -923,6 +923,138 @@ const AllergyEngine = {
         }
 
         return { status: 'avoid', hitIngredients: hitIngredients, detectedAllergens: detectedAllergens, substitutionsByAllergen: substitutionsByAllergen };
+    },
+
+    /**
+     * Analyze a recipe for problem ingredients and suggest substitutions.
+     * Detects both allergy conflicts and missing ingredients from shopping list.
+     * 
+     * @param {Object} recipe - Recipe object with ingredients array
+     * @param {Object} activeProfile - Profile object with allergies and shoppingList
+     * @returns {Object} Analysis result with problem ingredients and substitutions
+     */
+    analyzeRecipeAdaptation(recipe, activeProfile) {
+        if (!recipe || !recipe.ingredients || !Array.isArray(recipe.ingredients)) {
+            return {
+                hasProblems: false,
+                problemIngredients: [],
+                suggestedSubstitutions: {}
+            };
+        }
+
+        const problemIngredients = [];
+        const suggestedSubstitutions = {};
+        const allergies = activeProfile && Array.isArray(activeProfile.allergies) ? activeProfile.allergies : [];
+        const shoppingList = activeProfile && Array.isArray(activeProfile.shoppingList) ? activeProfile.shoppingList : [];
+        
+        // Get checked shopping list items (items user has available)
+        const availableItems = shoppingList
+            .filter(item => item && item.checked === true && item.text)
+            .map(item => item.text);
+
+        // 1. Detect allergy conflicts
+        const allergyDetection = this.detectAllergens(recipe.ingredients, allergies);
+        const allergyProblemIngredients = allergyDetection.hitIngredients;
+        const detectedAllergens = allergyDetection.detectedAllergens;
+
+        // Add allergy problem ingredients to problem list
+        allergyProblemIngredients.forEach(ingredient => {
+            if (!problemIngredients.includes(ingredient)) {
+                problemIngredients.push(ingredient);
+            }
+        });
+
+        // Get substitutions for detected allergens
+        detectedAllergens.forEach(allergenKey => {
+            const substitutions = getSubstitutionsFor(allergenKey);
+            if (substitutions && substitutions.length > 0) {
+                suggestedSubstitutions[allergenKey] = substitutions;
+            }
+        });
+
+        // 2. Detect missing ingredients (not in checked shopping list)
+        recipe.ingredients.forEach(ingredientLine => {
+            if (!ingredientLine || typeof ingredientLine !== 'string') return;
+
+            // Skip if already identified as allergy problem
+            if (allergyProblemIngredients.includes(ingredientLine)) {
+                return;
+            }
+
+            // Check if ingredient is available in shopping list
+            let isAvailable = false;
+            for (const availableItem of availableItems) {
+                if (this.checkIngredientAvailability(availableItem, ingredientLine)) {
+                    isAvailable = true;
+                    break;
+                }
+            }
+
+            // If not available, it's a problem ingredient
+            if (!isAvailable) {
+                if (!problemIngredients.includes(ingredientLine)) {
+                    problemIngredients.push(ingredientLine);
+                }
+
+                // Try to get substitutions for this specific ingredient
+                const ingredientSubs = getSubstitutionsFor(ingredientLine);
+                if (ingredientSubs && ingredientSubs.length > 0) {
+                    // Use ingredient line as key for missing items
+                    suggestedSubstitutions[ingredientLine] = ingredientSubs;
+                }
+            }
+        });
+
+        return {
+            hasProblems: problemIngredients.length > 0,
+            problemIngredients: problemIngredients,
+            suggestedSubstitutions: suggestedSubstitutions
+        };
+    },
+
+    /**
+     * Check if a shopping list item matches a recipe ingredient.
+     * Uses normalization similar to Forecast module.
+     */
+    checkIngredientAvailability(shoppingItem, recipeIngredient) {
+        if (!shoppingItem || !recipeIngredient) return false;
+
+        const normalize = (text) => {
+            return text
+                .toLowerCase()
+                .replace(/\d+[gml]?\s*/g, '')
+                .replace(/\d+\s*/g, '')
+                .replace(/\b(cut|diced|grated|minced|chopped|sliced|softened|fresh|dried|canned|for|and|or|with|the|a|an)\b/g, '')
+                .replace(/[,\s]+/g, ' ')
+                .trim();
+        };
+
+        const extractKeywords = (text) => {
+            const normalized = normalize(text);
+            return normalized.split(/\s+/).filter(w => w.length > 2);
+        };
+
+        const shoppingNormalized = normalize(shoppingItem);
+        const recipeNormalized = normalize(recipeIngredient);
+        const shoppingWords = extractKeywords(shoppingItem);
+        const recipeWords = extractKeywords(recipeIngredient);
+
+        // Exact match
+        if (shoppingNormalized === recipeNormalized) return true;
+
+        // Keyword matching
+        for (const word of shoppingWords) {
+            if (recipeWords.some(rw => rw.includes(word) || word.includes(rw))) {
+                return true;
+            }
+        }
+
+        // Substring matching
+        if (shoppingNormalized.includes(recipeNormalized) || recipeNormalized.includes(shoppingNormalized)) {
+            return true;
+        }
+
+        return false;
     }
 };
 
