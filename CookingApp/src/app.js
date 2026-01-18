@@ -944,6 +944,7 @@ const Recipes = {
         if (localBtn) {
             localBtn.addEventListener('click', () => {
                 this.searchMode = 'local';
+                this.updateToggleButtons();
                 this.handleSearch();
             });
         }
@@ -951,9 +952,13 @@ const Recipes = {
         if (onlineBtn) {
             onlineBtn.addEventListener('click', () => {
                 this.searchMode = 'online';
+                this.updateToggleButtons();
                 this.handleSearch();
             });
         }
+
+        // Set initial active state
+        this.updateToggleButtons();
 
         // Initialize with local recipes (merge base recipes + liked recipes)
         const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
@@ -971,6 +976,24 @@ const Recipes = {
         
         this.currentRecipes = allLocalRecipes;
         this.renderList();
+    },
+
+    updateToggleButtons() {
+        const localBtn = $('#recipe-search-local-btn');
+        const onlineBtn = $('#recipe-search-online-btn');
+        
+        if (localBtn && onlineBtn) {
+            // Always remove active from both first to ensure clean state
+            localBtn.classList.remove('active');
+            onlineBtn.classList.remove('active');
+            
+            // Then add active only to the current mode
+            if (this.searchMode === 'local') {
+                localBtn.classList.add('active');
+            } else {
+                onlineBtn.classList.add('active');
+            }
+        }
     },
 
     handleSearch() {
@@ -1870,8 +1893,35 @@ const Forecast = {
 
     render() {
         const forecastContent = $('#forecast-content');
+        const p = getActiveProfile();
+        
+        // Get all local recipes (base + liked from active profile)
+        const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
+        const likedRecipes = p && Array.isArray(p.localRecipes) ? p.localRecipes : [];
+        const allLocalRecipes = [...baseRecipes];
+        
+        // Add liked recipes, avoiding duplicates by ID
+        const existingIds = new Set(baseRecipes.map(r => String(r.id)));
+        likedRecipes.forEach(likedRecipe => {
+            if (!existingIds.has(String(likedRecipe.id))) {
+                allLocalRecipes.push(likedRecipe);
+                existingIds.add(String(likedRecipe.id));
+            }
+        });
+
+        // Empty state: no local recipes
+        if (allLocalRecipes.length === 0) {
+            forecastContent.innerHTML = `
+                <div class="forecast-empty">
+                    <p>No recipes available. Add recipes to your collection to see weekly forecast suggestions!</p>
+                </div>
+            `;
+            return;
+        }
+
         const shoppingList = getProfileShoppingList();
 
+        // Empty state: shopping list empty
         if (shoppingList.length === 0) {
             forecastContent.innerHTML = `
                 <div class="forecast-empty">
@@ -1890,22 +1940,8 @@ const Forecast = {
         // Use only checked items (items user has) for forecast matching
         const shoppingItems = shoppingList.filter(item => item.checked).map(item => item.text);
         
-        // Get all recipes (base + liked from active profile)
-        const p = getActiveProfile();
-        const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
-        const likedRecipes = p ? p.localRecipes : [];
-        const allRecipes = [...baseRecipes];
-        
-        // Add liked recipes, avoiding duplicates by ID
-        const existingIds = new Set(baseRecipes.map(r => String(r.id)));
-        likedRecipes.forEach(likedRecipe => {
-            if (!existingIds.has(String(likedRecipe.id))) {
-                allRecipes.push(likedRecipe);
-                existingIds.add(String(likedRecipe.id));
-            }
-        });
-        
-        const recipeAnalyses = allRecipes.map(recipe => this.analyzeRecipe(recipe, shoppingItems));
+        // Analyze all recipes
+        const recipeAnalyses = allLocalRecipes.map(recipe => this.analyzeRecipe(recipe, shoppingItems));
 
         const recommendedRecipes = recipeAnalyses
             .filter(analysis => analysis.matchPercentage > 0)
@@ -1923,11 +1959,6 @@ const Forecast = {
         const canCookRecipes = recommendedRecipes.filter(analysis => analysis.canCook);
         const partialRecipes = recommendedRecipes.filter(analysis => !analysis.canCook);
 
-        const allMissingIngredients = new Set();
-        recommendedRecipes.forEach(analysis => {
-            analysis.missingIngredients.forEach(ing => allMissingIngredients.add(ing));
-        });
-
         let html = `
             <div class="forecast-intro">
                 <p class="forecast-intro-text">Based on your shopping list, here are recommended recipes you can cook. Missing ingredients are highlighted for each recipe.</p>
@@ -1940,19 +1971,22 @@ const Forecast = {
                     <h3 class="forecast-section-title success">✅ Recommended: Ready to Cook</h3>
                     <p class="section-description">These recipes match your shopping list perfectly!</p>
                     <div class="recipe-forecast-grid">
-                        ${canCookRecipes.map(analysis => `
+                        ${canCookRecipes.map(analysis => {
+                            const imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            return `
                             <div class="recipe-forecast-card ready-card" data-recipe-id="${analysis.recipe.id}">
                                 <div class="forecast-recipe-image">
-                                    <img src="${analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo}" alt="${analysis.recipe.title}">
+                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}">
                                 </div>
-                                <h4>${analysis.recipe.title}</h4>
+                                <h4>${this.escapeHtml(analysis.recipe.title)}</h4>
                                 <p class="forecast-meta">⏱️ ${analysis.recipe.time} | 👥 ${analysis.recipe.servings} servings</p>
                                 <div class="forecast-status success-status">✓ All ingredients available!</div>
                                 <div class="ingredient-match-info">
                                     <span class="match-badge">${analysis.matchedIngredients.length}/${analysis.recipe.ingredients.length} ingredients</span>
                                 </div>
                             </div>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -1964,12 +1998,14 @@ const Forecast = {
                     <h3 class="forecast-section-title partial">⭐ Recommended: Almost Ready</h3>
                     <p class="section-description">These recipes are close to completion. Check what's missing below:</p>
                     <div class="recipe-forecast-grid">
-                        ${partialRecipes.map(analysis => `
+                        ${partialRecipes.map(analysis => {
+                            const imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            return `
                             <div class="recipe-forecast-card partial-card">
                                 <div class="forecast-recipe-image">
-                                    <img src="${analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo}" alt="${analysis.recipe.title}">
+                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}">
                                 </div>
-                                <h4>${analysis.recipe.title}</h4>
+                                <h4>${this.escapeHtml(analysis.recipe.title)}</h4>
                                 <p class="forecast-meta">⏱️ ${analysis.recipe.time} | 👥 ${analysis.recipe.servings} servings</p>
                                 <div class="forecast-status partial-status">${Math.round(analysis.matchPercentage)}% complete</div>
                                 <div class="ingredient-match-info">
@@ -1987,40 +2023,16 @@ const Forecast = {
                                             const btnDisabled = isAdded ? 'disabled' : '';
                                             return `
                                             <li>
-                                                <span>${ing}</span>
-                                                <button class="${btnClass}" data-ingredient="${ing.replace(/"/g, '&quot;')}" title="${btnTitle}" ${btnDisabled}>+</button>
+                                                <span>${this.escapeHtml(ing)}</span>
+                                                <button class="${btnClass}" data-ingredient="${this.escapeHtml(ing).replace(/"/g, '&quot;')}" title="${btnTitle}" ${btnDisabled}>+</button>
                                             </li>
                                         `;
                                         }).join('')}
                                     </ul>
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (allMissingIngredients.size > 0) {
-            html += `
-                <div class="forecast-section">
-                    <h3 class="forecast-section-title shopping">🛒 Complete Your Shopping List</h3>
-                    <p class="section-description">Add these missing ingredients to cook more recipes:</p>
-                    <div class="shopping-suggestions">
-                        <ul class="suggested-items-list">
-                            ${Array.from(allMissingIngredients).map(ingredient => {
-                                const isAdded = this.isIngredientInShoppingList(ingredient);
-                                const btnClass = isAdded ? 'add-suggestion-btn add-btn added' : 'add-suggestion-btn add-btn';
-                                const btnTitle = isAdded ? 'Already in shopping list' : 'Add to shopping list';
-                                const btnDisabled = isAdded ? 'disabled' : '';
-                                return `
-                                <li>
-                                    <span>${ingredient}</span>
-                                    <button class="${btnClass}" data-ingredient="${ingredient.replace(/"/g, '&quot;')}" title="${btnTitle}" ${btnDisabled}>+ Add to List</button>
-                                </li>
-                            `;
-                            }).join('')}
-                        </ul>
+                        `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -2028,8 +2040,8 @@ const Forecast = {
 
         forecastContent.innerHTML = html;
 
-        // Add buttons: add to shopping list
-        $$('.add-suggestion-btn, .add-missing-btn', forecastContent).forEach(btn => {
+        // Add event listeners for missing ingredient "+" buttons
+        $$('.add-missing-btn', forecastContent).forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 // Don't add if button is disabled (already in list)
@@ -2051,6 +2063,13 @@ const Forecast = {
                 Navigation.switchView('recipes');
             });
         });
+    },
+
+    escapeHtml(text) {
+        if (!text || typeof text !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 };
 

@@ -424,6 +424,63 @@ header p {
     box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
 }
 
+/* Recipe Search Toggle Buttons */
+.recipe-search-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    align-items: center;
+}
+
+.recipe-search-input {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #E6D3B3;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #5C4033;
+    background: white;
+}
+
+.recipe-search-input:focus {
+    outline: none;
+    border-color: #8B7355;
+}
+
+.recipe-search-btn {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #E8E8E8;
+    color: #8B8B8B;
+    border: 2px solid #D0D0D0;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+/* Inactive hover - must remain muted */
+.recipe-search-btn:hover:not(.active) {
+    background: #D8D8D8;
+    color: #6B6B6B;
+    border-color: #C0C0C0;
+}
+
+/* Active state - must override all other states */
+.recipe-search-btn.active {
+    background: #8B7355 !important;
+    color: white !important;
+    border-color: #8B7355 !important;
+    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+}
+
+.recipe-search-btn.active:hover {
+    background: #6B4E3D !important;
+    border-color: #6B4E3D !important;
+}
+
 .view-section {
     animation: fadeIn 0.3s ease;
 }
@@ -1102,47 +1159,6 @@ header p {
     margin-bottom: 20px;
 }
 
-.recipe-search-section {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    align-items: center;
-}
-
-.recipe-search-input {
-    flex: 1;
-    padding: 12px 16px;
-    border: 2px solid #E6D3B3;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #5C4033;
-    background: white;
-}
-
-.recipe-search-input:focus {
-    outline: none;
-    border-color: #8B7355;
-}
-
-.recipe-search-btn {
-    padding: 12px 24px;
-    border: 2px solid #8B7355;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #8B7355;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.recipe-search-btn:hover {
-    background: #6B4E3D;
-    border-color: #6B4E3D;
-    transform: translateY(-2px);
-}
 
 .recipe-loading,
 .recipe-error,
