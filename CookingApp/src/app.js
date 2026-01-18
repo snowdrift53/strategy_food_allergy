@@ -1733,6 +1733,102 @@ const Forecast = {
         };
     },
 
+    /**
+     * Pure matching function for weekly forecast suggestions.
+     * Matches recipes against shopping list items and returns sorted suggestions.
+     * 
+     * @param {Array} shoppingList - Array of shopping list item strings
+     * @param {Array} localRecipes - Array of recipe objects with id, title, ingredients
+     * @returns {Array} Sorted array of recipe suggestions with match data
+     */
+    suggestRecipesFromShoppingList(shoppingList, localRecipes) {
+        if (!Array.isArray(shoppingList) || !Array.isArray(localRecipes)) {
+            return [];
+        }
+
+        // Extract shopping list item text from CHECKED items only (items user has)
+        // Handle both string items and object items with checked property
+        const shoppingItems = shoppingList
+            .filter(item => {
+                // Only include checked items (user has these)
+                if (typeof item === 'string') return false; // String items can't be checked
+                return item.checked === true;
+            })
+            .map(item => {
+                return typeof item === 'string' ? item : (item.text || '');
+            })
+            .filter(item => item.trim().length > 0);
+
+        if (shoppingItems.length === 0) {
+            return [];
+        }
+
+        const suggestions = [];
+
+        // Process each recipe
+        localRecipes.forEach(recipe => {
+            if (!recipe || !recipe.id || !Array.isArray(recipe.ingredients)) {
+                return;
+            }
+
+            const matchedIngredients = [];
+            const missingIngredients = [];
+            const totalIngredients = recipe.ingredients.length;
+
+            if (totalIngredients === 0) {
+                return; // Skip recipes with no ingredients
+            }
+
+            // Match each recipe ingredient against shopping list
+            recipe.ingredients.forEach(ingredient => {
+                if (!ingredient || typeof ingredient !== 'string') {
+                    return;
+                }
+
+                let found = false;
+                // Check if any shopping list item matches this ingredient
+                for (const shoppingItem of shoppingItems) {
+                    if (this.checkIngredientMatch(shoppingItem, ingredient)) {
+                        matchedIngredients.push(ingredient);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    missingIngredients.push(ingredient);
+                }
+            });
+
+            // Only include recipes with at least one matched ingredient
+            if (matchedIngredients.length > 0) {
+                const matchScore = matchedIngredients.length / totalIngredients;
+
+                suggestions.push({
+                    recipeId: String(recipe.id),
+                    recipeTitle: recipe.title || 'Untitled Recipe',
+                    matchScore: matchScore,
+                    matchedIngredients: [...matchedIngredients], // Copy array
+                    missingIngredients: [...missingIngredients]  // Copy array
+                });
+            }
+        });
+
+        // Sort results:
+        // 1. Highest matchScore first (descending)
+        // 2. Then fewer missing ingredients (ascending)
+        suggestions.sort((a, b) => {
+            // Primary sort: matchScore (higher is better)
+            if (b.matchScore !== a.matchScore) {
+                return b.matchScore - a.matchScore;
+            }
+            // Secondary sort: missing ingredients count (fewer is better)
+            return a.missingIngredients.length - b.missingIngredients.length;
+        });
+
+        return suggestions;
+    },
+
     addSuggestedItem(ingredient) {
         addShoppingItem(ingredient);
         ShoppingList.save();
@@ -1758,7 +1854,8 @@ const Forecast = {
             return;
         }
 
-        const shoppingItems = shoppingList.filter(item => !item.checked).map(item => item.text);
+        // Use only checked items (items user has) for forecast matching
+        const shoppingItems = shoppingList.filter(item => item.checked).map(item => item.text);
         
         // Get all recipes (base + liked from active profile)
         const p = getActiveProfile();

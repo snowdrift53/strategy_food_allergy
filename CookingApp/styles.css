@@ -511,17 +511,25 @@ header p {
     box-shadow: 0 2px 8px rgba(92, 64, 51, 0.1);
 }
 
+.grocery-item.checked {
+    background: #F0F8F0;
+    border-color: #6B8E23;
+}
+
 .grocery-item.checked .grocery-text {
-    text-decoration: line-through;
-    color: #8B7355;
-    opacity: 0.6;
+    color: #5C4033;
+    font-weight: 500;
 }
 
 .grocery-item input[type="checkbox"] {
     width: 20px;
     height: 20px;
     cursor: pointer;
-    accent-color: #8B7355;
+    accent-color: #6B8E23;
+}
+
+.grocery-item.checked input[type="checkbox"] {
+    accent-color: #6B8E23;
 }
 
 .grocery-text {
