@@ -930,15 +930,38 @@ const Recipes = {
         }
 
         const searchInput = $('#recipe-search-input');
+        const clearBtn = $('#recipe-search-clear-btn');
         const localBtn = $('#recipe-search-local-btn');
         const onlineBtn = $('#recipe-search-online-btn');
 
         if (searchInput) {
+            // Update clear button visibility on input change
+            const updateClearButton = () => {
+                if (clearBtn) {
+                    clearBtn.style.display = searchInput.value.trim().length > 0 ? 'flex' : 'none';
+                }
+            };
+
+            searchInput.addEventListener('input', updateClearButton);
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     this.handleSearch();
                 }
             });
+
+            // Clear button click handler
+            if (clearBtn) {
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    searchInput.focus();
+                    updateClearButton();
+                    this.handleSearch();
+                });
+            }
+
+            // Initial state
+            updateClearButton();
         }
 
         if (localBtn) {
