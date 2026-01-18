@@ -292,7 +292,7 @@ function removeShoppingItem(id) {
 
 function getProfileLocalRecipes() {
     const profile = getActiveProfile();
-    return profile ? profile.localRecipes : [];
+    return profile && Array.isArray(profile.localRecipes) ? profile.localRecipes : [];
 }
 
 function setProfileLocalRecipes(list) {
