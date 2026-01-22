@@ -669,7 +669,10 @@ const Log = {
         fab.className = 'log-fab';
         fab.id = 'log-fab';
         fab.setAttribute('aria-label', 'Open log');
-        fab.innerHTML = '📜';
+        fab.innerHTML = `
+            <span class="log-fab-icon">📜</span>
+            <span class="log-fab-indicator hidden" id="log-fab-indicator" aria-hidden="true"></span>
+        `;
         document.body.appendChild(fab);
 
         // Create overlay
@@ -808,13 +811,24 @@ const Log = {
     render() {
         const entriesContainer = $('#log-entries');
         const profileId = AppState.activeProfileId;
+        const indicator = $('#log-fab-indicator');
 
         if (!profileId) {
             entriesContainer.innerHTML = '<div class="log-empty">No active profile</div>';
+            if (indicator) indicator.classList.add('hidden');
             return;
         }
 
         const logs = this.getProfileLogs(profileId);
+
+        // Update indicator visibility based on log entries
+        if (indicator) {
+            if (logs.length > 0) {
+                indicator.classList.remove('hidden');
+            } else {
+                indicator.classList.add('hidden');
+            }
+        }
 
         if (logs.length === 0) {
             entriesContainer.innerHTML = '<div class="log-empty">No entries yet</div>';
