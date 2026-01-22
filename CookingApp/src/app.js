@@ -391,31 +391,40 @@ const Profiles = {
         const widget = document.createElement('div');
         widget.className = 'profile-widget';
         widget.innerHTML = `
-            <div class="profile-widget-header">
-                <h3>Profile</h3>
-                <button class="profile-toggle-btn" id="profile-toggle-btn">−</button>
-            </div>
-            <div class="profile-widget-body" id="profile-widget-body">
-                <div class="profile-section">
-                    <label for="profile-select">Active profile</label>
-                    <select id="profile-select" class="profile-select"></select>
-                </div>
-                <div class="profile-section">
-                    <label for="profile-name-input">New profile</label>
-                    <div class="profile-add-section">
-                        <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
-                        <button id="profile-add-btn" class="profile-btn">Add</button>
+            <div class="profile-card">
+                <div class="profile-card-header">
+                    <div class="profile-avatar" id="profile-avatar" role="button" tabindex="0" aria-label="Profile avatar"></div>
+                    <div class="profile-info">
+                        <h3 class="profile-name" id="profile-name">Default</h3>
+                        <p class="profile-subtitle">Allergy profile</p>
                     </div>
                 </div>
-                <div class="profile-section">
-                    <label for="profile-allergies-input">Allergies</label>
-                    <div class="profile-allergies-input-wrapper">
-                        <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
-                        <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                <button class="profile-settings-btn" id="profile-settings-btn" aria-expanded="false" aria-controls="profile-settings-body">
+                    <span>Settings</span>
+                    <span class="profile-settings-chevron">▼</span>
+                </button>
+                <div class="profile-settings-body collapsed" id="profile-settings-body" role="region" aria-labelledby="profile-settings-btn">
+                    <div class="profile-section">
+                        <label for="profile-select">Active profile</label>
+                        <select id="profile-select" class="profile-select"></select>
                     </div>
-                </div>
-                <div class="profile-section">
-                    <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
+                    <div class="profile-section">
+                        <label for="profile-name-input">New profile</label>
+                        <div class="profile-add-section">
+                            <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
+                            <button id="profile-add-btn" class="profile-btn">Add</button>
+                        </div>
+                    </div>
+                    <div class="profile-section">
+                        <label for="profile-allergies-input">Allergies</label>
+                        <div class="profile-allergies-input-wrapper">
+                            <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
+                            <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                        </div>
+                    </div>
+                    <div class="profile-section">
+                        <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -423,7 +432,13 @@ const Profiles = {
     },
 
     attachEvents() {
-        $('#profile-toggle-btn').addEventListener('click', () => this.toggleWidget());
+        $('#profile-settings-btn').addEventListener('click', () => this.toggleWidget());
+        $('#profile-settings-btn').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.toggleWidget();
+            }
+        });
         $('#profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
         $('#profile-add-btn').addEventListener('click', () => this.addProfile());
         $('#profile-name-input').addEventListener('keypress', (e) => {
@@ -469,14 +484,15 @@ const Profiles = {
     },
 
     toggleWidget() {
-        const body = $('#profile-widget-body');
-        const btn = $('#profile-toggle-btn');
-        if (body.classList.contains('collapsed')) {
+        const body = $('#profile-settings-body');
+        const btn = $('#profile-settings-btn');
+        const isCollapsed = body.classList.contains('collapsed');
+        if (isCollapsed) {
             body.classList.remove('collapsed');
-            btn.textContent = '−';
+            btn.setAttribute('aria-expanded', 'true');
         } else {
             body.classList.add('collapsed');
-            btn.textContent = '+';
+            btn.setAttribute('aria-expanded', 'false');
         }
     },
 
@@ -579,6 +595,8 @@ const Profiles = {
     render() {
         const select = $('#profile-select');
         const allergiesInput = $('#profile-allergies-input');
+        const profileNameEl = $('#profile-name');
+        const profileAvatar = $('#profile-avatar');
 
         select.innerHTML = '';
         AppState.profiles.forEach(profile => {
@@ -596,8 +614,21 @@ const Profiles = {
         
         if (activeProfile) {
             allergiesInput.value = activeProfile.allergies.join(', ');
+            if (profileNameEl) {
+                profileNameEl.textContent = activeProfile.name;
+            }
+            if (profileAvatar) {
+                const initial = activeProfile.name.charAt(0).toUpperCase();
+                profileAvatar.textContent = initial;
+            }
         } else {
             allergiesInput.value = '';
+            if (profileNameEl) {
+                profileNameEl.textContent = 'Default';
+            }
+            if (profileAvatar) {
+                profileAvatar.textContent = 'D';
+            }
         }
 
         // Update clear button visibility

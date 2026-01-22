@@ -37,67 +37,132 @@ header p {
     color: #6B4E3D;
 }
 
-/* Profile Widget */
+/* Profile Widget - Card Layout */
 .profile-widget {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #FFFEF9;
-    border: 2px solid #8B7355;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.25);
     z-index: 1000;
     min-width: 280px;
     max-width: 320px;
 }
 
-.profile-widget-header {
+.profile-card {
+    background: #FFFEF9;
+    border: 2px solid #8B7355;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.25);
+    overflow: hidden;
+}
+
+.profile-card-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background: #8B7355;
-    color: white;
-    border-radius: 10px 10px 0 0;
-}
-
-.profile-widget-header h3 {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.profile-toggle-btn {
+    gap: 12px;
+    padding: 16px;
     background: transparent;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    width: 24px;
-    height: 24px;
+}
+
+.profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B7355 0%, #6B4E3D 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
-    transition: transform 0.2s ease;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(92, 64, 51, 0.2);
 }
 
-.profile-toggle-btn:hover {
-    transform: scale(1.1);
+.profile-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.3);
 }
 
-.profile-widget-body {
-    padding: 16px;
-    transition: max-height 0.3s ease, padding 0.3s ease;
+.profile-avatar:focus {
+    outline: 2px solid #8B7355;
+    outline-offset: 2px;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-name {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #5C4033;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.profile-widget-body.collapsed {
+.profile-subtitle {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.85rem;
+    color: #8B7355;
+    margin: 0;
+}
+
+.profile-settings-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: #8B7355;
+    color: white;
+    border: none;
+    border-top: 1px solid rgba(107, 78, 61, 0.3);
+    border-bottom: 1px solid rgba(107, 78, 61, 0.3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.profile-settings-btn:hover {
+    background: #6B4E3D;
+}
+
+.profile-settings-btn:focus {
+    outline: 2px solid #8B7355;
+    outline-offset: -2px;
+}
+
+.profile-settings-chevron {
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.profile-settings-btn[aria-expanded="true"] .profile-settings-chevron {
+    transform: rotate(180deg);
+}
+
+.profile-settings-body {
+    padding: 16px;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+    opacity: 1;
+}
+
+.profile-settings-body.collapsed {
     max-height: 0;
     padding: 0 16px;
     overflow: hidden;
+    opacity: 0;
 }
 
 .profile-section {
@@ -1814,10 +1879,28 @@ header p {
         position: fixed;
         top: auto;
         bottom: 280px;
-        right: 20px;
-        left: 20px;
+        right: 10px;
+        left: 10px;
         max-width: none;
         width: auto;
+    }
+
+    .profile-card-header {
+        padding: 12px;
+    }
+
+    .profile-avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 1.3rem;
+    }
+
+    .profile-name {
+        font-size: 1rem;
+    }
+
+    .profile-subtitle {
+        font-size: 0.8rem;
     }
 
     .log-widget {
