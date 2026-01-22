@@ -1132,36 +1132,74 @@ const Recipes = {
     buildCuisineTags(recipe) {
         if (!recipe) return [];
         
-        // Build text blob from title, description, and existing cuisine field
+        const tags = new Set();
+        
+        // For online recipes, use area/cuisine/family fields directly if available
+        if (recipe.area || recipe.cuisine) {
+            const areaLower = (recipe.area || recipe.cuisine || '').toLowerCase();
+            
+            // Map TheMealDB area names to canonical cuisine tags
+            const areaToCanonical = {
+                'italian': 'italian',
+                'spanish': 'spanish',
+                'mexican': 'mexican',
+                'indian': 'indian',
+                'chinese': 'chinese',
+                'japanese': 'japanese',
+                'korean': 'korean',
+                'thai': 'thai'
+            };
+            
+            // Check if area matches a canonical cuisine
+            for (const [area, canonical] of Object.entries(areaToCanonical)) {
+                if (areaLower === area || areaLower.includes(area)) {
+                    tags.add(canonical);
+                    // Add group tag
+                    const data = this.CUISINE_TAXONOMY.canonicals[canonical];
+                    if (data && data.group) {
+                        tags.add(data.group);
+                    }
+                }
+            }
+            
+            // Also add family tag if present
+            if (recipe.family) {
+                tags.add(recipe.family);
+            }
+        }
+        
+        // Also analyze text for additional matches (for local recipes or additional context)
         const text = [
             recipe.title || '',
             recipe.name || '',
             recipe.description || '',
             recipe.shortDescription || '',
             recipe.fullDescription || '',
-            recipe.cuisine || ''
+            recipe.cuisine || '',
+            recipe.area || ''
         ].join(' ').toLowerCase();
         
-        if (!text.trim()) return [];
-        
-        const tags = new Set();
-        
-        // Check each canonical cuisine for alias matches
-        for (const [canonical, data] of Object.entries(this.CUISINE_TAXONOMY.canonicals)) {
-            const { aliases, group } = data;
-            
-            // Check if any alias appears in the text (word boundary matching)
-            const hasMatch = aliases.some(alias => {
-                // Use word boundary regex to avoid partial matches
-                const regex = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-                return regex.test(text);
-            });
-            
-            if (hasMatch) {
-                tags.add(canonical);
-                // Add group tag if present
-                if (group) {
-                    tags.add(group);
+        if (text.trim()) {
+            // Check each canonical cuisine for alias matches
+            for (const [canonical, data] of Object.entries(this.CUISINE_TAXONOMY.canonicals)) {
+                const { aliases, group } = data;
+                
+                // Skip if already added from area field
+                if (tags.has(canonical)) continue;
+                
+                // Check if any alias appears in the text (word boundary matching)
+                const hasMatch = aliases.some(alias => {
+                    // Use word boundary regex to avoid partial matches
+                    const regex = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                    return regex.test(text);
+                });
+                
+                if (hasMatch) {
+                    tags.add(canonical);
+                    // Add group tag if present
+                    if (group) {
+                        tags.add(group);
+                    }
                 }
             }
         }
@@ -1308,7 +1346,7 @@ const Recipes = {
         return recipes.filter(recipe => {
             if (!recipe) return false;
             
-            // Build safe searchable string from title, description, ingredients, and cuisineTags
+            // Build safe searchable string from title, description, ingredients, cuisineTags, and area/cuisine/family fields
             const title = (recipe.title || recipe.name || '').toLowerCase();
             const description = (recipe.description || '').toLowerCase();
             const ingredients = Array.isArray(recipe.ingredients) 
@@ -1317,8 +1355,11 @@ const Recipes = {
             const cuisineTags = Array.isArray(recipe.cuisineTags) 
                 ? recipe.cuisineTags.join(' ').toLowerCase() 
                 : '';
+            const area = (recipe.area || '').toLowerCase();
+            const cuisine = (recipe.cuisine || '').toLowerCase();
+            const family = (recipe.family || '').toLowerCase();
             
-            const searchableText = `${title} ${description} ${ingredients} ${cuisineTags}`;
+            const searchableText = `${title} ${description} ${ingredients} ${cuisineTags} ${area} ${cuisine} ${family}`;
             
             // Match via includes (case-insensitive)
             return searchableText.includes(queryLower);
