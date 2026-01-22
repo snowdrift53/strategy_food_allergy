@@ -1944,9 +1944,6 @@ const Recipes = {
                     <div class="${mainImageClass}">
                         <img src="${mainImageUrl}" alt="${recipe.title}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
                     </div>
-                    <div class="${secondaryImageClass}">
-                        <img src="${secondaryImageUrl}" alt="${recipe.title}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
-                    </div>
                 </div>
                 <h1 class="detail-title">${recipe.title}</h1>
                 <div class="detail-meta">
