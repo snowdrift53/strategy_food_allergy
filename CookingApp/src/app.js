@@ -1772,28 +1772,23 @@ const Recipes = {
         card.className = 'recipe-card';
         card.addEventListener('click', () => this.renderDetail(recipe.id));
 
-        // Single image resolution rule:
-        // 1. If recipe.imageUrl exists and is non-empty -> use it
-        // 2. Else -> use placeholder
-        // For online recipes, imageUrl may not be set, so we fall back to photo field from provider
+        // Image resolution: use recipe.imageType to choose between recipe.illustration vs recipe.photo
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
         let imageUrl = '';
         
-        if (recipe.imageUrl && recipe.imageUrl.trim() !== '') {
-            // Explicit imageUrl takes priority (for local recipes)
-            imageUrl = recipe.imageUrl;
-        } else if (isOnlineRecipe) {
-            // Online recipes: use photo field from TheMealDB
-            imageUrl = recipe.photo || '';
+        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+            imageUrl = recipe.illustration;
+        } else if (recipe.photo && recipe.photo.trim() !== '') {
+            imageUrl = recipe.photo;
         }
         
         // If still no imageUrl, use placeholder
         if (!imageUrl || imageUrl.trim() === '') {
-            imageUrl = '/images/placeholder-recipe.svg';
+            imageUrl = 'images/recipes/placeholder-recipe.jpg';
         }
         
         const imageClass = recipe.imageType === 'illustration' ? 'recipe-image illustration' : 'recipe-image photo';
-        const placeholderUrl = '/images/placeholder-recipe.svg';
+        const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
 
         const suitability = this.checkRecipeSuitability(recipe);
         let badgeHtml = '';
@@ -1850,36 +1845,30 @@ const Recipes = {
         recipeList.classList.add('hidden');
         recipeDetail.classList.remove('hidden');
 
-        // Use imageUrl if available, otherwise fall back to photo/illustration for online recipes
+        // Image resolution: use recipe.imageType to choose between recipe.illustration vs recipe.photo
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
         let mainImageUrl = '';
         let secondaryImageUrl = '';
         
-        if (recipe.imageUrl && recipe.imageUrl.trim() !== '') {
-            // Explicit imageUrl takes priority (for local recipes)
-            mainImageUrl = recipe.imageUrl;
-            secondaryImageUrl = recipe.imageUrl; // Use same image for both
-        } else if (isOnlineRecipe) {
-            // Online recipes: use photo/illustration fields from TheMealDB
-            mainImageUrl = recipe.imageType === 'illustration' ? recipe.illustration : recipe.photo;
-            secondaryImageUrl = recipe.imageType === 'illustration' ? recipe.photo : recipe.illustration;
-        } else {
-            // Local recipe without imageUrl: use placeholder
-            mainImageUrl = '/images/placeholder-recipe.svg';
-            secondaryImageUrl = '/images/placeholder-recipe.svg';
+        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+            mainImageUrl = recipe.illustration;
+            secondaryImageUrl = recipe.photo || recipe.illustration;
+        } else if (recipe.photo && recipe.photo.trim() !== '') {
+            mainImageUrl = recipe.photo;
+            secondaryImageUrl = recipe.illustration || recipe.photo;
         }
         
         // Fallback to placeholder if still empty
         if (!mainImageUrl || mainImageUrl.trim() === '') {
-            mainImageUrl = '/images/placeholder-recipe.svg';
+            mainImageUrl = 'images/recipes/placeholder-recipe.jpg';
         }
         if (!secondaryImageUrl || secondaryImageUrl.trim() === '') {
-            secondaryImageUrl = '/images/placeholder-recipe.svg';
+            secondaryImageUrl = 'images/recipes/placeholder-recipe.jpg';
         }
         
         const mainImageClass = recipe.imageType === 'illustration' ? 'detail-image illustration' : 'detail-image photo';
         const secondaryImageClass = recipe.imageType === 'illustration' ? 'detail-image photo' : 'detail-image illustration';
-        const placeholderUrl = '/images/placeholder-recipe.svg';
+        const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
 
         const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         const activeAllergies = activeProfile ? (activeProfile.allergies || []) : [];
@@ -2510,17 +2499,17 @@ const Forecast = {
                     <p class="section-description">These recipes match your shopping list perfectly!</p>
                     <div class="recipe-forecast-grid">
                         ${canCookRecipes.map(analysis => {
-                            // Use imageUrl if available, otherwise fall back to photo/illustration
+                            // Use recipe.imageType to choose between recipe.illustration vs recipe.photo
                             let imageUrl = '';
-                            if (analysis.recipe.imageUrl && analysis.recipe.imageUrl.trim() !== '') {
-                                imageUrl = analysis.recipe.imageUrl;
-                            } else {
-                                imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            if (analysis.recipe.imageType === 'illustration' && analysis.recipe.illustration && analysis.recipe.illustration.trim() !== '') {
+                                imageUrl = analysis.recipe.illustration;
+                            } else if (analysis.recipe.photo && analysis.recipe.photo.trim() !== '') {
+                                imageUrl = analysis.recipe.photo;
                             }
                             if (!imageUrl || imageUrl.trim() === '') {
-                                imageUrl = '/images/placeholder-recipe.svg';
+                                imageUrl = 'images/recipes/placeholder-recipe.jpg';
                             }
-                            const placeholderUrl = '/images/placeholder-recipe.svg';
+                            const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
                             return `
                             <div class="recipe-forecast-card ready-card" data-recipe-id="${analysis.recipe.id}">
                                 <div class="forecast-recipe-image">
@@ -2547,17 +2536,17 @@ const Forecast = {
                     <p class="section-description">These recipes are close to completion. Check what's missing below:</p>
                     <div class="recipe-forecast-grid">
                         ${partialRecipes.map(analysis => {
-                            // Use imageUrl if available, otherwise fall back to photo/illustration
+                            // Use recipe.imageType to choose between recipe.illustration vs recipe.photo
                             let imageUrl = '';
-                            if (analysis.recipe.imageUrl && analysis.recipe.imageUrl.trim() !== '') {
-                                imageUrl = analysis.recipe.imageUrl;
-                            } else {
-                                imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            if (analysis.recipe.imageType === 'illustration' && analysis.recipe.illustration && analysis.recipe.illustration.trim() !== '') {
+                                imageUrl = analysis.recipe.illustration;
+                            } else if (analysis.recipe.photo && analysis.recipe.photo.trim() !== '') {
+                                imageUrl = analysis.recipe.photo;
                             }
                             if (!imageUrl || imageUrl.trim() === '') {
-                                imageUrl = '/images/placeholder-recipe.svg';
+                                imageUrl = 'images/recipes/placeholder-recipe.jpg';
                             }
-                            const placeholderUrl = '/images/placeholder-recipe.svg';
+                            const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
                             return `
                             <div class="recipe-forecast-card partial-card">
                                 <div class="forecast-recipe-image">
