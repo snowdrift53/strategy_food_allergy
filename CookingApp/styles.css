@@ -1,15 +1,38 @@
+:root {
+    --bg: #efe2d2;
+    --surface: #f7efe6;
+    --text: #2b2b2b;
+    --muted: #6b6156;
+    --brand: #2f341f;
+    --accent: #8b735b;
+    --border: rgba(43, 43, 43, 0.16);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+    --radius: 14px;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #F5E6D3;
+html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    line-height: 1.45;
     min-height: 100vh;
     padding: 20px;
-    color: #333;
+}
+
+h1, h2, h3 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    letter-spacing: 0.2px;
+}
+
+p, .muted, .secondary-text {
+    color: var(--muted);
 }
 
 .container {
@@ -19,7 +42,7 @@ body {
 
 header {
     text-align: center;
-    color: #5C4033;
+    color: var(--text);
     margin-bottom: 40px;
     padding: 0;
     min-height: auto;
@@ -57,10 +80,10 @@ header {
 }
 
 .profile-card {
-    background: #FFFEF9;
-    border: 2px solid #8B7355;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.25);
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     overflow: hidden;
 }
 
@@ -105,32 +128,33 @@ header {
 }
 
 .profile-name {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.1rem;
     font-weight: 600;
-    color: #5C4033;
+    color: var(--text);
     margin: 0 0 4px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: 0.2px;
 }
 
 .profile-subtitle {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 0.85rem;
-    color: #8B7355;
+    color: var(--muted);
     margin: 0;
 }
 
 .profile-settings-btn {
     width: 100%;
     padding: 10px 16px;
-    background: #8B7355;
+    background: var(--accent);
     color: white;
     border: none;
-    border-top: 1px solid rgba(107, 78, 61, 0.3);
-    border-bottom: 1px solid rgba(107, 78, 61, 0.3);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
@@ -142,7 +166,7 @@ header {
 }
 
 .profile-settings-btn:hover {
-    background: #6B4E3D;
+    background: var(--brand);
 }
 
 .profile-settings-btn:focus {
@@ -1116,11 +1140,12 @@ header {
 }
 
 .forecast-section-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.8rem;
-    color: #5C4033;
+    color: var(--text);
     margin-bottom: 20px;
     font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .forecast-section-title.success {
@@ -1142,9 +1167,9 @@ header {
 }
 
 .recipe-forecast-card {
-    background: white;
-    border: 2px solid #E6D3B3;
-    border-radius: 12px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
     padding: 15px;
     transition: all 0.3s ease;
     display: flex;
@@ -1186,17 +1211,18 @@ header {
 }
 
 .recipe-forecast-card h4 {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.2rem;
-    color: #5C4033;
+    color: var(--text);
     margin-bottom: 10px;
     font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .forecast-meta {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 0.9rem;
-    color: #8B7355;
+    color: var(--muted);
     margin-bottom: 10px;
 }
 
@@ -1409,11 +1435,11 @@ header {
 .forecast-empty {
     text-align: center;
     padding: 60px 20px;
-    color: #8B7355;
+    color: var(--muted);
 }
 
 .forecast-empty p {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.1rem;
     margin-bottom: 20px;
 }
@@ -1424,8 +1450,8 @@ header {
 .recipe-empty {
     text-align: center;
     padding: 40px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #8B7355;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    color: var(--muted);
     font-size: 1.1rem;
 }
 
@@ -1437,11 +1463,11 @@ header {
 }
 
 .recipe-card {
-    background: #FFFEF9;
-    border-radius: 15px;
+    background: var(--surface);
+    border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.15);
-    border: 1px solid rgba(92, 64, 51, 0.1);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
 }
@@ -1594,27 +1620,28 @@ header {
 }
 
 .recipe-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.5rem;
     margin-bottom: 10px;
-    color: #5C4033;
+    color: var(--text);
     font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .recipe-description {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #6B4E3D;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    color: var(--muted);
     font-size: 0.95rem;
     line-height: 1.6;
     margin-bottom: 15px;
 }
 
 .recipe-meta {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     display: flex;
     gap: 15px;
     font-size: 0.9rem;
-    color: #8B7355;
+    color: var(--muted);
 }
 
 .recipe-meta span {
@@ -1624,14 +1651,14 @@ header {
 }
 
 .recipe-detail {
-    background: #FFFEF9;
-    border-radius: 15px;
+    background: var(--surface);
+    border-radius: var(--radius);
     padding-top: 14px;
     padding-bottom: 22px;
     padding-left: 30px;
     padding-right: 30px;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.15);
-    border: 1px solid rgba(92, 64, 51, 0.1);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
     animation: fadeIn 0.3s ease;
     margin-top: 0;
     min-height: auto;
@@ -1654,8 +1681,8 @@ header {
 }
 
 .back-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #8B7355;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: var(--accent);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -1665,13 +1692,13 @@ header {
     margin-top: 0;
     margin-bottom: 26px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.2);
+    box-shadow: var(--shadow);
 }
 
 .back-btn:hover {
-    background: #6B4E3D;
+    background: var(--brand);
     transform: translateX(-5px);
-    box-shadow: 0 6px 20px rgba(92, 64, 51, 0.3);
+    box-shadow: var(--shadow);
 }
 
 
@@ -1711,7 +1738,7 @@ header {
 }
 
 .detail-image.illustration {
-    background: #F5E6D3;
+    background: var(--bg);
 }
 
 .detail-image.illustration img {
@@ -1736,11 +1763,12 @@ header {
 }
 
 .detail-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 2.5rem;
-    color: #5C4033;
+    color: var(--text);
     margin-bottom: 15px;
     font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .detail-meta {
@@ -1753,19 +1781,19 @@ header {
 }
 
 .detail-meta-item {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 1.1rem;
-    color: #6B4E3D;
+    color: var(--muted);
 }
 
 .detail-description {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.1rem;
     line-height: 1.8;
-    color: #5C4033;
+    color: var(--text);
     margin-bottom: 30px;
 }
 
