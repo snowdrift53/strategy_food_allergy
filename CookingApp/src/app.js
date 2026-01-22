@@ -1099,6 +1099,82 @@ const Navigation = {
 const Recipes = {
     currentRecipes: [],
     searchMode: 'local',
+    lastQuery: '', // Track last query for typo suggestions
+
+    /**
+     * Normalize query: trim + toLowerCase + collapse spaces
+     * @param {string} q - Query string
+     * @returns {string} Normalized query
+     */
+    normalizeQuery(q) {
+        if (!q || typeof q !== 'string') return '';
+        return q.trim().toLowerCase().replace(/\s+/g, ' ');
+    },
+
+    /**
+     * Dictionary of known cuisines/areas and families for typo suggestions
+     */
+    SUGGESTION_DICTIONARY: [
+        // Canonical cuisines
+        'italian', 'italy', 'spanish', 'spain', 'mexican', 'mexico',
+        'indian', 'india', 'chinese', 'china', 'japanese', 'japan',
+        'korean', 'korea', 'thai', 'thailand',
+        // Families
+        'mediterranean', 'asian', 'latin'
+    ],
+
+    /**
+     * Compute a suggested correction for a query (simple Levenshtein-like approach)
+     * @param {string} query - Original query
+     * @returns {string|null} Suggested correction or null
+     */
+    suggestCorrection(query) {
+        if (!query || query.length < 2) return null;
+        
+        const normalized = this.normalizeQuery(query);
+        if (!normalized) return null;
+        
+        let bestMatch = null;
+        let bestScore = Infinity;
+        
+        // Simple distance: count character differences
+        for (const dictTerm of this.SUGGESTION_DICTIONARY) {
+            const distance = this.computeSimpleDistance(normalized, dictTerm);
+            // Only suggest if distance is small (1-2 character differences for short words, more for longer)
+            const maxDistance = normalized.length <= 4 ? 1 : Math.min(2, Math.floor(normalized.length / 3));
+            if (distance <= maxDistance && distance < bestScore) {
+                bestScore = distance;
+                bestMatch = dictTerm;
+            }
+        }
+        
+        return bestMatch && bestMatch !== normalized ? bestMatch : null;
+    },
+
+    /**
+     * Simple distance computation (character-level differences)
+     * @param {string} a - First string
+     * @param {string} b - Second string
+     * @returns {number} Distance score
+     */
+    computeSimpleDistance(a, b) {
+        // If one is a substring of the other, distance is 0
+        if (a.includes(b) || b.includes(a)) {
+            return 0;
+        }
+        
+        // Count character differences (simplified)
+        const len = Math.min(a.length, b.length);
+        let diff = Math.abs(a.length - b.length);
+        
+        for (let i = 0; i < len; i++) {
+            if (a[i] !== b[i]) {
+                diff++;
+            }
+        }
+        
+        return diff;
+    },
 
     /**
      * Cuisine taxonomy: canonical tags, groups, and aliases
@@ -1316,6 +1392,9 @@ const Recipes = {
     handleSearch() {
         const searchInput = $('#recipe-search-input');
         const query = searchInput ? searchInput.value.trim() : '';
+        
+        // Store query for typo suggestions
+        this.lastQuery = query;
 
         if (this.searchMode === 'online') {
             this.searchOnline(query);
@@ -1394,6 +1473,9 @@ const Recipes = {
     },
 
     async searchOnline(query) {
+        // Store query for typo suggestions
+        this.lastQuery = query || '';
+        
         if (!query) {
             this.currentRecipes = [];
             this.renderList();
@@ -1613,11 +1695,22 @@ const Recipes = {
             recipeDetail.classList.add('hidden');
         }
 
+        // Hide any existing suggestion
+        this.hideSuggestion();
+
         // Note: currentRecipes is set by searchLocal/searchOnline, so we don't refresh it here
         // This ensures filtered results are preserved
 
         if (this.currentRecipes.length === 0) {
             recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
+            
+            // Show typo suggestion if we have a query
+            if (this.lastQuery && this.lastQuery.trim()) {
+                const suggestion = this.suggestCorrection(this.lastQuery);
+                if (suggestion) {
+                    this.showSuggestion(suggestion);
+                }
+            }
             return;
         }
 
@@ -1626,14 +1719,66 @@ const Recipes = {
         });
     },
 
+    /**
+     * Show typo suggestion near search input
+     * @param {string} suggestion - Suggested correction
+     */
+    showSuggestion(suggestion) {
+        const searchSection = document.querySelector('.recipe-search-section');
+        if (!searchSection) return;
+        
+        // Remove existing suggestion if any
+        const existing = document.getElementById('recipe-search-suggestion');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // Create suggestion element
+        const suggestionEl = document.createElement('div');
+        suggestionEl.id = 'recipe-search-suggestion';
+        suggestionEl.className = 'recipe-search-suggestion';
+        suggestionEl.innerHTML = `Did you mean: <a href="#" class="suggestion-link">${suggestion}</a>?`;
+        
+        // Add click handler
+        const link = suggestionEl.querySelector('.suggestion-link');
+        if (link) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const searchInput = $('#recipe-search-input');
+                if (searchInput) {
+                    searchInput.value = suggestion;
+                    this.lastQuery = suggestion;
+                    this.handleSearch();
+                }
+            });
+        }
+        
+        // Insert after search section
+        searchSection.parentNode.insertBefore(suggestionEl, searchSection.nextSibling);
+    },
+
+    /**
+     * Hide typo suggestion
+     */
+    hideSuggestion() {
+        const existing = document.getElementById('recipe-search-suggestion');
+        if (existing) {
+            existing.remove();
+        }
+    },
+
     createCard(recipe) {
         const card = document.createElement('div');
         card.className = 'recipe-card';
         card.addEventListener('click', () => this.renderDetail(recipe.id));
 
-        const imageUrl = recipe.imageType === 'illustration' ? recipe.illustration : recipe.photo;
+        // Ensure imageUrl exists, use placeholder if missing
+        let imageUrl = recipe.imageType === 'illustration' ? recipe.illustration : recipe.photo;
+        if (!imageUrl || imageUrl.trim() === '') {
+            imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTZEM0IzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzhCNzM1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjLc8L3RleHQ+PC9zdmc+';
+        }
         const imageClass = recipe.imageType === 'illustration' ? 'recipe-image illustration' : 'recipe-image photo';
-        const fallbackEmoji = recipe.imageType === 'illustration' ? '🎨' : '📷';
+        const placeholderUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTZEM0IzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzhCNzM1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjLc8L3RleHQ+PC9zdmc+';
 
         const suitability = this.checkRecipeSuitability(recipe);
         let badgeHtml = '';
@@ -1653,7 +1798,7 @@ const Recipes = {
 
         card.innerHTML = `
             <div class="${imageClass}">
-                <img src="${imageUrl}" alt="${recipe.title}" onerror="this.style.display='none'; this.parentElement.innerHTML='${fallbackEmoji}';">
+                <img src="${imageUrl}" alt="${recipe.title}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
                 ${badgeHtml}
             </div>
             <div class="recipe-info">
@@ -2327,11 +2472,15 @@ const Forecast = {
                     <p class="section-description">These recipes match your shopping list perfectly!</p>
                     <div class="recipe-forecast-grid">
                         ${canCookRecipes.map(analysis => {
-                            const imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            let imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            if (!imageUrl || imageUrl.trim() === '') {
+                                imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTZEM0IzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzhCNzM1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjLc8L3RleHQ+PC9zdmc+';
+                            }
+                            const placeholderUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTZEM0IzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzhCNzM1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjLc8L3RleHQ+PC9zdmc+';
                             return `
                             <div class="recipe-forecast-card ready-card" data-recipe-id="${analysis.recipe.id}">
                                 <div class="forecast-recipe-image">
-                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}">
+                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
                                 </div>
                                 <h4>${this.escapeHtml(analysis.recipe.title)}</h4>
                                 <p class="forecast-meta">⏱️ ${analysis.recipe.time} | 👥 ${analysis.recipe.servings} servings</p>
@@ -2354,11 +2503,15 @@ const Forecast = {
                     <p class="section-description">These recipes are close to completion. Check what's missing below:</p>
                     <div class="recipe-forecast-grid">
                         ${partialRecipes.map(analysis => {
-                            const imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            let imageUrl = analysis.recipe.imageType === 'illustration' ? analysis.recipe.illustration : analysis.recipe.photo;
+                            if (!imageUrl || imageUrl.trim() === '') {
+                                imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTZEM0IzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzhCNzM1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjLc8L3RleHQ+PC9zdmc+';
+                            }
+                            const placeholderUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTZEM0IzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzhCNzM1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjLc8L3RleHQ+PC9zdmc+';
                             return `
                             <div class="recipe-forecast-card partial-card">
                                 <div class="forecast-recipe-image">
-                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}">
+                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
                                 </div>
                                 <h4>${this.escapeHtml(analysis.recipe.title)}</h4>
                                 <p class="forecast-meta">⏱️ ${analysis.recipe.time} | 👥 ${analysis.recipe.servings} servings</p>

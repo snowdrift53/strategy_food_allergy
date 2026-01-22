@@ -1864,3 +1864,27 @@ header p {
 .recipe-info {
     position: relative;
 }
+
+/* Typo suggestion */
+.recipe-search-suggestion {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: #FFFEF9;
+    border: 1px solid #E6D3B3;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #6B4E3D;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.recipe-search-suggestion .suggestion-link {
+    color: #8B7355;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.recipe-search-suggestion .suggestion-link:hover {
+    color: #6B4E3D;
+}
