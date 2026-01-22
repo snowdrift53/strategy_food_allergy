@@ -21,21 +21,30 @@ header {
     text-align: center;
     color: #5C4033;
     margin-bottom: 40px;
-    padding: 30px 0;
+    padding: 0;
+    min-height: auto;
+    height: auto;
+    overflow: visible;
 }
 
-header h1 {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 3rem;
-    margin-bottom: 10px;
-    font-weight: 600;
+.header-brand-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0 18px 0;
 }
 
-header p {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1.2rem;
-    color: #6B4E3D;
+.brand-banner {
+    width: min(820px, 92vw);
+    height: 160px;
+    background-image: url("images/brand/logo-banner.jpeg");
+    background-repeat: no-repeat;
+    background-size: 100% auto;
+    background-position: center 46%;
+    border-radius: 12px;
 }
+
 
 /* Profile Widget - Card Layout */
 .profile-widget {
@@ -1929,8 +1938,9 @@ header p {
 }
 
 @media (max-width: 768px) {
-    header h1 {
-        font-size: 2rem;
+    .brand-logo {
+        width: clamp(100px, 20vw, 150px);
+        height: clamp(100px, 20vw, 150px);
     }
 
     .recipe-grid {
