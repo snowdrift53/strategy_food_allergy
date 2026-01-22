@@ -655,6 +655,8 @@ const Profiles = {
  ************************************/
 
 const Log = {
+    isOpen: false,
+
     init() {
         this.createWidget();
         this.attachEvents();
@@ -662,14 +664,32 @@ const Log = {
     },
 
     createWidget() {
-        const widget = document.createElement('div');
-        widget.className = 'log-widget';
-        widget.innerHTML = `
-            <div class="log-widget-header">
-                <h3>Log</h3>
-                <button class="log-toggle-btn" id="log-toggle-btn">−</button>
+        // Create floating action button
+        const fab = document.createElement('button');
+        fab.className = 'log-fab';
+        fab.id = 'log-fab';
+        fab.setAttribute('aria-label', 'Open log');
+        fab.innerHTML = '📜';
+        document.body.appendChild(fab);
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'log-overlay hidden';
+        overlay.id = 'log-overlay';
+        document.body.appendChild(overlay);
+
+        // Create drawer panel
+        const panel = document.createElement('div');
+        panel.className = 'log-panel hidden';
+        panel.id = 'log-panel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-labelledby', 'log-panel-title');
+        panel.innerHTML = `
+            <div class="log-panel-header">
+                <h3 id="log-panel-title">Log</h3>
+                <button class="log-close-btn" id="log-close-btn" aria-label="Close log">×</button>
             </div>
-            <div class="log-widget-body" id="log-widget-body">
+            <div class="log-panel-body">
                 <div class="log-entry-section">
                     <textarea id="log-textarea" class="log-textarea" placeholder="Write a note..."></textarea>
                     <button id="log-save-btn" class="log-btn">Save</button>
@@ -679,11 +699,32 @@ const Log = {
                 </div>
             </div>
         `;
-        document.body.appendChild(widget);
+        document.body.appendChild(panel);
     },
 
     attachEvents() {
-        $('#log-toggle-btn').addEventListener('click', () => this.toggleWidget());
+        const fab = $('#log-fab');
+        const overlay = $('#log-overlay');
+        const panel = $('#log-panel');
+        const closeBtn = $('#log-close-btn');
+
+        // FAB click to open
+        fab.addEventListener('click', () => this.openPanel());
+
+        // Close button
+        closeBtn.addEventListener('click', () => this.closePanel());
+
+        // Overlay click to close
+        overlay.addEventListener('click', () => this.closePanel());
+
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.closePanel();
+            }
+        });
+
+        // Save entry
         $('#log-save-btn').addEventListener('click', () => this.saveEntry());
         $('#log-textarea').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -693,16 +734,20 @@ const Log = {
         });
     },
 
-    toggleWidget() {
-        const body = $('#log-widget-body');
-        const btn = $('#log-toggle-btn');
-        if (body.classList.contains('collapsed')) {
-            body.classList.remove('collapsed');
-            btn.textContent = '−';
-        } else {
-            body.classList.add('collapsed');
-            btn.textContent = '+';
-        }
+    openPanel() {
+        this.isOpen = true;
+        $('#log-overlay').classList.remove('hidden');
+        $('#log-panel').classList.remove('hidden');
+        $('#log-fab').classList.add('hidden');
+        // Focus textarea for better UX
+        setTimeout(() => $('#log-textarea').focus(), 100);
+    },
+
+    closePanel() {
+        this.isOpen = false;
+        $('#log-overlay').classList.add('hidden');
+        $('#log-panel').classList.add('hidden');
+        $('#log-fab').classList.remove('hidden');
     },
 
     getProfileLogs(profileId) {

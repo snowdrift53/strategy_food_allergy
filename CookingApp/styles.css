@@ -300,75 +300,151 @@ header p {
     cursor: not-allowed;
 }
 
-/* Log Widget */
-.log-widget {
+/* Log Floating Action Button */
+.log-fab {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #FFFEF9;
-    border: 2px solid #8B7355;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.25);
-    z-index: 1000;
-    min-width: 280px;
-    max-width: 320px;
-    max-height: 500px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #8B7355;
+    color: white;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.3);
+    z-index: 999;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
 }
 
-.log-widget-header {
+.log-fab:hover {
+    background: #6B4E3D;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.4);
+}
+
+.log-fab:focus {
+    outline: 2px solid #8B7355;
+    outline-offset: 2px;
+}
+
+.log-fab.hidden {
+    display: none;
+}
+
+/* Log Overlay */
+.log-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    animation: fadeInOverlay 0.2s ease;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.log-overlay.hidden {
+    display: none;
+}
+
+/* Log Panel (Drawer) */
+.log-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 400px;
+    background: #FFFEF9;
+    border-left: 2px solid #8B7355;
+    box-shadow: -4px 0 20px rgba(92, 64, 51, 0.3);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.3s ease;
+}
+
+.log-panel.hidden {
+    display: none;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.log-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 16px;
     background: #8B7355;
     color: white;
-    border-radius: 10px 10px 0 0;
     flex-shrink: 0;
+    border-bottom: 1px solid rgba(107, 78, 61, 0.3);
 }
 
-.log-widget-header h3 {
+.log-panel-header h3 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
 }
 
-.log-toggle-btn {
+.log-close-btn {
     background: transparent;
     border: none;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
     padding: 0;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     transition: transform 0.2s ease;
+    border-radius: 4px;
 }
 
-.log-toggle-btn:hover {
+.log-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
 }
 
-.log-widget-body {
+.log-close-btn:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+.log-panel-body {
     padding: 16px;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
-}
-
-.log-widget-body.collapsed {
-    max-height: 0;
-    padding: 0 16px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .log-entry-section {
@@ -416,9 +492,8 @@ header p {
 
 .log-entries {
     flex: 1;
-    overflow-y: auto;
-    max-height: 300px;
     margin-top: 8px;
+    min-height: 0;
 }
 
 .log-entry {
@@ -1903,13 +1978,34 @@ header p {
         font-size: 0.8rem;
     }
 
-    .log-widget {
-        position: fixed;
+    .log-fab {
         bottom: 20px;
         right: 20px;
-        left: 20px;
-        max-width: none;
-        width: auto;
+        width: 52px;
+        height: 52px;
+        font-size: 1.4rem;
+    }
+
+    .log-panel {
+        top: auto;
+        right: 0;
+        left: 0;
+        bottom: 0;
+        max-width: 100%;
+        width: 100%;
+        border-left: none;
+        border-top: 2px solid #8B7355;
+        border-radius: 20px 20px 0 0;
+        animation: slideInUp 0.3s ease;
+    }
+
+    @keyframes slideInUp {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
     }
 }
 
