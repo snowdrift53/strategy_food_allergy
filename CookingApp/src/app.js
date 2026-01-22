@@ -1100,6 +1100,75 @@ const Recipes = {
     currentRecipes: [],
     searchMode: 'local',
 
+    /**
+     * Cuisine taxonomy: canonical tags, groups, and aliases
+     * Used for unified cuisine tagging system
+     */
+    CUISINE_TAXONOMY: {
+        // Canonical cuisine tags
+        canonicals: {
+            italian: { aliases: ['italian', 'italy', 'roma', 'roman', 'tuscan', 'sicilian', 'venetian'], group: 'mediterranean' },
+            spanish: { aliases: ['spanish', 'spain', 'catalan', 'andalusian'], group: 'mediterranean' },
+            mexican: { aliases: ['mexican', 'mexico', 'tex-mex'], group: 'latin' },
+            indian: { aliases: ['indian', 'india', 'curry', 'masala', 'tandoori', 'biryani'], group: 'asian' },
+            chinese: { aliases: ['chinese', 'china', 'szechuan', 'sichuan', 'cantonese', 'hunan', 'shanghai'], group: 'asian' },
+            japanese: { aliases: ['japanese', 'japan', 'sushi', 'ramen', 'teriyaki'], group: 'asian' },
+            korean: { aliases: ['korean', 'korea', 'kimchi', 'bulgogi'], group: 'asian' },
+            thai: { aliases: ['thai', 'thailand', 'pad thai', 'tom yum'], group: 'asian' }
+        },
+        // Group tags (broader categories)
+        groups: {
+            mediterranean: ['italian', 'spanish'],
+            asian: ['chinese', 'japanese', 'korean', 'thai', 'indian'],
+            latin: ['mexican']
+        }
+    },
+
+    /**
+     * Build cuisine tags for a recipe based on title, description, and existing cuisine field
+     * @param {Object} recipe - Recipe object
+     * @returns {Array} Array of canonical cuisine tags and group tags
+     */
+    buildCuisineTags(recipe) {
+        if (!recipe) return [];
+        
+        // Build text blob from title, description, and existing cuisine field
+        const text = [
+            recipe.title || '',
+            recipe.name || '',
+            recipe.description || '',
+            recipe.shortDescription || '',
+            recipe.fullDescription || '',
+            recipe.cuisine || ''
+        ].join(' ').toLowerCase();
+        
+        if (!text.trim()) return [];
+        
+        const tags = new Set();
+        
+        // Check each canonical cuisine for alias matches
+        for (const [canonical, data] of Object.entries(this.CUISINE_TAXONOMY.canonicals)) {
+            const { aliases, group } = data;
+            
+            // Check if any alias appears in the text (word boundary matching)
+            const hasMatch = aliases.some(alias => {
+                // Use word boundary regex to avoid partial matches
+                const regex = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                return regex.test(text);
+            });
+            
+            if (hasMatch) {
+                tags.add(canonical);
+                // Add group tag if present
+                if (group) {
+                    tags.add(group);
+                }
+            }
+        }
+        
+        return Array.from(tags);
+    },
+
     init() {
         const backBtn = $('#back-btn');
         if (backBtn) {
@@ -1119,7 +1188,10 @@ const Recipes = {
                 }
             };
 
-            searchInput.addEventListener('input', updateClearButton);
+            searchInput.addEventListener('input', () => {
+                updateClearButton();
+                this.handleSearch();
+            });
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     this.handleSearch();
@@ -1174,6 +1246,13 @@ const Recipes = {
             }
         });
         
+        // Build cuisine tags for all local recipes at initialization
+        allLocalRecipes.forEach(recipe => {
+            if (!recipe.cuisineTags || recipe.cuisineTags.length === 0) {
+                recipe.cuisineTags = this.buildCuisineTags(recipe);
+            }
+        });
+        
         this.currentRecipes = allLocalRecipes;
         this.renderList();
     },
@@ -1207,6 +1286,45 @@ const Recipes = {
         }
     },
 
+    /**
+     * Filter recipes by query string
+     * @param {Array} recipes - Array of recipe objects
+     * @param {string} query - Search query
+     * @returns {Array} Filtered recipes array
+     * 
+     * Quick tests (in browser console):
+     * - filterRecipes(recipes, "italy").some(r => r.title.includes("Carbonara")) // should return true
+     * - filterRecipes(recipes, "ITALIAN").some(r => r.title.includes("Carbonara")) // case-insensitive test
+     * - filterRecipes(recipes, "mediterranean").length >= 1 // should return true (Italian + Spanish if present)
+     * - filterRecipes(recipes, "asian").some(r => r.title.includes("Stir-Fry")) // should return true (Chinese/Korean/Japanese)
+     */
+    filterRecipes(recipes, query) {
+        if (!Array.isArray(recipes)) return [];
+        if (!query || typeof query !== 'string') return recipes;
+        
+        const queryLower = query.trim().toLowerCase();
+        if (!queryLower) return recipes;
+        
+        return recipes.filter(recipe => {
+            if (!recipe) return false;
+            
+            // Build safe searchable string from title, description, ingredients, and cuisineTags
+            const title = (recipe.title || recipe.name || '').toLowerCase();
+            const description = (recipe.description || '').toLowerCase();
+            const ingredients = Array.isArray(recipe.ingredients) 
+                ? recipe.ingredients.join(' ').toLowerCase() 
+                : '';
+            const cuisineTags = Array.isArray(recipe.cuisineTags) 
+                ? recipe.cuisineTags.join(' ').toLowerCase() 
+                : '';
+            
+            const searchableText = `${title} ${description} ${ingredients} ${cuisineTags}`;
+            
+            // Match via includes (case-insensitive)
+            return searchableText.includes(queryLower);
+        });
+    },
+
     searchLocal(query) {
         // Merge local recipes from state with base recipes
         const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
@@ -1222,16 +1340,15 @@ const Recipes = {
             }
         });
 
-        if (!query) {
-            this.currentRecipes = allLocalRecipes;
-        } else {
-            const queryLower = query.toLowerCase();
-            this.currentRecipes = allLocalRecipes.filter(recipe => {
-                const titleMatch = recipe.title && recipe.title.toLowerCase().includes(queryLower);
-                const descMatch = recipe.description && recipe.description.toLowerCase().includes(queryLower);
-                return titleMatch || descMatch;
-            });
-        }
+        // Build cuisine tags for all local recipes (if not already built)
+        allLocalRecipes.forEach(recipe => {
+            if (!recipe.cuisineTags || recipe.cuisineTags.length === 0) {
+                recipe.cuisineTags = this.buildCuisineTags(recipe);
+            }
+        });
+
+        // Use filterRecipes function to filter based on query
+        this.currentRecipes = this.filterRecipes(allLocalRecipes, query);
         this.renderList();
     },
 
@@ -1249,7 +1366,20 @@ const Recipes = {
 
         try {
             const onlineRecipes = await searchRecipesOnline(query);
-            this.currentRecipes = onlineRecipes;
+            
+            // Build cuisine tags for all online recipes
+            onlineRecipes.forEach(recipe => {
+                if (!recipe.cuisineTags || recipe.cuisineTags.length === 0) {
+                    recipe.cuisineTags = this.buildCuisineTags(recipe);
+                }
+            });
+            
+            // Apply client-side filtering if query is provided
+            if (query && query.trim()) {
+                this.currentRecipes = this.filterRecipes(onlineRecipes, query);
+            } else {
+                this.currentRecipes = onlineRecipes;
+            }
             this.renderList();
         } catch (error) {
             console.warn('Online search failed:', error);
@@ -1442,24 +1572,8 @@ const Recipes = {
             recipeDetail.classList.add('hidden');
         }
 
-        // Refresh currentRecipes from active profile when in local mode
-        if (this.searchMode === 'local') {
-            const baseRecipes = Array.isArray(recipes) ? [...recipes] : [];
-            const p = getActiveProfile();
-            const likedRecipes = p ? p.localRecipes : [];
-            const allLocalRecipes = [...baseRecipes];
-            
-            // Add liked recipes, avoiding duplicates by ID
-            const existingIds = new Set(baseRecipes.map(r => String(r.id)));
-            likedRecipes.forEach(likedRecipe => {
-                if (!existingIds.has(String(likedRecipe.id))) {
-                    allLocalRecipes.push(likedRecipe);
-                    existingIds.add(String(likedRecipe.id));
-                }
-            });
-            
-            this.currentRecipes = allLocalRecipes;
-        }
+        // Note: currentRecipes is set by searchLocal/searchOnline, so we don't refresh it here
+        // This ensures filtered results are preserved
 
         if (this.currentRecipes.length === 0) {
             recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
