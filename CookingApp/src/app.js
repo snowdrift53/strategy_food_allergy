@@ -510,6 +510,12 @@ const Profiles = {
             };
         }
         saveState();
+        
+        // Refresh recipe view after profile change to update liked recipes and cancel stale requests
+        if (typeof Recipes !== 'undefined' && Recipes.refreshViewAfterProfileChange) {
+            Recipes.refreshViewAfterProfileChange();
+        }
+        
         renderApp();
     },
 
@@ -1528,6 +1534,67 @@ const Recipes = {
         } else {
             this.searchLocal(query);
         }
+    },
+
+    /**
+     * Refresh view after profile change
+     * Cancels in-flight requests, resets detail view, and re-runs current search
+     */
+    refreshViewAfterProfileChange() {
+        // A) Cancel/invalidate any in-flight online searches
+        this.onlineSearchRequestId++;
+        
+        // Clear any pending debounce timer
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = null;
+        }
+
+        // C) Reset detail view state - go back to grid
+        const recipeList = $('#recipe-list');
+        const recipeDetail = $('#recipe-detail');
+        if (recipeList && recipeDetail) {
+            recipeList.classList.remove('hidden');
+            recipeDetail.classList.add('hidden');
+        }
+
+        // B) Clear current recipe grid rendering immediately
+        if (recipeList && typeof window.renderLoading === 'function') {
+            window.renderLoading(recipeList, 'Updating…');
+        } else if (recipeList) {
+            recipeList.innerHTML = '<div class="recipe-loading">Updating…</div>';
+        }
+
+        // Get current query and mode
+        const searchInput = $('#recipe-search-input');
+        const currentQuery = searchInput ? searchInput.value.trim() : '';
+        const currentMode = this.searchMode;
+
+        // Debug logging
+        const PROFILE_DEBUG = new URLSearchParams(location.search).has("profileDebug");
+        if (PROFILE_DEBUG) {
+            const activeProfileId = AppState.activeProfileId;
+            console.log("[PROFILE] switched to", activeProfileId, "query=", currentQuery, "mode=", currentMode);
+        }
+
+        // D) Re-run the current search using the current query and current mode
+        // Use setTimeout to ensure state is fully updated before re-running search
+        setTimeout(() => {
+            if (currentQuery) {
+                // If search input has text, re-run search
+                this.handleSearch();
+            } else {
+                // If empty query, re-render the default list for the active mode
+                if (currentMode === 'local') {
+                    // For local mode, show all local recipes (base + liked)
+                    this.searchLocal('');
+                } else {
+                    // For online mode, show empty state with message
+                    this.currentRecipes = [];
+                    this.renderList();
+                }
+            }
+        }, 0);
     },
 
     /**
