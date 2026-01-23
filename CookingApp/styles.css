@@ -2164,3 +2164,175 @@ header {
 .recipe-search-suggestion .suggestion-link:hover {
     color: #6B4E3D;
 }
+
+/* ===== Minimalist Controls: Tabs + Buttons ===== */
+button, .btn {
+    font-family: inherit;
+    color: var(--text);
+}
+
+/* Navigation tabs */
+.nav-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transition: background 160ms ease, transform 160ms ease, border-color 160ms ease !important;
+    font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+    color: var(--text) !important;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.40) !important;
+    border-color: rgba(43, 43, 43, 0.24) !important;
+    transform: translateY(-1px);
+    box-shadow: none !important;
+}
+
+.nav-btn.active {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.nav-btn.active:hover {
+    background: rgba(139, 115, 91, 0.90) !important;
+}
+
+/* ===== Inputs ===== */
+input[type="text"], input[type="search"], .recipe-search-input {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+    font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+}
+
+input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus {
+    outline: none !important;
+    border-color: rgba(47, 52, 31, 0.45) !important;
+    box-shadow: 0 0 0 3px rgba(47, 52, 31, 0.12) !important;
+}
+
+/* ===== Toggle buttons (Local / Online) ===== */
+.recipe-search-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transition: background 160ms ease, transform 160ms ease, border-color 160ms ease !important;
+    font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+    color: var(--text) !important;
+}
+
+.recipe-search-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.40) !important;
+    border-color: rgba(43, 43, 43, 0.24) !important;
+}
+
+.recipe-search-btn.active {
+    background: var(--brand) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.recipe-search-btn.active:hover {
+    background: rgba(47, 52, 31, 0.90) !important;
+}
+
+/* ===== Additional Inputs (Shopping List, etc.) ===== */
+.grocery-input, .profile-input, .allergy-input, textarea {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+    font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+}
+
+.grocery-input:focus, .profile-input:focus, .allergy-input:focus, textarea:focus {
+    outline: none !important;
+    border-color: rgba(47, 52, 31, 0.45) !important;
+    box-shadow: 0 0 0 3px rgba(47, 52, 31, 0.12) !important;
+}
+
+/* ===== General Buttons (Shopping List Add, etc.) ===== */
+/* Primary action buttons (Add, Save) */
+.add-btn, .save-btn, .profile-btn {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border: 1px solid transparent !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transition: background 160ms ease, transform 160ms ease !important;
+    font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+}
+
+.add-btn:hover, .save-btn:hover, .profile-btn:hover {
+    background: rgba(139, 115, 91, 0.90) !important;
+}
+
+/* Secondary buttons */
+.profile-delete-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transition: background 160ms ease, transform 160ms ease, border-color 160ms ease !important;
+    font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+    color: var(--text) !important;
+}
+
+.profile-delete-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.40) !important;
+    border-color: rgba(43, 43, 43, 0.24) !important;
+}
+
+/* ===== Click/Layering Safety Patch ===== */
+header, .header-brand-row, .header-brand, .header-banner, .header-logo {
+    position: relative;
+    z-index: 1;
+}
+
+/* If the big banner image is decorative, it must not steal clicks */
+.brand-banner,
+.header-banner,
+.header-banner img,
+.header-logo,
+#header-logo {
+    pointer-events: none;
+}
+
+/* Controls must always be clickable and above decorative layers */
+.main-nav,
+.recipe-search-section {
+    position: relative;
+    z-index: 50;
+    pointer-events: auto;
+}
+
+/* Ensure individual buttons/inputs remain clickable */
+.main-nav button,
+.recipe-search-section button,
+.recipe-search-section input,
+.recipe-search-input-wrapper {
+    position: relative;
+    z-index: 60;
+    pointer-events: auto;
+}
+
+/* If any overlay exists, it must not cover the page unless visible */
+.log-overlay.hidden,
+.log-panel.hidden {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+/* ===== View Switching Fix ===== */
+.view-section.hidden,
+.hidden {
+    display: none !important;
+}
