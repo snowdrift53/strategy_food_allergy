@@ -659,7 +659,7 @@ const state = loadState();
 // Legacy AppState for backward compatibility during transition
 // AppState is now a pure wrapper around state - all reads and writes go through state
 // Setters automatically persist changes via saveState() to ensure data is saved
-// NOTE: groceryList, profiles, and activeProfileId removed - these features now use state directly
+// NOTE: groceryList, profiles, activeProfileId, and localRecipes removed - these features now use state directly
 const AppState = {
     get profileLogs() { 
         // Direct read from state
@@ -668,16 +668,6 @@ const AppState = {
     set profileLogs(value) { 
         // Direct write to state
         state.profileLogs = value;
-        // Auto-save to ensure persistence (old code expects this)
-        saveState();
-    },
-    get localRecipes() { 
-        // Read from state via helper function
-        return getProfileLocalRecipes(); 
-    },
-    set localRecipes(value) { 
-        // Write to state via helper function
-        setProfileLocalRecipes(value);
         // Auto-save to ensure persistence (old code expects this)
         saveState();
     },
