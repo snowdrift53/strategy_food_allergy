@@ -1731,14 +1731,21 @@ const Recipes = {
     },
 
     async searchOnline(query) {
-        // Store query for typo suggestions
-        this.lastQuery = query || '';
+        // Normalize query: trim whitespace
+        const normalizedQuery = query ? query.trim() : '';
         
-        if (!query) {
+        // Store query for typo suggestions
+        this.lastQuery = normalizedQuery;
+        
+        // Reset online results immediately when query is empty
+        if (!normalizedQuery) {
             this.currentRecipes = [];
             this.renderList();
             return;
         }
+
+        // Reset currentRecipes BEFORE fetching new results (replace, not append)
+        this.currentRecipes = [];
 
         const recipeList = $('#recipe-list');
         if (recipeList) {
@@ -1746,7 +1753,7 @@ const Recipes = {
         }
 
         try {
-            const onlineRecipes = await searchRecipesOnline(query);
+            const onlineRecipes = await searchRecipesOnline(normalizedQuery);
             
             // Build cuisine tags for all online recipes
             onlineRecipes.forEach(recipe => {
@@ -1755,15 +1762,14 @@ const Recipes = {
                 }
             });
             
-            // Apply client-side filtering if query is provided
-            if (query && query.trim()) {
-                this.currentRecipes = this.filterRecipes(onlineRecipes, query);
-            } else {
-                this.currentRecipes = onlineRecipes;
-            }
+            // Apply client-side filtering (always filter, never return all)
+            // Replace currentRecipes with filtered results (never append)
+            this.currentRecipes = this.filterRecipes(onlineRecipes, normalizedQuery);
             this.renderList();
         } catch (error) {
             console.warn('Online search failed:', error);
+            // Reset on error to prevent stale results
+            this.currentRecipes = [];
             if (recipeList) {
                 recipeList.innerHTML = '<div class="recipe-error">Online search unavailable.</div>';
             }
@@ -1960,7 +1966,12 @@ const Recipes = {
         // This ensures filtered results are preserved
 
         if (this.currentRecipes.length === 0) {
-            recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
+            // Show different message for online mode when query is empty
+            if (this.searchMode === 'online' && (!this.lastQuery || !this.lastQuery.trim())) {
+                recipeList.innerHTML = '<div class="recipe-empty">Type a country, cuisine, or region to search online recipes.</div>';
+            } else {
+                recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
+            }
             
             // Show typo suggestion if we have a query
             if (this.lastQuery && this.lastQuery.trim()) {
