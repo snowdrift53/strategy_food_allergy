@@ -659,34 +659,8 @@ const state = loadState();
 // Legacy AppState for backward compatibility during transition
 // AppState is now a pure wrapper around state - all reads and writes go through state
 // Setters automatically persist changes via saveState() to ensure data is saved
-// NOTE: groceryList removed - grocery list feature now uses state directly via helper functions
+// NOTE: groceryList, profiles, and activeProfileId removed - these features now use state directly
 const AppState = {
-    get profiles() { 
-        // Direct read from state
-        return state.userProfiles; 
-    },
-    set profiles(value) { 
-        // Direct write to state
-        state.userProfiles = value;
-        // Auto-save to ensure persistence (old code expects this)
-        saveState();
-    },
-    get activeProfileId() { 
-        // Direct read from state
-        return state.userActiveProfileId; 
-    },
-    set activeProfileId(value) { 
-        // Direct write to state
-        state.userActiveProfileId = value;
-        // Sync state.activeProfileId to keep both profile ID systems in sync
-        // This ensures profile-owned state activeProfileId matches user profile activeProfileId
-        // Only sync if value is not null (null means no active user profile, but profile-owned state should have a valid ID)
-        if (value !== null) {
-            state.activeProfileId = value;
-        }
-        // Auto-save to ensure persistence (old code expects this)
-        saveState();
-    },
     get profileLogs() { 
         // Direct read from state
         return state.profileLogs; 
@@ -716,23 +690,24 @@ const AppState = {
 
 function ensureDefaultProfile() {
     // Migration: ensure all profiles have avatarDataUrl field
-    AppState.profiles.forEach(profile => {
+    state.userProfiles.forEach(profile => {
         if (profile.avatarDataUrl === undefined) {
             profile.avatarDataUrl = null;
         }
     });
     
-    if (AppState.profiles.length === 0) {
+    if (state.userProfiles.length === 0) {
         const defaultProfile = {
             id: Id.uid(),
             name: 'Default',
             allergies: [],
             avatarDataUrl: null
         };
-        AppState.profiles.push(defaultProfile);
-        AppState.activeProfileId = defaultProfile.id;
-        // Create corresponding profile-owned state with fresh empty arrays
+        state.userProfiles.push(defaultProfile);
+        state.userActiveProfileId = defaultProfile.id;
+        // Sync profile-owned state activeProfileId with user profile ID
         state.activeProfileId = defaultProfile.id;
+        // Create corresponding profile-owned state with fresh empty arrays
         if (!state.profiles[defaultProfile.id]) {
             state.profiles[defaultProfile.id] = {
                 localRecipes: [],
@@ -742,13 +717,13 @@ function ensureDefaultProfile() {
             };
         }
         saveState();
-    } else if (!AppState.activeProfileId || !AppState.profiles.find(p => p.id === AppState.activeProfileId)) {
-        AppState.activeProfileId = AppState.profiles[0].id;
-        // Sync profile-owned state
-        state.activeProfileId = AppState.profiles[0].id;
+    } else if (!state.userActiveProfileId || !state.userProfiles.find(p => p.id === state.userActiveProfileId)) {
+        state.userActiveProfileId = state.userProfiles[0].id;
+        // Sync profile-owned state activeProfileId with user profile ID
+        state.activeProfileId = state.userProfiles[0].id;
         // Ensure profile-owned state exists
-        if (!state.profiles[AppState.profiles[0].id]) {
-            state.profiles[AppState.profiles[0].id] = {
+        if (!state.profiles[state.userProfiles[0].id]) {
+            state.profiles[state.userProfiles[0].id] = {
                 localRecipes: [],
                 shoppingList: [],
                 allergyFilters: [],
@@ -758,16 +733,16 @@ function ensureDefaultProfile() {
         saveState();
     } else {
         // Ensure current active profile has profile-owned state
-        if (!state.profiles[AppState.activeProfileId]) {
-            state.profiles[AppState.activeProfileId] = {
+        if (!state.profiles[state.userActiveProfileId]) {
+            state.profiles[state.userActiveProfileId] = {
                 localRecipes: [],
                 shoppingList: [],
                 allergyFilters: [],
                 symptomLog: []
             };
         }
-        // Sync state.activeProfileId with AppState.activeProfileId
-        state.activeProfileId = AppState.activeProfileId;
+        // Sync state.activeProfileId with state.userActiveProfileId
+        state.activeProfileId = state.userActiveProfileId;
     }
 }
 
@@ -901,7 +876,7 @@ const Profiles = {
             if (clearBtn) {
                 clearBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+                    const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
                     if (activeProfile) {
                         activeProfile.allergies = [];
                         allergiesInput.value = '';
@@ -931,7 +906,7 @@ const Profiles = {
     },
 
     switchProfile(profileId) {
-        AppState.activeProfileId = profileId;
+        state.userActiveProfileId = profileId;
         // Sync profile-owned state activeProfileId with user profile ID
         state.activeProfileId = profileId;
         // Ensure profile-owned state exists for this profile
@@ -964,11 +939,12 @@ const Profiles = {
             allergies: [],
             avatarDataUrl: null
         };
-        AppState.profiles.push(newProfile);
-        AppState.activeProfileId = newProfile.id;
+        state.userProfiles.push(newProfile);
+        state.userActiveProfileId = newProfile.id;
         
-        // Create corresponding profile-owned state with fresh empty arrays (not shared by reference)
+        // Sync profile-owned state activeProfileId with user profile ID
         state.activeProfileId = newProfile.id;
+        // Create corresponding profile-owned state with fresh empty arrays (not shared by reference)
         state.profiles[newProfile.id] = {
             localRecipes: [],
             shoppingList: [],
@@ -987,7 +963,7 @@ const Profiles = {
         const rawAllergies = Text.splitList(allergiesText);
         const allergies = normalizeUserAllergies(rawAllergies);
 
-        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
         if (activeProfile) {
             activeProfile.allergies = allergies;
             saveState();
@@ -996,28 +972,28 @@ const Profiles = {
     },
 
     deleteProfile() {
-        if (AppState.profiles.length <= 1) {
+        if (state.userProfiles.length <= 1) {
             alert('Cannot delete the last remaining profile.');
             return;
         }
 
         if (!confirm('Are you sure you want to delete this profile?')) return;
 
-        const deletedProfileId = AppState.activeProfileId;
-        AppState.profiles = AppState.profiles.filter(p => p.id !== AppState.activeProfileId);
+        const deletedProfileId = state.userActiveProfileId;
+        state.userProfiles = state.userProfiles.filter(p => p.id !== state.userActiveProfileId);
         
         // Delete corresponding profile-owned state
         if (state.profiles[deletedProfileId]) {
             delete state.profiles[deletedProfileId];
         }
         
-        if (AppState.profiles.length > 0) {
-            AppState.activeProfileId = AppState.profiles[0].id;
-            // Sync profile-owned state
-            state.activeProfileId = AppState.profiles[0].id;
+        if (state.userProfiles.length > 0) {
+            state.userActiveProfileId = state.userProfiles[0].id;
+            // Sync profile-owned state activeProfileId with user profile ID
+            state.activeProfileId = state.userProfiles[0].id;
             // Ensure profile-owned state exists
-            if (!state.profiles[AppState.profiles[0].id]) {
-                state.profiles[AppState.profiles[0].id] = {
+            if (!state.profiles[state.userProfiles[0].id]) {
+                state.profiles[state.userProfiles[0].id] = {
                     localRecipes: [],
                     shoppingList: [],
                     allergyFilters: [],
@@ -1025,7 +1001,7 @@ const Profiles = {
                 };
             }
         } else {
-            AppState.activeProfileId = null;
+            state.userActiveProfileId = null;
             state.activeProfileId = 'default';
         }
 
@@ -1040,17 +1016,17 @@ const Profiles = {
         const profileAvatar = $('#profile-avatar');
 
         select.innerHTML = '';
-        AppState.profiles.forEach(profile => {
+        state.userProfiles.forEach(profile => {
             const option = document.createElement('option');
             option.value = profile.id;
             option.textContent = profile.name;
-            if (profile.id === AppState.activeProfileId) {
+            if (profile.id === state.userActiveProfileId) {
                 option.selected = true;
             }
             select.appendChild(option);
         });
 
-        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
         const clearBtn = $('#profile-allergies-clear-btn');
         
         if (activeProfile) {
@@ -1098,7 +1074,7 @@ const Profiles = {
         }
 
         const deleteBtn = $('#profile-delete-btn');
-        if (AppState.profiles.length <= 1) {
+        if (state.userProfiles.length <= 1) {
             deleteBtn.disabled = true;
             deleteBtn.style.opacity = '0.5';
             deleteBtn.style.cursor = 'not-allowed';
@@ -1124,7 +1100,7 @@ const Profiles = {
         }
 
         // Get active profile ID before any async operations
-        const activeProfileId = AppState.activeProfileId;
+        const activeProfileId = state.userActiveProfileId;
         if (!activeProfileId) {
             alert('No active profile found.');
             return;
@@ -1148,7 +1124,7 @@ const Profiles = {
 
             // Find and update the correct profile in the profiles array
             // Get reference to the actual profiles array
-            const profiles = AppState.profiles;
+            const profiles = state.userProfiles;
             const profileIndex = profiles.findIndex(p => p.id === activeProfileId);
             
             if (profileIndex < 0) {
@@ -1157,7 +1133,6 @@ const Profiles = {
             }
 
             // Update the profile object directly in the array
-            // Since AppState.profiles returns state.userProfiles, this modifies the source
             profiles[profileIndex].avatarDataUrl = avatarDataUrl;
             
             // Explicitly update state.userProfiles to ensure consistency
@@ -1212,7 +1187,7 @@ const Profiles = {
      * Remove avatar from active profile
      */
     removeAvatar() {
-        const activeProfileId = AppState.activeProfileId;
+        const activeProfileId = state.userActiveProfileId;
         if (!activeProfileId) {
             alert('No active profile found.');
             return;
@@ -1223,7 +1198,7 @@ const Profiles = {
         }
 
         // Find and update the correct profile in the profiles array
-        const profiles = AppState.profiles;
+        const profiles = state.userProfiles;
         const profileIndex = profiles.findIndex(p => p.id === activeProfileId);
         
         if (profileIndex < 0) {
@@ -1368,7 +1343,7 @@ const Log = {
         const text = textarea.value.trim();
         if (!text) return;
 
-        const profileId = AppState.activeProfileId;
+        const profileId = state.userActiveProfileId;
         if (!profileId) return;
 
         const logs = this.getProfileLogs(profileId);
@@ -1378,7 +1353,7 @@ const Log = {
             text: text
         };
         logs.push(entry);
-        AppState.profileLogs[profileId] = logs;
+        state.profileLogs[profileId] = logs;
         saveState();
 
         textarea.value = '';
@@ -1386,10 +1361,10 @@ const Log = {
     },
 
     deleteEntry(entryId) {
-        const profileId = AppState.activeProfileId;
-        if (!profileId || !AppState.profileLogs[profileId]) return;
+        const profileId = state.userActiveProfileId;
+        if (!profileId || !state.profileLogs[profileId]) return;
 
-        AppState.profileLogs[profileId] = AppState.profileLogs[profileId].filter(entry => entry.id !== entryId);
+        state.profileLogs[profileId] = state.profileLogs[profileId].filter(entry => entry.id !== entryId);
         saveState();
         renderApp();
     },
@@ -1412,7 +1387,7 @@ const Log = {
 
     render() {
         const entriesContainer = $('#log-entries');
-        const profileId = AppState.activeProfileId;
+        const profileId = state.userActiveProfileId;
         const indicator = $('#log-fab-indicator');
 
         if (!profileId) {
@@ -2169,7 +2144,7 @@ const Recipes = {
         // Debug logging
         const PROFILE_DEBUG = new URLSearchParams(location.search).has("profileDebug");
         if (PROFILE_DEBUG) {
-            const activeProfileId = AppState.activeProfileId;
+            const activeProfileId = state.userActiveProfileId;
             console.log("[PROFILE] switched to", activeProfileId, "query=", currentQuery, "mode=", currentMode);
         }
 
@@ -2645,7 +2620,7 @@ const Recipes = {
     },
 
     checkRecipeSuitability(recipe) {
-        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
         if (!activeProfile || !activeProfile.allergies || activeProfile.allergies.length === 0) {
             return null;
         }
@@ -2693,7 +2668,7 @@ const Recipes = {
     },
 
     getUnsafeRecipeDetails(recipe) {
-        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
         if (!activeProfile || !activeProfile.allergies || activeProfile.allergies.length === 0) {
             return null;
         }
@@ -2957,7 +2932,7 @@ const Recipes = {
         recipeDetail.classList.remove('hidden');
 
         // Get active allergies for classification
-        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
+        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
         const activeAllergies = activeProfile ? (activeProfile.allergies || []) : [];
 
         // Use UI render function
@@ -3163,7 +3138,7 @@ const Recipes = {
         }
 
         // Store the active profile ID at modal open time for safety check
-        const activeProfileIdAtOpen = AppState.activeProfileId;
+        const activeProfileIdAtOpen = state.userActiveProfileId;
 
         // Build ingredient suggestions
         const ingredientSuggestions = buildIngredientSuggestions();
@@ -3181,7 +3156,7 @@ const Recipes = {
                 },
                 onSave: async (updatedRecipeObj, imageFile, removeImage) => {
                     // Safety check: ensure profile hasn't changed
-                    if (AppState.activeProfileId !== activeProfileIdAtOpen) {
+                    if (state.userActiveProfileId !== activeProfileIdAtOpen) {
                         alert('Profile was switched. Please close and reopen the edit dialog.');
                         return;
                     }
@@ -3190,7 +3165,7 @@ const Recipes = {
                 },
                 onDelete: (recipeIdToDelete) => {
                     // Safety check: ensure profile hasn't changed
-                    if (AppState.activeProfileId !== activeProfileIdAtOpen) {
+                    if (state.userActiveProfileId !== activeProfileIdAtOpen) {
                         alert('Profile was switched. Please close and reopen the edit dialog.');
                         return;
                     }
