@@ -2079,6 +2079,10 @@ header {
         border-width: 3px;
     }
 
+    .add-recipe-fab {
+        bottom: 120px !important;
+    }
+
     .log-panel {
         top: auto;
         right: 0;
@@ -2451,4 +2455,339 @@ input[type="search"]:focus,
     background: var(--mc-green) !important;
     box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
     transform: translateY(-1px) !important;
+}
+
+/* ===== Add Recipe FAB ===== */
+.add-recipe-fab {
+    position: fixed !important;
+    bottom: 120px !important;
+    right: 24px !important;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: #8B7355;
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.3);
+    z-index: 9998 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.add-recipe-fab-icon {
+    font-size: 2.8rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-recipe-fab:hover {
+    background: #6B4E3D;
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.4);
+}
+
+.add-recipe-fab:focus {
+    outline: 2px solid #8B7355;
+    outline-offset: 2px;
+}
+
+.add-recipe-fab:active {
+    transform: scale(0.98);
+}
+
+.add-recipe-fab.hidden {
+    display: none;
+}
+
+/* ===== Add Recipe Modal ===== */
+.add-recipe-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInOverlay 0.2s ease;
+}
+
+.add-recipe-modal {
+    background: #FFFEF9;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(92, 64, 51, 0.3);
+    z-index: 10001;
+    animation: slideInModal 0.3s ease;
+}
+
+@keyframes slideInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.add-recipe-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: #8B7355;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+.add-recipe-modal-header h3 {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.add-recipe-close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: transform 0.2s ease;
+    border-radius: 4px;
+}
+
+.add-recipe-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.add-recipe-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.add-recipe-field {
+    margin-bottom: 20px;
+}
+
+.add-recipe-field label {
+    display: block;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #5C4033;
+    margin-bottom: 8px;
+}
+
+.add-recipe-field .required {
+    color: #d32f2f;
+}
+
+.add-recipe-input,
+.add-recipe-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #E6D3B3;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #5C4033;
+    background: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-sizing: border-box;
+}
+
+.add-recipe-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.add-recipe-input:focus,
+.add-recipe-textarea:focus {
+    outline: none;
+    border-color: #8B7355;
+}
+
+.add-recipe-list-input-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.add-recipe-list-input-wrapper .add-recipe-input {
+    flex: 1;
+}
+
+.add-recipe-add-btn {
+    background: #8B7355;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.add-recipe-add-btn:hover {
+    background: #6B4E3D;
+    transform: translateY(-1px);
+}
+
+.add-recipe-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.add-recipe-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background: white;
+    border: 1px solid #E6D3B3;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.add-recipe-list-item:hover {
+    box-shadow: 0 2px 6px rgba(92, 64, 51, 0.1);
+}
+
+.add-recipe-list-item span {
+    flex: 1;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    color: #5C4033;
+}
+
+.add-recipe-remove-btn {
+    background: transparent;
+    border: none;
+    color: #8B7355;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.add-recipe-remove-btn:hover {
+    background: rgba(139, 115, 85, 0.1);
+    color: #6B4E3D;
+    transform: scale(1.1);
+}
+
+.add-recipe-disabled-label {
+    color: #999 !important;
+}
+
+.add-recipe-disabled-placeholder {
+    padding: 12px;
+    background: #f5f5f5;
+    border: 1px dashed #E6D3B3;
+    border-radius: 6px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.85rem;
+    color: #999;
+    text-align: center;
+    font-style: italic;
+}
+
+.add-recipe-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #E6D3B3;
+}
+
+.add-recipe-btn {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.add-recipe-btn-primary {
+    background: #8B7355;
+    color: white;
+}
+
+.add-recipe-btn-primary:hover {
+    background: #6B4E3D;
+    transform: translateY(-1px);
+}
+
+.add-recipe-btn-secondary {
+    background: #E6D3B3;
+    color: #5C4033;
+}
+
+.add-recipe-btn-secondary:hover {
+    background: #d4c0a0;
+}
+
+@media (max-width: 768px) {
+    .add-recipe-fab {
+        bottom: 120px !important;
+        right: 20px !important;
+        width: 72px;
+        height: 72px;
+    }
+
+    .add-recipe-fab-icon {
+        font-size: 2.4rem;
+    }
+
+    .add-recipe-modal {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .add-recipe-modal-body {
+        padding: 16px;
+    }
 }

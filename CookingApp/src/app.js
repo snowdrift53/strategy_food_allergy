@@ -309,6 +309,97 @@ function isRecipeLiked(recipeId) {
     return localRecipes.some(r => String(r.id) === recipeIdStr);
 }
 
+/**
+ * Add recipe to active profile's local recipes
+ * @param {Object} recipeObj - Recipe object (without id)
+ * @returns {Object} Recipe object with generated id
+ */
+function addRecipeToProfile(recipeObj) {
+    if (!recipeObj || !recipeObj.title) {
+        console.warn('Invalid recipe object');
+        return null;
+    }
+
+    // Generate unique ID: "u_" prefix for user-added recipes
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    const recipeId = `u_${timestamp}_${random}`;
+
+    // Create full recipe object with id
+    const fullRecipe = {
+        ...recipeObj,
+        id: recipeId
+    };
+
+    // Build cuisine tags if Recipes module is available
+    if (typeof Recipes !== 'undefined' && Recipes.buildCuisineTags) {
+        fullRecipe.cuisineTags = Recipes.buildCuisineTags(fullRecipe);
+    }
+
+    // Get current local recipes
+    const localRecipes = getProfileLocalRecipes();
+
+    // Add new recipe
+    localRecipes.push(fullRecipe);
+
+    // Save to profile
+    setProfileLocalRecipes(localRecipes);
+    saveState();
+
+    return fullRecipe;
+}
+
+/**
+ * Build ingredient suggestions from all available sources
+ * @returns {Array<string>} Array of unique ingredient strings
+ */
+function buildIngredientSuggestions() {
+    const suggestions = new Set();
+
+    // Get base recipes (from recipes.local.js)
+    if (typeof recipes !== 'undefined' && Array.isArray(recipes)) {
+        recipes.forEach(recipe => {
+            if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
+                recipe.ingredients.forEach(ing => {
+                    if (ing && typeof ing === 'string' && ing.trim()) {
+                        suggestions.add(ing.trim());
+                    }
+                });
+            }
+        });
+    }
+
+    // Get user-added recipes from all profiles
+    if (state.profiles) {
+        Object.values(state.profiles).forEach(profile => {
+            if (profile.localRecipes && Array.isArray(profile.localRecipes)) {
+                profile.localRecipes.forEach(recipe => {
+                    if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
+                        recipe.ingredients.forEach(ing => {
+                            if (ing && typeof ing === 'string' && ing.trim()) {
+                                suggestions.add(ing.trim());
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // Get shopping list items (optional)
+    const activeProfile = getActiveProfile();
+    if (activeProfile && activeProfile.shoppingList && Array.isArray(activeProfile.shoppingList)) {
+        activeProfile.shoppingList.forEach(item => {
+            if (item && item.text && typeof item.text === 'string' && item.text.trim()) {
+                suggestions.add(item.text.trim());
+            }
+        });
+    }
+
+    // Convert to sorted array
+    return Array.from(suggestions).sort();
+}
+
 const state = loadState();
 
 // Legacy AppState for backward compatibility during transition
@@ -3193,6 +3284,53 @@ const App = {
         Navigation.init();
         Profiles.init();
         Log.init();
+        this.initAddRecipe();
+    },
+
+    initAddRecipe() {
+        // Build ingredient suggestions
+        const ingredientSuggestions = buildIngredientSuggestions();
+
+        // Render FAB
+        if (typeof window.renderAddRecipeFab === 'function') {
+            window.renderAddRecipeFab({
+                onClick: () => {
+                    // Open modal
+                    if (typeof window.renderAddRecipeModal === 'function') {
+                        window.renderAddRecipeModal({
+                            onClose: () => {
+                                if (typeof window.closeAddRecipeModal === 'function') {
+                                    window.closeAddRecipeModal();
+                                }
+                            },
+                            onSubmit: (recipeObj) => {
+                                // Save recipe
+                                const savedRecipe = addRecipeToProfile(recipeObj);
+                                if (savedRecipe) {
+                                    // Close modal
+                                    if (typeof window.closeAddRecipeModal === 'function') {
+                                        window.closeAddRecipeModal();
+                                    }
+
+                                    // Refresh recipe list if in local mode
+                                    if (Recipes.searchMode === 'local') {
+                                        const searchInput = $('#recipe-search-input');
+                                        const currentQuery = searchInput ? searchInput.value.trim() : '';
+                                        Recipes.searchLocal(currentQuery);
+                                    } else {
+                                        // If in online mode, switch to local to show the new recipe
+                                        Recipes.searchMode = 'local';
+                                        Recipes.updateToggleButtons();
+                                        Recipes.searchLocal('');
+                                    }
+                                }
+                            },
+                            ingredientSuggestions: ingredientSuggestions
+                        });
+                    }
+                }
+            });
+        }
     }
 };
 
