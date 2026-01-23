@@ -1,4 +1,54 @@
 /**
+ * Mapping from canonical cuisine names to TheMealDB area names
+ * Case-insensitive matching is handled in the detection logic
+ * RESTORED: Old mapping logic that worked well
+ */
+const THEMEALDB_AREA_MAP = {
+    italian: 'Italian',
+    spanish: 'Spanish',
+    mexican: 'Mexican',
+    indian: 'Indian',
+    chinese: 'Chinese',
+    japanese: 'Japanese',
+    korean: 'Korean',
+    thai: 'Thai',
+    french: 'French',
+    british: 'British',
+    canadian: 'Canadian',
+    american: 'American',
+    greek: 'Greek',
+    portuguese: 'Portuguese',
+    dutch: 'Dutch',
+    german: 'German',
+    polish: 'Polish',
+    swedish: 'Swedish',
+    norwegian: 'Norwegian',
+    danish: 'Danish',
+    finnish: 'Finnish',
+    irish: 'Irish',
+    russian: 'Russian',
+    ukrainian: 'Ukrainian',
+    turkish: 'Turkish',
+    moroccan: 'Moroccan',
+    tunisian: 'Tunisian',
+    algerian: 'Algerian',
+    // Aliases
+    italy: 'Italian',
+    spain: 'Spanish',
+    mexico: 'Mexican',
+    india: 'Indian',
+    china: 'Chinese',
+    japan: 'Japanese',
+    korea: 'Korean',
+    thailand: 'Thai',
+    france: 'French',
+    turkey: 'Turkish',
+    morocco: 'Moroccan',
+    tunisia: 'Tunisian',
+    algeria: 'Algerian'
+};
+
+/**
  * Mapping from cuisine to family (broader category)
  * Kept for backwards compatibility with mapMealToRecipe
  */
@@ -14,20 +64,58 @@ const CUISINE_TO_FAMILY = {
 };
 
 /**
+ * Group mappings: family/category to list of areas
+ * RESTORED: Old mapping logic that worked well
+ */
+const GROUP_TO_AREAS = {
+    mediterranean: ['Italian', 'Spanish', 'Greek', 'Portuguese', 'Turkish', 'Moroccan', 'Tunisian', 'Algerian'],
+    asian: ['Chinese', 'Japanese', 'Korean', 'Thai', 'Indian'],
+    latin: ['Mexican']
+};
+
+/**
  * Detect if query matches a known area or group (case-insensitive)
- * Uses centralized cuisine taxonomy for stable, expandable mappings
+ * RESTORED: Old logic that worked, with new taxonomy as additive helper
  * @param {string} query - Search query
  * @returns {string|string[]|null} TheMealDB area name(s) if match found, null otherwise
  */
 function detectAreaFromQuery(query) {
     if (!query || !query.trim()) return null;
     
-    // Use centralized taxonomy if available
+    const queryLower = query.trim().toLowerCase();
+    
+    // NEW: Try taxonomy first (if available) as additive helper
     if (typeof window !== 'undefined' && typeof window.detectTheMealDbAreasFromQuery === 'function') {
-        return window.detectTheMealDbAreasFromQuery(query);
+        const taxonomyAreas = window.detectTheMealDbAreasFromQuery(query);
+        if (taxonomyAreas) {
+            return taxonomyAreas;
+        }
     }
     
-    // Fallback to null if taxonomy not loaded
+    // OLD LOGIC: Check direct mapping for single area (restored)
+    if (THEMEALDB_AREA_MAP[queryLower]) {
+        return THEMEALDB_AREA_MAP[queryLower];
+    }
+    
+    // OLD LOGIC: Check for group matches (restored)
+    if (GROUP_TO_AREAS[queryLower]) {
+        return GROUP_TO_AREAS[queryLower];
+    }
+    
+    // OLD LOGIC: Check if query contains any area name (restored)
+    for (const [key, area] of Object.entries(THEMEALDB_AREA_MAP)) {
+        if (queryLower === key || queryLower.includes(key)) {
+            return area;
+        }
+    }
+    
+    // OLD LOGIC: Check if query matches any group name (restored)
+    for (const [group, areas] of Object.entries(GROUP_TO_AREAS)) {
+        if (queryLower === group || queryLower.includes(group)) {
+            return areas;
+        }
+    }
+    
     return null;
 }
 

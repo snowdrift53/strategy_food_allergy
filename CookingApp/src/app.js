@@ -1190,6 +1190,8 @@ const Recipes = {
     currentRecipes: [],
     searchMode: 'local',
     lastQuery: '', // Track last query for typo suggestions
+    searchDebounceTimer: null, // Debounce timer for search input
+    onlineSearchRequestId: 0, // Request token to prevent stale responses
 
     /**
      * Normalize query: trim + toLowerCase + collapse spaces
@@ -1392,12 +1394,33 @@ const Recipes = {
                 }
             };
 
-            searchInput.addEventListener('input', () => {
+            // Debounced search handler for online mode, instant for local mode
+            const handleSearchInput = () => {
                 updateClearButton();
-                this.handleSearch();
-            });
+                // Local mode: run immediately (no debounce)
+                if (this.searchMode === 'local') {
+                    this.handleSearch();
+                } else {
+                    // Online mode: use debounce
+                    if (this.searchDebounceTimer) {
+                        clearTimeout(this.searchDebounceTimer);
+                    }
+                    this.searchDebounceTimer = setTimeout(() => {
+                        this.handleSearch();
+                    }, 300);
+                }
+            };
+
+            searchInput.addEventListener('input', handleSearchInput);
+            
+            // Enter key bypasses debounce (runs immediately)
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
+                    if (this.searchDebounceTimer) {
+                        clearTimeout(this.searchDebounceTimer);
+                        this.searchDebounceTimer = null;
+                    }
+                    updateClearButton();
                     this.handleSearch();
                 }
             });
@@ -1406,6 +1429,10 @@ const Recipes = {
             if (clearBtn) {
                 clearBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    if (this.searchDebounceTimer) {
+                        clearTimeout(this.searchDebounceTimer);
+                        this.searchDebounceTimer = null;
+                    }
                     searchInput.value = '';
                     searchInput.focus();
                     updateClearButton();
@@ -1419,6 +1446,11 @@ const Recipes = {
 
         if (localBtn) {
             localBtn.addEventListener('click', () => {
+                // Clear any pending debounce timer when switching modes
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                    this.searchDebounceTimer = null;
+                }
                 this.searchMode = 'local';
                 this.updateToggleButtons();
                 this.handleSearch();
@@ -1427,6 +1459,11 @@ const Recipes = {
 
         if (onlineBtn) {
             onlineBtn.addEventListener('click', () => {
+                // Clear any pending debounce timer when switching modes
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                    this.searchDebounceTimer = null;
+                }
                 this.searchMode = 'online';
                 this.updateToggleButtons();
                 this.handleSearch();
@@ -1520,14 +1557,99 @@ const Recipes = {
         const q = norm(query);
         if (!q) return recipes;
         
-        // Build set of terms to match using centralized taxonomy
-        let terms = new Set([q]);
+        // Build set of terms to match - COMBINE old and new expansion logic
+        const terms = new Set([q]); // Start with original normalized query
         
-        // Use centralized taxonomy if available
+        // OLD EXPANSION LOGIC: Country to area demonym mapping (restored for backwards compatibility)
+        const COUNTRY_TO_AREA = {
+            "france": "french", "french": "french",
+            "italy": "italian", "italian": "italian",
+            "spain": "spanish", "spanish": "spanish",
+            "portugal": "portuguese", "portuguese": "portuguese",
+            "greece": "greek", "greek": "greek",
+            "germany": "german", "german": "german",
+            "netherlands": "dutch", "dutch": "dutch", "holland": "dutch",
+            "switzerland": "swiss", "swiss": "swiss",
+            "austria": "austrian", "austrian": "austrian",
+            "belgium": "belgian", "belgian": "belgian",
+            "poland": "polish", "polish": "polish",
+            "sweden": "swedish", "swedish": "swedish",
+            "norway": "norwegian", "norwegian": "norwegian",
+            "denmark": "danish", "danish": "danish",
+            "finland": "finnish", "finnish": "finnish",
+            "ireland": "irish", "irish": "irish",
+            "scotland": "scottish", "scottish": "scottish",
+            "england": "english", "english": "english",
+            "uk": "british", "united kingdom": "british", "britain": "british", "british": "british",
+            "russia": "russian", "russian": "russian",
+            "ukraine": "ukrainian", "ukrainian": "ukrainian",
+            "usa": "american", "us": "american", "united states": "american", "american": "american",
+            "mexico": "mexican", "mexican": "mexican",
+            "canada": "canadian", "canadian": "canadian",
+            "brazil": "brazilian", "brazilian": "brazilian",
+            "argentina": "argentinian", "argentinian": "argentinian",
+            "chile": "chilean", "chilean": "chilean",
+            "peru": "peruvian", "peruvian": "peruvian",
+            "colombia": "colombian", "colombian": "colombian",
+            "venezuela": "venezuelan", "venezuelan": "venezuelan",
+            "china": "chinese", "chinese": "chinese",
+            "japan": "japanese", "japanese": "japanese",
+            "korea": "korean", "south korea": "korean", "korean": "korean",
+            "thailand": "thai", "thai": "thai",
+            "vietnam": "vietnamese", "vietnamese": "vietnamese",
+            "india": "indian", "indian": "indian",
+            "pakistan": "pakistani", "pakistani": "pakistani",
+            "indonesia": "indonesian", "indonesian": "indonesian",
+            "philippines": "filipino", "philippine": "filipino", "filipino": "filipino",
+            "malaysia": "malaysian", "malaysian": "malaysian",
+            "singapore": "singaporean", "singaporean": "singaporean",
+            "morocco": "moroccan", "moroccan": "moroccan",
+            "tunisia": "tunisian", "tunisian": "tunisian",
+            "algeria": "algerian", "algerian": "algerian",
+            "turkey": "turkish", "turkish": "turkish",
+            "egypt": "egyptian", "egyptian": "egyptian",
+            "australia": "australian", "australian": "australian",
+            "new zealand": "new zealand", "nz": "new zealand"
+        };
+        
+        // OLD EXPANSION LOGIC: Regional keywords to areas/demonyms mapping
+        const REGION_TO_AREAS = {
+            "asia": ["chinese", "japanese", "korean", "thai", "vietnamese", "indian", "malaysian", "indonesian", "filipino"],
+            "asian": ["chinese", "japanese", "korean", "thai", "vietnamese", "indian", "malaysian", "indonesian", "filipino"],
+            "east asian": ["chinese", "japanese", "korean"],
+            "southeast asian": ["thai", "vietnamese", "malaysian", "indonesian", "filipino"],
+            "south asian": ["indian", "pakistani"],
+            "mediterranean": ["greek", "italian", "spanish", "portuguese", "turkish", "moroccan", "tunisian", "algerian"],
+            "north africa": ["moroccan", "tunisian", "algerian"],
+            "north african": ["moroccan", "tunisian", "algerian"],
+            "maghreb": ["moroccan", "tunisian", "algerian"],
+            "middle east": ["turkish"],
+            "middle eastern": ["turkish"],
+            "latin america": ["mexican", "peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
+            "latin american": ["mexican", "peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
+            "south america": ["peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
+            "europe": ["french", "italian", "spanish", "portuguese", "greek", "dutch", "german", "polish", "swedish", "norwegian", "danish", "finnish", "british", "irish", "scottish", "english", "russian", "ukrainian", "austrian", "swiss", "belgian"],
+            "european": ["french", "italian", "spanish", "portuguese", "greek", "dutch", "german", "polish", "swedish", "norwegian", "danish", "finnish", "british", "irish", "scottish", "english", "russian", "ukrainian", "austrian", "swiss", "belgian"],
+            "central europe": ["german", "austrian", "swiss", "polish"],
+            "central european": ["german", "austrian", "swiss", "polish"]
+        };
+        
+        // Add mapped area from COUNTRY_TO_AREA if exists (old logic)
+        if (COUNTRY_TO_AREA[q]) {
+            terms.add(COUNTRY_TO_AREA[q]);
+        }
+        
+        // Add regional areas if query matches a region (old logic)
+        if (REGION_TO_AREAS[q]) {
+            REGION_TO_AREAS[q].forEach(x => terms.add(norm(x)));
+        }
+        
+        // NEW EXPANSION LOGIC: Add taxonomy expansion terms (additive, doesn't replace old logic)
         if (typeof window !== 'undefined' && typeof window.expandCuisineQueryTerms === 'function') {
             const expandedTerms = window.expandCuisineQueryTerms(query);
             if (expandedTerms && expandedTerms.size > 0) {
-                terms = expandedTerms;
+                // Add all taxonomy-expanded terms to the set
+                expandedTerms.forEach(term => terms.add(norm(term)));
             }
         }
         
@@ -1577,14 +1699,68 @@ const Recipes = {
         
         /* ===== Console Tests =====
         // Uncomment to run tests:
-        // Test 1: Country name -> demonym
-        // const testRecipes = [{ title: "Paella", area: "Spanish" }];
-        // console.assert(this.filterRecipes(testRecipes, "spain").length >= 1, "Spain search failed");
-        // console.assert(this.filterRecipes(testRecipes, "spanish").length >= 1, "Spanish search failed");
         
-        // Test 2: Regional search
-        // const mediterraneanRecipes = [{ title: "Pasta", area: "Italian" }, { title: "Tapas", area: "Spanish" }];
-        // console.assert(this.filterRecipes(mediterraneanRecipes, "mediterranean").length >= 1, "Mediterranean search failed");
+        // Test 1: Country name -> demonym equivalence
+        (function() {
+            const testRecipes = [{ title: "Paella", area: "Spanish" }];
+            console.assert(this.filterRecipes(testRecipes, "spain").length >= 1, "Spain search failed");
+            console.assert(this.filterRecipes(testRecipes, "spanish").length >= 1, "Spanish search failed");
+            console.log("✓ Country/demonym equivalence test passed");
+        }.bind(this))();
+        
+        // Test 2: Turkey/Turkish equivalence (critical regression test)
+        (function() {
+            const testRecipes = [{ title: "Kebab", area: "Turkish" }];
+            const turkeyResults = this.filterRecipes(testRecipes, "turkey");
+            const turkishResults = this.filterRecipes(testRecipes, "turkish");
+            console.assert(turkeyResults.length >= 1, "Turkey search failed", { results: turkeyResults });
+            console.assert(turkishResults.length >= 1, "Turkish search failed", { results: turkishResults });
+            console.log("✓ Turkey/Turkish equivalence test passed");
+        }.bind(this))();
+        
+        // Test 3: Tunisia/Tunisian equivalence (includes prefix fix)
+        (function() {
+            const testRecipes = [{ title: "Couscous", area: "Tunisian" }];
+            const tunisiaResults = this.filterRecipes(testRecipes, "tunisia");
+            const tunisianResults = this.filterRecipes(testRecipes, "tunisian");
+            console.assert(tunisiaResults.length >= 1, "Tunisia search failed");
+            console.assert(tunisianResults.length >= 1, "Tunisian search failed");
+            console.log("✓ Tunisia/Tunisian equivalence test passed");
+        }.bind(this))();
+        
+        // Test 4: Expansion includes both forms
+        (function() {
+            if (typeof window !== 'undefined' && typeof window.expandCuisineQueryTerms === 'function') {
+                const turkeyExpansion = Array.from(window.expandCuisineQueryTerms("turkey"));
+                const turkishExpansion = Array.from(window.expandCuisineQueryTerms("turkish"));
+                console.assert(turkeyExpansion.includes("turkish"), "Turkey expansion must include 'turkish'", { expansion: turkeyExpansion });
+                console.assert(turkishExpansion.includes("turkey"), "Turkish expansion must include 'turkey'", { expansion: turkishExpansion });
+                
+                const tunisiaExpansion = Array.from(window.expandCuisineQueryTerms("tunisia"));
+                const tunisianExpansion = Array.from(window.expandCuisineQueryTerms("tunisian"));
+                console.assert(tunisiaExpansion.includes("tunisian"), "Tunisia expansion must include 'tunisian'", { expansion: tunisiaExpansion });
+                console.assert(tunisianExpansion.includes("tunisia"), "Tunisian expansion must include 'tunisia'", { expansion: tunisianExpansion });
+                console.log("✓ Expansion includes both forms test passed");
+            }
+        })();
+        
+        // Test 5: detectAreaFromQuery works for Turkey/Turkish
+        (function() {
+            if (typeof window !== 'undefined' && typeof window.detectAreaFromQuery === 'function') {
+                const turkeyArea = window.detectAreaFromQuery("turkey");
+                const turkishArea = window.detectAreaFromQuery("turkish");
+                console.assert(turkeyArea === "Turkish", "detectAreaFromQuery('turkey') must return 'Turkish'", { result: turkeyArea });
+                console.assert(turkishArea === "Turkish", "detectAreaFromQuery('turkish') must return 'Turkish'", { result: turkishArea });
+                console.log("✓ detectAreaFromQuery Turkey/Turkish test passed");
+            }
+        })();
+        
+        // Test 6: Regional search
+        (function() {
+            const mediterraneanRecipes = [{ title: "Pasta", area: "Italian" }, { title: "Tapas", area: "Spanish" }];
+            console.assert(this.filterRecipes(mediterraneanRecipes, "mediterranean").length >= 1, "Mediterranean search failed");
+            console.log("✓ Regional search test passed");
+        }.bind(this))();
         
         // Test 3: Asian search
         // const asianRecipes = [{ title: "Sushi", area: "Japanese" }, { title: "Pad Thai", area: "Thai" }];
@@ -1654,6 +1830,21 @@ const Recipes = {
             return;
         }
 
+        // Add minimum query length check to reduce noise
+        if (normalizedQuery.length < 2) {
+            // Clear results for very short queries
+            this.currentRecipes = [];
+            const recipeList = $('#recipe-list');
+            if (recipeList) {
+                recipeList.innerHTML = '';
+            }
+            this.renderList();
+            return;
+        }
+
+        // Increment request ID at start to track this request
+        const reqId = ++this.onlineSearchRequestId;
+
         // CRITICAL: Reset currentRecipes BEFORE fetching (replace, never append)
         this.currentRecipes = [];
 
@@ -1666,6 +1857,12 @@ const Recipes = {
         try {
             const onlineRecipes = await searchRecipesOnline(normalizedQuery);
             
+            // CRITICAL: Check if this response is stale before applying results
+            if (reqId !== this.onlineSearchRequestId) {
+                // Stale response, ignore it
+                return;
+            }
+            
             // Build cuisine tags for all online recipes
             onlineRecipes.forEach(recipe => {
                 if (!recipe.cuisineTags || recipe.cuisineTags.length === 0) {
@@ -1673,13 +1870,31 @@ const Recipes = {
                 }
             });
             
+            // CRITICAL: Check again before applying results (double-check for race conditions)
+            if (reqId !== this.onlineSearchRequestId) {
+                // Stale response, ignore it
+                return;
+            }
+            
             // CRITICAL: Replace currentRecipes with filtered results (never append or concat)
             // filterRecipes returns a new array, so we're replacing, not mutating
             this.currentRecipes = this.filterRecipes(onlineRecipes, normalizedQuery);
             
+            // CRITICAL: Final check before rendering
+            if (reqId !== this.onlineSearchRequestId) {
+                // Stale response, ignore it
+                return;
+            }
+            
             // CRITICAL: renderList() will clear container and render fresh
             this.renderList();
         } catch (error) {
+            // CRITICAL: Check if this error is from a stale request
+            if (reqId !== this.onlineSearchRequestId) {
+                // Stale error, ignore it
+                return;
+            }
+            
             console.warn('Online search failed:', error);
             // Reset on error to prevent stale results
             this.currentRecipes = [];
