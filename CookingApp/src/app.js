@@ -323,6 +323,16 @@ async function fileToCompressedDataUrl(file, opts = {}) {
     const maxDimension = opts.maxDimension || 1000;
     const initialQuality = opts.quality || 0.75;
     const maxSize = opts.maxSize || 600000; // ~450KB in base64 chars
+    
+    // Debug flag (for avatars)
+    const AVATAR_DEBUG = new URLSearchParams(location.search).has("avatarDebug");
+    if (AVATAR_DEBUG && opts.maxDimension === 256) {
+        console.log("[AVATAR_DEBUG] Selected file:", {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        });
+    }
 
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -361,6 +371,9 @@ async function fileToCompressedDataUrl(file, opts = {}) {
                     quality = Math.max(0.5, quality - 0.1);
                     dataUrl = canvas.toDataURL('image/jpeg', quality);
                     attempts++;
+                    if (AVATAR_DEBUG && opts.maxDimension === 256) {
+                        console.log("[AVATAR_DEBUG] Compression attempt:", attempts, "Quality:", quality, "Size:", dataUrl.length);
+                    }
                 }
 
                 // If still too large, try scaling down more
@@ -378,6 +391,10 @@ async function fileToCompressedDataUrl(file, opts = {}) {
                 if (dataUrl.length > maxSize) {
                     reject(new Error('Image is too large even after compression. Please use a smaller image.'));
                     return;
+                }
+
+                if (AVATAR_DEBUG && opts.maxDimension === 256) {
+                    console.log("[AVATAR_DEBUG] Image compression complete. Data URL length:", dataUrl.length);
                 }
 
                 resolve(dataUrl);
@@ -560,11 +577,19 @@ const AppState = {
  ************************************/
 
 function ensureDefaultProfile() {
+    // Migration: ensure all profiles have avatarDataUrl field
+    AppState.profiles.forEach(profile => {
+        if (profile.avatarDataUrl === undefined) {
+            profile.avatarDataUrl = null;
+        }
+    });
+    
     if (AppState.profiles.length === 0) {
         const defaultProfile = {
             id: Id.uid(),
             name: 'Default',
-            allergies: []
+            allergies: [],
+            avatarDataUrl: null
         };
         AppState.profiles.push(defaultProfile);
         AppState.activeProfileId = defaultProfile.id;
@@ -638,6 +663,14 @@ const Profiles = {
                         <select id="profile-select" class="profile-select"></select>
                     </div>
                     <div class="profile-section">
+                        <label>Profile picture</label>
+                        <div class="profile-avatar-actions">
+                            <button id="profile-avatar-change-btn" class="profile-btn profile-btn-secondary">Change picture</button>
+                            <button id="profile-avatar-remove-btn" class="profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
+                        </div>
+                        <input type="file" id="profile-avatar-input" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="profile-section">
                         <label for="profile-name-input">New profile</label>
                         <div class="profile-add-section">
                             <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
@@ -674,6 +707,40 @@ const Profiles = {
             if (e.key === 'Enter') this.addProfile();
         });
         $('#profile-delete-btn').addEventListener('click', () => this.deleteProfile());
+        
+        // Avatar upload handlers
+        const avatarInput = $('#profile-avatar-input');
+        const avatarChangeBtn = $('#profile-avatar-change-btn');
+        const avatarRemoveBtn = $('#profile-avatar-remove-btn');
+        
+        if (avatarChangeBtn && avatarInput) {
+            avatarChangeBtn.addEventListener('click', () => {
+                avatarInput.click();
+            });
+        }
+        
+        if (avatarInput) {
+            avatarInput.addEventListener('change', async (e) => {
+                // Ensure we get the actual File object from input
+                const file = avatarInput.files && avatarInput.files[0] ? avatarInput.files[0] : null;
+                
+                // Debug logging
+                const AVATAR_DEBUG = new URLSearchParams(location.search).has("avatarDebug");
+                if (AVATAR_DEBUG) {
+                    console.log("[AVATAR] file:", file?.name, file?.size, file?.type);
+                }
+                
+                if (file) {
+                    await this.handleAvatarUpload(file);
+                }
+            });
+        }
+        
+        if (avatarRemoveBtn) {
+            avatarRemoveBtn.addEventListener('click', () => {
+                this.removeAvatar();
+            });
+        }
         
         const allergiesInput = $('#profile-allergies-input');
         const clearBtn = $('#profile-allergies-clear-btn');
@@ -756,7 +823,8 @@ const Profiles = {
         const newProfile = {
             id: Id.uid(),
             name: name,
-            allergies: []
+            allergies: [],
+            avatarDataUrl: null
         };
         AppState.profiles.push(newProfile);
         AppState.activeProfileId = newProfile.id;
@@ -853,8 +921,22 @@ const Profiles = {
                 profileNameEl.textContent = activeProfile.name;
             }
             if (profileAvatar) {
-                const initial = activeProfile.name.charAt(0).toUpperCase();
-                profileAvatar.textContent = initial;
+                // Show avatar image if available, else show initial
+                if (activeProfile.avatarDataUrl && activeProfile.avatarDataUrl.trim() !== '') {
+                    const escapeHtml = (typeof window.UI !== 'undefined' && window.UI.escape) ? window.UI.escape : (s) => String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+                    profileAvatar.innerHTML = `<img src="${escapeHtml(activeProfile.avatarDataUrl)}" alt="${escapeHtml(activeProfile.name)}" class="profile-avatar-img">`;
+                    profileAvatar.classList.add('has-avatar');
+                } else {
+                    const initial = activeProfile.name.charAt(0).toUpperCase();
+                    profileAvatar.textContent = initial;
+                    profileAvatar.classList.remove('has-avatar');
+                }
+            }
+            
+            // Update avatar remove button visibility
+            const avatarRemoveBtn = $('#profile-avatar-remove-btn');
+            if (avatarRemoveBtn) {
+                avatarRemoveBtn.style.display = (activeProfile.avatarDataUrl && activeProfile.avatarDataUrl.trim() !== '') ? 'inline-block' : 'none';
             }
         } else {
             allergiesInput.value = '';
@@ -863,6 +945,12 @@ const Profiles = {
             }
             if (profileAvatar) {
                 profileAvatar.textContent = 'D';
+                profileAvatar.classList.remove('has-avatar');
+            }
+            
+            const avatarRemoveBtn = $('#profile-avatar-remove-btn');
+            if (avatarRemoveBtn) {
+                avatarRemoveBtn.style.display = 'none';
             }
         }
 
@@ -881,6 +969,147 @@ const Profiles = {
             deleteBtn.style.opacity = '1';
             deleteBtn.style.cursor = 'pointer';
         }
+    },
+
+    /**
+     * Handle avatar upload for active profile
+     * @param {File} file - Image file
+     */
+    async handleAvatarUpload(file) {
+        // Debug flag
+        const AVATAR_DEBUG = new URLSearchParams(location.search).has("avatarDebug");
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            return;
+        }
+
+        // Get active profile ID before any async operations
+        const activeProfileId = AppState.activeProfileId;
+        if (!activeProfileId) {
+            alert('No active profile found.');
+            return;
+        }
+
+        if (AVATAR_DEBUG) {
+            console.log("[AVATAR] Starting upload for profile id:", activeProfileId);
+        }
+
+        try {
+            // Compress with strict settings for avatars - MUST await completion
+            const avatarDataUrl = await fileToCompressedDataUrl(file, {
+                maxDimension: 256,
+                quality: 0.7,
+                maxSize: 200000 // ~150KB in base64 chars (approximately 200KB raw)
+            });
+
+            if (AVATAR_DEBUG) {
+                console.log("[AVATAR] dataUrl length:", avatarDataUrl?.length);
+            }
+
+            // Find and update the correct profile in the profiles array
+            // Get reference to the actual profiles array
+            const profiles = AppState.profiles;
+            const profileIndex = profiles.findIndex(p => p.id === activeProfileId);
+            
+            if (profileIndex < 0) {
+                alert('Profile not found.');
+                return;
+            }
+
+            // Update the profile object directly in the array
+            // Since AppState.profiles returns state.userProfiles, this modifies the source
+            profiles[profileIndex].avatarDataUrl = avatarDataUrl;
+            
+            // Explicitly update state.userProfiles to ensure consistency
+            state.userProfiles = profiles;
+
+            if (AVATAR_DEBUG) {
+                console.log("[AVATAR] updated profile id:", activeProfileId);
+                console.log("[AVATAR] profile has avatarDataUrl:", !!profiles[profileIndex].avatarDataUrl);
+                console.log("[AVATAR] profile index:", profileIndex);
+            }
+
+            // Persist to LocalStorage using the same mechanism as other profile edits
+            try {
+                saveState();
+                
+                // Verify storage immediately after save
+                if (AVATAR_DEBUG) {
+                    // Re-read from storage to verify
+                    const storedProfiles = state.userProfiles;
+                    const storedProfile = storedProfiles ? storedProfiles.find(p => p.id === activeProfileId) : null;
+                    console.log("[AVATAR] stored?", !!storedProfile?.avatarDataUrl);
+                    if (storedProfile?.avatarDataUrl) {
+                        console.log("[AVATAR] stored dataUrl length:", storedProfile.avatarDataUrl.length);
+                    }
+                }
+            } catch (error) {
+                // Check if it's a quota error
+                if (error.name === 'QuotaExceededError' || error.code === 22) {
+                    alert('Storage quota exceeded. Please remove some recipes or images to free up space.');
+                } else {
+                    alert('Failed to save avatar: ' + (error.message || 'Please try again.'));
+                }
+                console.error('Avatar save error:', error);
+                return;
+            }
+
+            // Re-render profile widget immediately (no refresh needed)
+            this.render();
+
+            // Reset file input
+            const avatarInput = $('#profile-avatar-input');
+            if (avatarInput) {
+                avatarInput.value = '';
+            }
+        } catch (error) {
+            alert('Failed to process avatar: ' + (error.message || 'Please try a different image.'));
+            console.error('Avatar upload error:', error);
+        }
+    },
+
+    /**
+     * Remove avatar from active profile
+     */
+    removeAvatar() {
+        const activeProfileId = AppState.activeProfileId;
+        if (!activeProfileId) {
+            alert('No active profile found.');
+            return;
+        }
+
+        if (!confirm('Remove profile picture?')) {
+            return;
+        }
+
+        // Find and update the correct profile in the profiles array
+        const profiles = AppState.profiles;
+        const profileIndex = profiles.findIndex(p => p.id === activeProfileId);
+        
+        if (profileIndex < 0) {
+            alert('Profile not found.');
+            return;
+        }
+
+        // Set avatarDataUrl to null
+        profiles[profileIndex].avatarDataUrl = null;
+        
+        // Explicitly update state.userProfiles to ensure consistency
+        state.userProfiles = profiles;
+
+        // Persist to LocalStorage
+        try {
+            saveState();
+        } catch (error) {
+            alert('Failed to remove avatar: ' + (error.message || 'Please try again.'));
+            console.error('Avatar remove error:', error);
+            return;
+        }
+
+        // Re-render profile widget immediately
+        this.render();
     }
 };
 
