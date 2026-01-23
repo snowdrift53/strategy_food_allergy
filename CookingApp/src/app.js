@@ -650,7 +650,7 @@ const Profiles = {
                     <div class="profile-avatar" id="profile-avatar" role="button" tabindex="0" aria-label="Profile avatar"></div>
                     <div class="profile-info">
                         <h3 class="profile-name" id="profile-name">Default</h3>
-                        <p class="profile-subtitle">Allergy profile</p>
+                        <p class="profile-subtitle">Profile</p>
                     </div>
                 </div>
                 <button class="profile-settings-btn" id="profile-settings-btn" aria-expanded="false" aria-controls="profile-settings-body">
