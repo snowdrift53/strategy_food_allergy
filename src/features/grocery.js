@@ -10,13 +10,40 @@ window.Melory = window.Melory || {};
 // renderApp from app.js (will be available globally)
 
 const ShoppingList = {
+    _listenersAttached: false,
+
     init() {
-        $('#add-grocery-btn').addEventListener('click', () => this.addItem());
-        $('#grocery-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.addItem();
-        });
-        $('#clear-list-btn').addEventListener('click', () => this.clearAll());
-        $('#reset-demo-btn').addEventListener('click', () => this.resetDemoData());
+        // Attach static listeners only once
+        if (!this._listenersAttached) {
+            $('#add-grocery-btn').addEventListener('click', () => this.addItem());
+            $('#grocery-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.addItem();
+            });
+            $('#clear-list-btn').addEventListener('click', () => this.clearAll());
+            $('#reset-demo-btn').addEventListener('click', () => this.resetDemoData());
+
+            // Use event delegation for dynamic items (checkboxes and remove buttons)
+            const listContainer = $('#grocery-list');
+            if (listContainer) {
+                listContainer.addEventListener('change', (e) => {
+                    if (e.target.type === 'checkbox' && e.target.closest('.grocery-item')) {
+                        const itemId = parseInt(e.target.closest('.grocery-item').getAttribute('data-item-id'));
+                        if (itemId) {
+                            this.toggleItem(itemId);
+                        }
+                    }
+                });
+                listContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('remove-btn')) {
+                        const itemId = parseInt(e.target.closest('.grocery-item').getAttribute('data-item-id'));
+                        if (itemId) {
+                            this.removeItem(itemId);
+                        }
+                    }
+                });
+            }
+            this._listenersAttached = true;
+        }
 
         this.render();
     },
@@ -110,11 +137,12 @@ const ShoppingList = {
         shoppingList.forEach(item => {
             const li = document.createElement('li');
             li.className = `grocery-item ${item.checked ? 'checked' : ''}`;
+            li.setAttribute('data-item-id', item.id); // Add data attribute for event delegation
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = item.checked;
-            checkbox.addEventListener('change', () => this.toggleItem(item.id));
+            // No addEventListener - handled by event delegation in init()
 
             const textSpan = document.createElement('span');
             textSpan.className = 'grocery-text';
@@ -123,7 +151,7 @@ const ShoppingList = {
             const removeBtn = document.createElement('button');
             removeBtn.className = 'remove-btn';
             removeBtn.textContent = '×';
-            removeBtn.addEventListener('click', () => this.removeItem(item.id));
+            // No addEventListener - handled by event delegation in init()
 
             li.appendChild(checkbox);
             li.appendChild(textSpan);

@@ -3693,6 +3693,8 @@ const AllergyInfo = {
  ************************************/
 
 const Forecast = {
+    _listenersAttached: false,
+
     normalizeIngredient(ingredient) {
         return ingredient
             .toLowerCase()
@@ -3892,7 +3894,55 @@ const Forecast = {
         renderApp();
     },
 
+    initOnce() {
+        // Attach event delegation listeners only once
+        if (this._listenersAttached) return;
+
+        const forecastContent = $('#forecast-content');
+        if (forecastContent) {
+            // Use event delegation for dynamic buttons and cards
+            forecastContent.addEventListener('click', (e) => {
+                // Handle "Go to Shopping List" button
+                if (e.target.id === 'go-to-shopping-btn' || e.target.closest('#go-to-shopping-btn')) {
+                    Navigation.switchView('shopping');
+                    return;
+                }
+
+                // Handle missing ingredient "+" buttons
+                if (e.target.classList.contains('add-missing-btn')) {
+                    e.stopPropagation();
+                    const btn = e.target;
+                    // Don't add if button is disabled (already in list)
+                    if (btn.disabled || btn.classList.contains('added')) {
+                        return;
+                    }
+                    const ingredient = btn.getAttribute('data-ingredient');
+                    if (ingredient) {
+                        this.addSuggestedItem(ingredient);
+                    }
+                    return;
+                }
+
+                // Handle ready-card clicks
+                const readyCard = e.target.closest('.ready-card');
+                if (readyCard) {
+                    const recipeId = readyCard.getAttribute('data-recipe-id');
+                    if (recipeId) {
+                        Recipes.renderDetail(recipeId);
+                        Navigation.switchView('recipes');
+                    }
+                    return;
+                }
+            });
+        }
+
+        this._listenersAttached = true;
+    },
+
     render() {
+        // Ensure event delegation is set up
+        this.initOnce();
+
         const forecastContent = $('#forecast-content');
         const p = getActiveProfile();
         
@@ -3930,11 +3980,7 @@ const Forecast = {
                     <button class="nav-btn" id="go-to-shopping-btn">Go to Shopping List</button>
                 </div>
             `;
-
-            const goBtn = $('#go-to-shopping-btn');
-            if (goBtn) {
-                goBtn.addEventListener('click', () => Navigation.switchView('shopping'));
-            }
+            // No need to attach listener - handled by event delegation in initOnce()
             return;
         }
 
@@ -4061,29 +4107,7 @@ const Forecast = {
 
         forecastContent.innerHTML = html;
 
-        // Add event listeners for missing ingredient "+" buttons
-        $$('.add-missing-btn', forecastContent).forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Don't add if button is disabled (already in list)
-                if (btn.disabled || btn.classList.contains('added')) {
-                    return;
-                }
-                const ingredient = btn.getAttribute('data-ingredient');
-                this.addSuggestedItem(ingredient);
-            });
-        });
-
-        // Make ready-cards clickable (open recipe detail and switch view)
-        $$('.ready-card', forecastContent).forEach(card => {
-            card.addEventListener('click', () => {
-                const recipeId = card.getAttribute('data-recipe-id');
-                if (!recipeId) return;
-
-                Recipes.renderDetail(recipeId);
-                Navigation.switchView('recipes');
-            });
-        });
+        // No need to attach listeners - handled by event delegation in initOnce()
     },
 
     escapeHtml(text) {
@@ -4136,6 +4160,7 @@ const App = {
         Navigation.init();
         Profiles.init();
         Log.init();
+        Forecast.initOnce(); // Initialize event delegation for Forecast
         this.initAddRecipe();
     },
 

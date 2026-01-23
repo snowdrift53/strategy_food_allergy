@@ -547,6 +547,7 @@ const Profiles = {
 
 const Log = {
     isOpen: false,
+    _listenersAttached: false,
 
     init() {
         this.createWidget();
@@ -597,6 +598,9 @@ const Log = {
     },
 
     attachEvents() {
+        // Attach static listeners only once
+        if (this._listenersAttached) return;
+
         const fab = $('#log-fab');
         const overlay = $('#log-overlay');
         const panel = $('#log-panel');
@@ -626,6 +630,21 @@ const Log = {
                 this.saveEntry();
             }
         });
+
+        // Use event delegation for dynamic delete buttons
+        const entriesContainer = $('#log-entries');
+        if (entriesContainer) {
+            entriesContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('log-delete-btn')) {
+                    const entryId = e.target.getAttribute('data-entry-id');
+                    if (entryId) {
+                        this.deleteEntry(entryId);
+                    }
+                }
+            });
+        }
+
+        this._listenersAttached = true;
     },
 
     openPanel() {
@@ -739,13 +758,7 @@ const Log = {
             </div>
         `).join('');
 
-        // Attach delete handlers
-        $$('.log-delete-btn', entriesContainer).forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const entryId = btn.getAttribute('data-entry-id');
-                this.deleteEntry(entryId);
-            });
-        });
+        // No need to attach delete handlers - handled by event delegation in attachEvents()
     },
 
     escapeHtml(text) {
