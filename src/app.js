@@ -657,17 +657,65 @@ function buildIngredientSuggestions() {
 const state = loadState();
 
 // Legacy AppState for backward compatibility during transition
+// AppState is now a pure wrapper around state - all reads and writes go through state
+// Setters automatically persist changes via saveState() to ensure data is saved
 const AppState = {
-    get groceryList() { return getProfileShoppingList(); },
-    set groceryList(value) { setProfileShoppingList(value); },
-    get profiles() { return state.userProfiles; },
-    set profiles(value) { state.userProfiles = value; },
-    get activeProfileId() { return state.userActiveProfileId; },
-    set activeProfileId(value) { state.userActiveProfileId = value; },
-    get profileLogs() { return state.profileLogs; },
-    set profileLogs(value) { state.profileLogs = value; },
-    get localRecipes() { return getProfileLocalRecipes(); },
-    set localRecipes(value) { setProfileLocalRecipes(value); },
+    get groceryList() { 
+        // Read from state via helper function
+        return getProfileShoppingList(); 
+    },
+    set groceryList(value) { 
+        // Write to state via helper function
+        setProfileShoppingList(value);
+        // Auto-save to ensure persistence (old code expects this)
+        saveState();
+    },
+    get profiles() { 
+        // Direct read from state
+        return state.userProfiles; 
+    },
+    set profiles(value) { 
+        // Direct write to state
+        state.userProfiles = value;
+        // Auto-save to ensure persistence (old code expects this)
+        saveState();
+    },
+    get activeProfileId() { 
+        // Direct read from state
+        return state.userActiveProfileId; 
+    },
+    set activeProfileId(value) { 
+        // Direct write to state
+        state.userActiveProfileId = value;
+        // Sync state.activeProfileId to keep both profile ID systems in sync
+        // This ensures profile-owned state activeProfileId matches user profile activeProfileId
+        // Only sync if value is not null (null means no active user profile, but profile-owned state should have a valid ID)
+        if (value !== null) {
+            state.activeProfileId = value;
+        }
+        // Auto-save to ensure persistence (old code expects this)
+        saveState();
+    },
+    get profileLogs() { 
+        // Direct read from state
+        return state.profileLogs; 
+    },
+    set profileLogs(value) { 
+        // Direct write to state
+        state.profileLogs = value;
+        // Auto-save to ensure persistence (old code expects this)
+        saveState();
+    },
+    get localRecipes() { 
+        // Read from state via helper function
+        return getProfileLocalRecipes(); 
+    },
+    set localRecipes(value) { 
+        // Write to state via helper function
+        setProfileLocalRecipes(value);
+        // Auto-save to ensure persistence (old code expects this)
+        saveState();
+    },
 };
 
 
