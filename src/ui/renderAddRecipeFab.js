@@ -23,7 +23,10 @@
         fab.className = 'add-recipe-fab';
         fab.id = 'add-recipe-fab';
         fab.setAttribute('aria-label', 'Add recipe');
-        fab.innerHTML = '<span class="add-recipe-fab-icon">🥘</span>';
+        fab.innerHTML = `
+            <span class="add-recipe-fab-icon">🍜</span>
+            <span class="add-recipe-fab-badge" aria-hidden="true">➕</span>
+        `;
         
         // Attach click handler
         fab.addEventListener('click', (e) => {

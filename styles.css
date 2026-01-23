@@ -2102,6 +2102,14 @@ header {
         bottom: 120px !important;
     }
 
+    .add-recipe-fab-badge {
+        width: 24px;
+        height: 24px;
+        font-size: 0.95rem;
+        bottom: 3px;
+        right: 3px;
+    }
+
     .log-panel {
         top: auto;
         right: 0;
@@ -2504,6 +2512,24 @@ input[type="search"]:focus,
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.add-recipe-fab-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--mc-green);
+    color: white;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    line-height: 1;
 }
 
 .add-recipe-fab:hover {
