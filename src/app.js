@@ -656,24 +656,6 @@ function buildIngredientSuggestions() {
 
 const state = loadState();
 
-// Legacy AppState for backward compatibility during transition
-// AppState is now a pure wrapper around state - all reads and writes go through state
-// Setters automatically persist changes via saveState() to ensure data is saved
-// NOTE: groceryList, profiles, activeProfileId, and localRecipes removed - these features now use state directly
-const AppState = {
-    get profileLogs() { 
-        // Direct read from state
-        return state.profileLogs; 
-    },
-    set profileLogs(value) { 
-        // Direct write to state
-        state.profileLogs = value;
-        // Auto-save to ensure persistence (old code expects this)
-        saveState();
-    },
-};
-
-
 /************************************
  * 4) PROFILES MODULE
  ************************************/
@@ -1322,10 +1304,10 @@ const Log = {
 
     getProfileLogs(profileId) {
         if (!profileId) return [];
-        if (!AppState.profileLogs[profileId]) {
-            AppState.profileLogs[profileId] = [];
+        if (!state.profileLogs[profileId]) {
+            state.profileLogs[profileId] = [];
         }
-        return AppState.profileLogs[profileId];
+        return state.profileLogs[profileId];
     },
 
     saveEntry() {
