@@ -13,6 +13,7 @@
      * @param {Function} options.onToggleLike - Callback when like button is clicked (recipe)
      * @param {Function} options.checkRecipeSuitability - Function to check recipe suitability (recipe) -> 'SAFE'|'REPLACEABLE'|'UNSAFE'
      * @param {Function} options.isRecipeLiked - Function to check if recipe is liked (recipeId) -> boolean
+     * @param {Function} options.onEditPicture - Callback when edit picture button is clicked (recipeId)
      * @param {string} options.emptyMessage - Message to show when recipes array is empty
      */
     window.renderRecipesGrid = function(options) {
@@ -25,6 +26,7 @@
             onToggleLike,
             checkRecipeSuitability,
             isRecipeLiked,
+            onEditPicture,
             emptyMessage
         } = options;
 
@@ -50,7 +52,8 @@
                 onRecipeClick,
                 onToggleLike,
                 checkRecipeSuitability,
-                isRecipeLiked
+                isRecipeLiked,
+                onEditPicture
             });
             containerEl.appendChild(card);
         });
@@ -70,11 +73,14 @@
             card.addEventListener('click', () => callbacks.onRecipeClick(recipe.id));
         }
 
-        // Image resolution: use recipe.imageType to choose between recipe.illustration vs recipe.photo
+        // Image resolution: prioritize user-uploaded image, then use recipe.imageType to choose between recipe.illustration vs recipe.photo
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
         let imageUrl = '';
         
-        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+        // Check for user-uploaded image first (imageDataUrl)
+        if (recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '') {
+            imageUrl = recipe.imageDataUrl;
+        } else if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
             imageUrl = recipe.illustration;
         } else if (recipe.photo && recipe.photo.trim() !== '') {
             imageUrl = recipe.photo;
@@ -106,10 +112,17 @@
         const likeButtonClass = isOnlineRecipe ? (isLiked ? 'like-btn liked' : 'like-btn') : '';
         const likeButtonHtml = isOnlineRecipe ? '<button class="' + likeButtonClass + '" data-recipe-id="' + UI.escape(recipe.id) + '" title="' + UI.escape(isLiked ? 'Remove from My Recipes' : 'Add to My Recipes') + '">❤️</button>' : '';
 
+        // Edit picture button for user-created recipes (optional on cards)
+        const isUserCreated = recipe.isUserCreated || (recipe.id && String(recipe.id).startsWith('u_'));
+        const editPictureBtnHtml = isUserCreated && callbacks.onEditPicture ? `
+            <button class="edit-picture-btn edit-picture-btn-card" data-recipe-id="${UI.escape(recipe.id)}" aria-label="Edit picture" title="Edit picture">⚙️</button>
+        ` : '';
+
         card.innerHTML = `
-            <div class="${imageClass}">
+            <div class="${imageClass}" style="position: relative;">
                 <img src="${UI.escape(imageUrl)}" alt="${UI.escape(recipe.title || '')}" onerror="this.onerror=null; this.src='${UI.escape(placeholderUrl)}';">
                 ${badgeHtml}
+                ${editPictureBtnHtml}
             </div>
             <div class="recipe-info">
                 <h2 class="recipe-title">${UI.escape(recipe.title || '')}</h2>
@@ -130,6 +143,20 @@
                 likeBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     callbacks.onToggleLike(recipe);
+                });
+            }
+        }
+
+        // Attach edit picture button handler for user-created recipes
+        if (isUserCreated && callbacks.onEditPicture) {
+            const editBtn = card.querySelector('.edit-picture-btn-card');
+            if (editBtn) {
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const recipeId = editBtn.getAttribute('data-recipe-id');
+                    if (recipeId && callbacks.onEditPicture) {
+                        callbacks.onEditPicture(recipeId);
+                    }
                 });
             }
         }

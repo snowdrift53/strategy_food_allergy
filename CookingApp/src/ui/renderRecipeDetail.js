@@ -12,6 +12,7 @@
      * @param {Function} options.classifyRecipe - Function to classify recipe (recipe, allergies) -> classification object
      * @param {Function} options.escapeHtml - Function to escape HTML (text) -> escaped string
      * @param {Array} options.activeAllergies - Array of active allergies for classification
+     * @param {Function} options.onEditPicture - Callback when edit picture is clicked (recipeId)
      */
     window.renderRecipeDetail = function(options) {
         if (!options || !options.recipe || !options.containerEl) return;
@@ -21,15 +22,20 @@
             containerEl,
             classifyRecipe,
             escapeHtml,
-            activeAllergies = []
+            activeAllergies = [],
+            onEditPicture
         } = options;
 
-        // Image resolution: use recipe.imageType to choose between recipe.illustration vs recipe.photo
+        // Image resolution: prioritize user-uploaded image, then use recipe.imageType to choose between recipe.illustration vs recipe.photo
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
         let mainImageUrl = '';
         let secondaryImageUrl = '';
         
-        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+        // Check for user-uploaded image first (imageDataUrl)
+        if (recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '') {
+            mainImageUrl = recipe.imageDataUrl;
+            secondaryImageUrl = recipe.imageDataUrl;
+        } else if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
             mainImageUrl = recipe.illustration;
             secondaryImageUrl = recipe.photo || recipe.illustration;
         } else if (recipe.photo && recipe.photo.trim() !== '') {
@@ -117,11 +123,20 @@
             }
         }
 
+        // Check if recipe is user-created
+        const isUserCreated = recipe.isUserCreated || (recipe.id && String(recipe.id).startsWith('u_'));
+        
+        // Edit picture button for user-created recipes
+        const editPictureBtnHtml = isUserCreated && onEditPicture ? `
+            <button class="edit-picture-btn" id="edit-picture-btn" data-recipe-id="${UI.escape(recipe.id)}" aria-label="Edit picture" title="Edit picture">⚙️</button>
+        ` : '';
+
         containerEl.innerHTML = `
             <div class="detail-header">
                 <div class="detail-images">
-                    <div class="${mainImageClass}">
+                    <div class="${mainImageClass}" style="position: relative;">
                         <img src="${UI.escape(mainImageUrl)}" alt="${UI.escape(recipe.title || '')}" onerror="this.onerror=null; this.src='${UI.escape(placeholderUrl)}';">
+                        ${editPictureBtnHtml}
                     </div>
                 </div>
                 <h1 class="detail-title">${UI.escape(recipe.title || '')}</h1>
@@ -148,6 +163,20 @@
                 </ol>
             </div>
         `;
+
+        // Attach edit picture button handler
+        if (isUserCreated && onEditPicture) {
+            const editBtn = containerEl.querySelector('#edit-picture-btn');
+            if (editBtn) {
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const recipeId = editBtn.getAttribute('data-recipe-id');
+                    if (recipeId && onEditPicture) {
+                        onEditPicture(recipeId);
+                    }
+                });
+            }
+        }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };

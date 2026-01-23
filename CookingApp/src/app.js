@@ -39,6 +39,10 @@ const Storage = {
             localStorage.setItem(prefixedKey, JSON.stringify(value));
         } catch (e) {
             console.warn(`Storage.save failed for key "${key}"`, e);
+            // Re-throw quota errors so they can be handled by caller
+            if (e.name === 'QuotaExceededError' || e.code === 22) {
+                throw e;
+            }
         }
     }
 };
@@ -310,26 +314,147 @@ function isRecipeLiked(recipeId) {
 }
 
 /**
- * Add recipe to active profile's local recipes
- * @param {Object} recipeObj - Recipe object (without id)
- * @returns {Object} Recipe object with generated id
+ * Compress image file to data URL with size constraints
+ * @param {File} file - Image file
+ * @param {Object} opts - Options { maxDimension: number, quality: number, maxSize: number }
+ * @returns {Promise<string>} Compressed image as data URL
  */
-function addRecipeToProfile(recipeObj) {
+async function fileToCompressedDataUrl(file, opts = {}) {
+    const maxDimension = opts.maxDimension || 1000;
+    const initialQuality = opts.quality || 0.75;
+    const maxSize = opts.maxSize || 600000; // ~450KB in base64 chars
+
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // Calculate new dimensions preserving aspect ratio
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxDimension || height > maxDimension) {
+                    if (width > height) {
+                        height = (height / width) * maxDimension;
+                        width = maxDimension;
+                    } else {
+                        width = (width / height) * maxDimension;
+                        height = maxDimension;
+                    }
+                }
+
+                // Create canvas and draw resized image
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Try compression with initial quality
+                let quality = initialQuality;
+                let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                let attempts = 0;
+                const maxAttempts = 3;
+
+                // If too large, reduce quality progressively
+                while (dataUrl.length > maxSize && attempts < maxAttempts) {
+                    quality = Math.max(0.5, quality - 0.1);
+                    dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    attempts++;
+                }
+
+                // If still too large, try scaling down more
+                if (dataUrl.length > maxSize && attempts >= maxAttempts) {
+                    // Scale down to 75% of current size
+                    const newWidth = Math.floor(width * 0.75);
+                    const newHeight = Math.floor(height * 0.75);
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                    dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                }
+
+                // Final check
+                if (dataUrl.length > maxSize) {
+                    reject(new Error('Image is too large even after compression. Please use a smaller image.'));
+                    return;
+                }
+
+                resolve(dataUrl);
+            };
+            img.onerror = () => {
+                reject(new Error('Failed to load image. Please try a different file.'));
+            };
+            img.src = e.target.result;
+        };
+        reader.onerror = () => {
+            reject(new Error('Failed to read file. Please try again.'));
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Add recipe to active profile's local recipes
+ * @param {Object} recipeObj - Recipe object (without id, may include imageFile)
+ * @returns {Promise<Object>} Recipe object with generated id
+ */
+async function addRecipeToProfile(recipeObj) {
     if (!recipeObj || !recipeObj.title) {
         console.warn('Invalid recipe object');
         return null;
     }
+
+    // Debug flag
+    const IMG_DEBUG = new URLSearchParams(location.search).has("imgDebug");
 
     // Generate unique ID: "u_" prefix for user-added recipes
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000);
     const recipeId = `u_${timestamp}_${random}`;
 
-    // Create full recipe object with id
+    // Process image if provided - MUST complete before saving
+    let imageDataUrl = null;
+    if (recipeObj.imageFile) {
+        try {
+            if (IMG_DEBUG) {
+                console.log("[IMG_DEBUG] Starting image compression for file:", recipeObj.imageFile.name);
+            }
+            imageDataUrl = await fileToCompressedDataUrl(recipeObj.imageFile);
+            if (IMG_DEBUG) {
+                console.log("[IMG_DEBUG] Image compression complete. Data URL length:", imageDataUrl ? imageDataUrl.length : 0);
+            }
+        } catch (error) {
+            console.error('Image compression failed:', error);
+            throw error; // Re-throw to show error to user
+        }
+    }
+
+    // Create full recipe object with id (remove imageFile, add imageDataUrl if available)
+    const { imageFile, ...recipeWithoutFile } = recipeObj;
     const fullRecipe = {
-        ...recipeObj,
-        id: recipeId
+        ...recipeWithoutFile,
+        id: recipeId,
+        isUserCreated: true // Mark as user-created
     };
+
+    // Add imageDataUrl if available (standardized field name)
+    if (imageDataUrl) {
+        fullRecipe.imageDataUrl = imageDataUrl;
+        fullRecipe.imageType = 'photo';
+        fullRecipe.photo = imageDataUrl; // Also set for compatibility with existing rendering
+    }
+
+    // Debug: verify saved recipe contains imageDataUrl
+    if (IMG_DEBUG) {
+        console.log("[IMG_DEBUG] Recipe object contains imageDataUrl:", !!fullRecipe.imageDataUrl);
+        console.log("[IMG_DEBUG] Full recipe object:", {
+            id: fullRecipe.id,
+            title: fullRecipe.title,
+            hasImageDataUrl: !!fullRecipe.imageDataUrl,
+            imageDataUrlLength: fullRecipe.imageDataUrl ? fullRecipe.imageDataUrl.length : 0
+        });
+    }
 
     // Build cuisine tags if Recipes module is available
     if (typeof Recipes !== 'undefined' && Recipes.buildCuisineTags) {
@@ -342,9 +467,22 @@ function addRecipeToProfile(recipeObj) {
     // Add new recipe
     localRecipes.push(fullRecipe);
 
-    // Save to profile
-    setProfileLocalRecipes(localRecipes);
-    saveState();
+    // Save to profile with error handling
+    try {
+        setProfileLocalRecipes(localRecipes);
+        saveState();
+    } catch (error) {
+        // Check if it's a quota error
+        if (error.name === 'QuotaExceededError' || error.code === 22) {
+            const errorMsg = 'Storage quota exceeded. Please remove some recipes or images to free up space.';
+            alert(errorMsg);
+            throw new Error(errorMsg);
+        }
+        // Other storage errors
+        const errorMsg = 'Failed to save recipe. ' + (error.message || 'Please try again.');
+        alert(errorMsg);
+        throw new Error(errorMsg);
+    }
 
     return fullRecipe;
 }
@@ -2277,6 +2415,7 @@ const Recipes = {
                 onToggleLike: (recipe) => this.toggleLikeRecipe(recipe),
                 checkRecipeSuitability: (recipe) => this.checkRecipeSuitability(recipe),
                 isRecipeLiked: (recipeId) => isRecipeLiked(recipeId),
+                onEditPicture: (recipeId) => this.editRecipePicture(recipeId),
                 emptyMessage: emptyMessage
             });
 
@@ -2461,7 +2600,8 @@ const Recipes = {
                 containerEl: detailContent,
                 classifyRecipe: (recipe, allergies) => AllergyEngine.classifyRecipe(recipe, allergies),
                 escapeHtml: (text) => this.escapeHtml(text),
-                activeAllergies: activeAllergies
+                activeAllergies: activeAllergies,
+                onEditPicture: (recipeId) => this.editRecipePicture(recipeId)
             });
 
             // Debug logging
@@ -2627,6 +2767,182 @@ const Recipes = {
         // Persist and re-render
         saveState();
         renderApp();
+    },
+
+    /**
+     * Edit picture for a user-created recipe
+     * @param {string} recipeId - Recipe ID
+     */
+    async editRecipePicture(recipeId) {
+        const recipe = this.currentRecipes.find(r => String(r.id) === String(recipeId));
+        if (!recipe) return;
+
+        // Check if recipe is user-created
+        const isUserCreated = recipe.isUserCreated || (recipe.id && String(recipe.id).startsWith('u_'));
+        if (!isUserCreated) {
+            alert('Only user-created recipes can have their pictures edited.');
+            return;
+        }
+
+        // Show options: Change picture or Remove picture
+        const hasImage = recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '';
+        const action = hasImage 
+            ? confirm('Change picture? (Click Cancel to remove picture)')
+                ? 'change'
+                : 'remove'
+            : 'change';
+
+        if (action === 'remove') {
+            // Remove picture
+            if (!confirm('Remove picture from this recipe?')) {
+                return;
+            }
+
+            // Update recipe in storage
+            const localRecipes = getProfileLocalRecipes();
+            const recipeIndex = localRecipes.findIndex(r => String(r.id) === String(recipeId));
+            
+            if (recipeIndex >= 0) {
+                delete localRecipes[recipeIndex].imageDataUrl;
+                
+                try {
+                    setProfileLocalRecipes(localRecipes);
+                    saveState();
+                    
+                    // Update currentRecipes
+                    const currentIndex = this.currentRecipes.findIndex(r => String(r.id) === String(recipeId));
+                    if (currentIndex >= 0) {
+                        delete this.currentRecipes[currentIndex].imageDataUrl;
+                    }
+                    
+                    // Re-render detail view
+                    this.renderDetail(recipeId);
+                } catch (error) {
+                    alert('Failed to remove picture: ' + (error.message || 'Please try again.'));
+                }
+            }
+            return;
+        }
+
+        // Change picture - create hidden file input if it doesn't exist
+        let fileInput = document.getElementById('edit-recipe-image-input');
+        if (!fileInput) {
+            fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.id = 'edit-recipe-image-input';
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+        }
+
+        // Create a promise to handle file selection
+        const filePromise = new Promise((resolve, reject) => {
+            const handleChange = (e) => {
+                const file = e.target.files[0];
+                fileInput.removeEventListener('change', handleChange);
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file.');
+                        reject(new Error('Invalid file type'));
+                        return;
+                    }
+                    resolve(file);
+                } else {
+                    reject(new Error('No file selected'));
+                }
+            };
+            fileInput.addEventListener('change', handleChange);
+            fileInput.click();
+        });
+
+        // Also handle cancel (user closes file picker without selecting)
+        const cancelPromise = new Promise((resolve) => {
+            const handleCancel = () => {
+                window.removeEventListener('focus', handleCancel);
+                setTimeout(() => {
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        resolve(null);
+                    }
+                }, 300);
+            };
+            window.addEventListener('focus', handleCancel);
+        });
+
+        try {
+            // Wait for file selection or cancel
+            const file = await Promise.race([filePromise, cancelPromise]);
+            
+            if (!file) {
+                // User cancelled
+                return;
+            }
+
+            // Compress image
+            const IMG_DEBUG = new URLSearchParams(location.search).has("imgDebug");
+            if (IMG_DEBUG) {
+                console.log("[IMG_DEBUG] Editing picture for recipe:", recipeId, "File:", file.name, "Size:", file.size);
+            }
+
+            let imageDataUrl = null;
+            try {
+                imageDataUrl = await fileToCompressedDataUrl(file);
+                if (IMG_DEBUG) {
+                    console.log("[IMG_DEBUG] Image compression complete. Data URL length:", imageDataUrl ? imageDataUrl.length : 0);
+                }
+            } catch (error) {
+                alert('Failed to process image: ' + (error.message || 'Please try a different image.'));
+                return;
+            }
+
+            // Update recipe in storage
+            const localRecipes = getProfileLocalRecipes();
+            const recipeIndex = localRecipes.findIndex(r => String(r.id) === String(recipeId));
+            
+            if (recipeIndex >= 0) {
+                // Update imageDataUrl
+                if (imageDataUrl) {
+                    localRecipes[recipeIndex].imageDataUrl = imageDataUrl;
+                } else {
+                    delete localRecipes[recipeIndex].imageDataUrl;
+                }
+                
+                // Save
+                try {
+                    setProfileLocalRecipes(localRecipes);
+                    saveState();
+                    
+                    if (IMG_DEBUG) {
+                        console.log("[IMG_DEBUG] Recipe updated with imageDataUrl:", !!localRecipes[recipeIndex].imageDataUrl);
+                    }
+                    
+                    // Update currentRecipes to reflect change
+                    const currentIndex = this.currentRecipes.findIndex(r => String(r.id) === String(recipeId));
+                    if (currentIndex >= 0) {
+                        if (imageDataUrl) {
+                            this.currentRecipes[currentIndex].imageDataUrl = imageDataUrl;
+                        } else {
+                            delete this.currentRecipes[currentIndex].imageDataUrl;
+                        }
+                    }
+                    
+                    // Re-render detail view immediately
+                    this.renderDetail(recipeId);
+                } catch (error) {
+                    if (error.name === 'QuotaExceededError' || error.code === 22) {
+                        alert('Storage quota exceeded. Please remove some recipes or images to free up space.');
+                    } else {
+                        alert('Failed to save image: ' + (error.message || 'Please try again.'));
+                    }
+                }
+            }
+        } catch (error) {
+            if (error.message !== 'No file selected' && error.message !== 'Invalid file type') {
+                console.error('Edit picture error:', error);
+            }
+        } finally {
+            // Reset file input
+            fileInput.value = '';
+        }
     }
 };
 
@@ -3303,26 +3619,32 @@ const App = {
                                     window.closeAddRecipeModal();
                                 }
                             },
-                            onSubmit: (recipeObj) => {
-                                // Save recipe
-                                const savedRecipe = addRecipeToProfile(recipeObj);
-                                if (savedRecipe) {
-                                    // Close modal
-                                    if (typeof window.closeAddRecipeModal === 'function') {
-                                        window.closeAddRecipeModal();
-                                    }
+                            onSubmit: async (recipeObj) => {
+                                try {
+                                    // Save recipe (async due to image compression)
+                                    const savedRecipe = await addRecipeToProfile(recipeObj);
+                                    if (savedRecipe) {
+                                        // Close modal
+                                        if (typeof window.closeAddRecipeModal === 'function') {
+                                            window.closeAddRecipeModal();
+                                        }
 
-                                    // Refresh recipe list if in local mode
-                                    if (Recipes.searchMode === 'local') {
-                                        const searchInput = $('#recipe-search-input');
-                                        const currentQuery = searchInput ? searchInput.value.trim() : '';
-                                        Recipes.searchLocal(currentQuery);
-                                    } else {
-                                        // If in online mode, switch to local to show the new recipe
-                                        Recipes.searchMode = 'local';
-                                        Recipes.updateToggleButtons();
-                                        Recipes.searchLocal('');
+                                        // Refresh recipe list if in local mode
+                                        if (Recipes.searchMode === 'local') {
+                                            const searchInput = $('#recipe-search-input');
+                                            const currentQuery = searchInput ? searchInput.value.trim() : '';
+                                            Recipes.searchLocal(currentQuery);
+                                        } else {
+                                            // If in online mode, switch to local to show the new recipe
+                                            Recipes.searchMode = 'local';
+                                            Recipes.updateToggleButtons();
+                                            Recipes.searchLocal('');
+                                        }
                                     }
+                                } catch (error) {
+                                    // Show user-friendly error message
+                                    alert(error.message || 'Failed to save recipe. Please try again.');
+                                    console.error('Recipe save error:', error);
                                 }
                             },
                             ingredientSuggestions: ingredientSuggestions

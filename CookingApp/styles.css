@@ -2770,6 +2770,79 @@ input[type="search"]:focus,
     background: #d4c0a0;
 }
 
+.add-recipe-image-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.add-recipe-image-btn {
+    background: #8B7355;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    align-self: flex-start;
+}
+
+.add-recipe-image-btn:hover {
+    background: #6B4E3D;
+    transform: translateY(-1px);
+}
+
+.add-recipe-image-preview-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    border: 2px solid #E6D3B3;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.add-recipe-image-preview-wrapper.hidden {
+    display: none;
+}
+
+.add-recipe-image-preview {
+    display: block;
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.add-recipe-image-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.add-recipe-image-remove-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+}
+
 @media (max-width: 768px) {
     .add-recipe-fab {
         bottom: 120px !important;
@@ -2790,4 +2863,50 @@ input[type="search"]:focus,
     .add-recipe-modal-body {
         padding: 16px;
     }
+
+    .add-recipe-image-preview {
+        max-height: 200px;
+    }
+}
+
+/* ===== Edit Picture Button ===== */
+.edit-picture-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.edit-picture-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.edit-picture-btn:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+.edit-picture-btn-card {
+    top: 8px;
+    left: 8px;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
 }

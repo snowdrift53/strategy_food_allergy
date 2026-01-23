@@ -88,8 +88,15 @@
                     </div>
 
                     <div class="add-recipe-field">
-                        <label class="add-recipe-disabled-label">Image (coming next)</label>
-                        <div class="add-recipe-disabled-placeholder">Image upload will be available in a future update</div>
+                        <label for="recipe-image-input">Picture (optional)</label>
+                        <div class="add-recipe-image-section">
+                            <input type="file" id="recipe-image-input" class="add-recipe-file-input" accept="image/*" style="display: none;">
+                            <button type="button" id="recipe-image-select-btn" class="add-recipe-image-btn">Choose Picture</button>
+                            <div id="recipe-image-preview-wrapper" class="add-recipe-image-preview-wrapper hidden">
+                                <img id="recipe-image-preview" class="add-recipe-image-preview" alt="Recipe preview">
+                                <button type="button" id="recipe-image-remove-btn" class="add-recipe-image-remove-btn" aria-label="Remove picture">×</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="add-recipe-modal-actions">
@@ -176,6 +183,51 @@
             }
         });
 
+        // Image upload handling
+        const imageInput = document.getElementById('recipe-image-input');
+        const imageSelectBtn = document.getElementById('recipe-image-select-btn');
+        const imagePreviewWrapper = document.getElementById('recipe-image-preview-wrapper');
+        const imagePreview = document.getElementById('recipe-image-preview');
+        const imageRemoveBtn = document.getElementById('recipe-image-remove-btn');
+
+        imageSelectBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file.');
+                    imageInput.value = '';
+                    return;
+                }
+
+                // Validate file size (before compression, warn if > 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Image is very large. It will be compressed automatically.');
+                }
+
+                selectedImageFile = file;
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imagePreview.src = event.target.result;
+                    imagePreviewWrapper.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        imageRemoveBtn.addEventListener('click', () => {
+            selectedImageFile = null;
+            imageInput.value = '';
+            imagePreviewWrapper.classList.add('hidden');
+            imagePreview.src = '';
+        });
+
         // Form submission
         const form = document.getElementById('add-recipe-form');
         form.addEventListener('submit', (e) => {
@@ -205,6 +257,24 @@
                 return;
             }
 
+            // Get file from input (ensure we have the actual File object)
+            const fileFromInput = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+            const imageFileToUse = fileFromInput || selectedImageFile || null;
+
+            // Debug logging
+            const IMG_DEBUG = new URLSearchParams(location.search).has("imgDebug");
+            if (IMG_DEBUG) {
+                if (imageFileToUse) {
+                    console.log("[IMG_DEBUG] Selected file:", {
+                        name: imageFileToUse.name,
+                        size: imageFileToUse.size,
+                        type: imageFileToUse.type
+                    });
+                } else {
+                    console.log("[IMG_DEBUG] No image file selected");
+                }
+            }
+
             // Build recipe object
             const recipeObj = {
                 title: title,
@@ -218,7 +288,8 @@
                 difficulty: 'N/A',
                 imageType: 'photo',
                 photo: '',
-                illustration: ''
+                illustration: '',
+                imageFile: imageFileToUse
             };
 
             if (onSubmit) {
