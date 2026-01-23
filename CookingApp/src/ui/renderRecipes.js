@@ -13,7 +13,7 @@
      * @param {Function} options.onToggleLike - Callback when like button is clicked (recipe)
      * @param {Function} options.checkRecipeSuitability - Function to check recipe suitability (recipe) -> 'SAFE'|'REPLACEABLE'|'UNSAFE'
      * @param {Function} options.isRecipeLiked - Function to check if recipe is liked (recipeId) -> boolean
-     * @param {Function} options.onEditPicture - Callback when edit picture button is clicked (recipeId)
+     * @param {Function} options.onEditRecipe - Callback when edit recipe button is clicked (recipeId)
      * @param {string} options.emptyMessage - Message to show when recipes array is empty
      */
     window.renderRecipesGrid = function(options) {
@@ -26,7 +26,7 @@
             onToggleLike,
             checkRecipeSuitability,
             isRecipeLiked,
-            onEditPicture,
+            onEditRecipe,
             emptyMessage
         } = options;
 
@@ -53,7 +53,7 @@
                 onToggleLike,
                 checkRecipeSuitability,
                 isRecipeLiked,
-                onEditPicture
+                onEditRecipe
             });
             containerEl.appendChild(card);
         });
@@ -112,17 +112,17 @@
         const likeButtonClass = isOnlineRecipe ? (isLiked ? 'like-btn liked' : 'like-btn') : '';
         const likeButtonHtml = isOnlineRecipe ? '<button class="' + likeButtonClass + '" data-recipe-id="' + UI.escape(recipe.id) + '" title="' + UI.escape(isLiked ? 'Remove from My Recipes' : 'Add to My Recipes') + '">❤️</button>' : '';
 
-        // Edit picture button for user-created recipes (optional on cards)
+        // Edit recipe button for user-created recipes (optional on cards)
         const isUserCreated = recipe.isUserCreated || (recipe.id && String(recipe.id).startsWith('u_'));
-        const editPictureBtnHtml = isUserCreated && callbacks.onEditPicture ? `
-            <button class="edit-picture-btn edit-picture-btn-card" data-recipe-id="${UI.escape(recipe.id)}" aria-label="Edit picture" title="Edit picture">⚙️</button>
+        const editRecipeBtnHtml = isUserCreated && callbacks.onEditRecipe ? `
+            <button class="edit-picture-btn edit-picture-btn-card" data-recipe-id="${UI.escape(recipe.id)}" aria-label="Edit recipe" title="Edit recipe">⚙️</button>
         ` : '';
 
         card.innerHTML = `
             <div class="${imageClass}" style="position: relative;">
                 <img src="${UI.escape(imageUrl)}" alt="${UI.escape(recipe.title || '')}" onerror="this.onerror=null; this.src='${UI.escape(placeholderUrl)}';">
                 ${badgeHtml}
-                ${editPictureBtnHtml}
+                ${editRecipeBtnHtml}
             </div>
             <div class="recipe-info">
                 <h2 class="recipe-title">${UI.escape(recipe.title || '')}</h2>
@@ -147,15 +147,15 @@
             }
         }
 
-        // Attach edit picture button handler for user-created recipes
-        if (isUserCreated && callbacks.onEditPicture) {
+        // Attach edit recipe button handler for user-created recipes
+        if (isUserCreated && callbacks.onEditRecipe) {
             const editBtn = card.querySelector('.edit-picture-btn-card');
             if (editBtn) {
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const recipeId = editBtn.getAttribute('data-recipe-id');
-                    if (recipeId && callbacks.onEditPicture) {
-                        callbacks.onEditPicture(recipeId);
+                    if (recipeId && callbacks.onEditRecipe) {
+                        callbacks.onEditRecipe(recipeId);
                     }
                 });
             }

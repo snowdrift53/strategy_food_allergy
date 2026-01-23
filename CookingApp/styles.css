@@ -2869,6 +2869,31 @@ input[type="search"]:focus,
     }
 }
 
+/* ===== Recipe Editor Modal - Delete Button ===== */
+.add-recipe-btn-danger {
+    background: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+}
+
+.add-recipe-btn-danger:hover {
+    background: #c82333;
+    border-color: #bd2130;
+}
+
+.add-recipe-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--mc-border);
+}
+
+.add-recipe-modal-actions .add-recipe-btn-danger {
+    margin-right: auto;
+}
+
 /* ===== Edit Picture Button ===== */
 .edit-picture-btn {
     position: absolute;

@@ -12,7 +12,7 @@
      * @param {Function} options.classifyRecipe - Function to classify recipe (recipe, allergies) -> classification object
      * @param {Function} options.escapeHtml - Function to escape HTML (text) -> escaped string
      * @param {Array} options.activeAllergies - Array of active allergies for classification
-     * @param {Function} options.onEditPicture - Callback when edit picture is clicked (recipeId)
+     * @param {Function} options.onEditRecipe - Callback when edit recipe is clicked (recipeId)
      */
     window.renderRecipeDetail = function(options) {
         if (!options || !options.recipe || !options.containerEl) return;
@@ -23,7 +23,7 @@
             classifyRecipe,
             escapeHtml,
             activeAllergies = [],
-            onEditPicture
+            onEditRecipe
         } = options;
 
         // Image resolution: prioritize user-uploaded image, then use recipe.imageType to choose between recipe.illustration vs recipe.photo
@@ -126,9 +126,9 @@
         // Check if recipe is user-created
         const isUserCreated = recipe.isUserCreated || (recipe.id && String(recipe.id).startsWith('u_'));
         
-        // Edit picture button for user-created recipes
-        const editPictureBtnHtml = isUserCreated && onEditPicture ? `
-            <button class="edit-picture-btn" id="edit-picture-btn" data-recipe-id="${UI.escape(recipe.id)}" aria-label="Edit picture" title="Edit picture">⚙️</button>
+        // Edit recipe button for user-created recipes
+        const editRecipeBtnHtml = isUserCreated && onEditRecipe ? `
+            <button class="edit-picture-btn" id="edit-recipe-btn" data-recipe-id="${UI.escape(recipe.id)}" aria-label="Edit recipe" title="Edit recipe">⚙️</button>
         ` : '';
 
         containerEl.innerHTML = `
@@ -136,7 +136,7 @@
                 <div class="detail-images">
                     <div class="${mainImageClass}" style="position: relative;">
                         <img src="${UI.escape(mainImageUrl)}" alt="${UI.escape(recipe.title || '')}" onerror="this.onerror=null; this.src='${UI.escape(placeholderUrl)}';">
-                        ${editPictureBtnHtml}
+                        ${editRecipeBtnHtml}
                     </div>
                 </div>
                 <h1 class="detail-title">${UI.escape(recipe.title || '')}</h1>
@@ -164,15 +164,15 @@
             </div>
         `;
 
-        // Attach edit picture button handler
-        if (isUserCreated && onEditPicture) {
-            const editBtn = containerEl.querySelector('#edit-picture-btn');
+        // Attach edit recipe button handler
+        if (isUserCreated && onEditRecipe) {
+            const editBtn = containerEl.querySelector('#edit-recipe-btn');
             if (editBtn) {
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const recipeId = editBtn.getAttribute('data-recipe-id');
-                    if (recipeId && onEditPicture) {
-                        onEditPicture(recipeId);
+                    if (recipeId && onEditRecipe) {
+                        onEditRecipe(recipeId);
                     }
                 });
             }

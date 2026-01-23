@@ -1,31 +1,49 @@
 /**
- * Add Recipe Modal - Modal form for adding new recipes
+ * Recipe Editor Modal - Reusable modal for creating and editing recipes
  */
 (function() {
     'use strict';
 
     /**
-     * Render add recipe modal
+     * Render recipe editor modal (create or edit mode)
      * @param {Object} options - Configuration object
-     * @param {Function} options.onClose - Callback when modal is closed
-     * @param {Function} options.onSubmit - Callback when form is submitted (recipeObj)
+     * @param {string} options.mode - "create" | "edit"
+     * @param {Object|null} options.initialRecipe - Recipe object for edit mode, null for create
      * @param {Array} options.ingredientSuggestions - Array of ingredient strings for autocomplete
+     * @param {Function} options.onClose - Callback when modal is closed
+     * @param {Function} options.onSave - Callback when form is saved (recipeObj, imageFile, removeImage)
+     * @param {Function} options.onDelete - Callback when delete is clicked (recipeId) - only in edit mode
      */
-    window.renderAddRecipeModal = function(options) {
+    window.renderRecipeEditorModal = function(options) {
         if (!options) return;
 
-        const { onClose, onSubmit, ingredientSuggestions = [] } = options;
+        const { 
+            mode = 'create', 
+            initialRecipe = null, 
+            ingredientSuggestions = [], 
+            onClose, 
+            onSave,
+            onDelete 
+        } = options;
+
+        const isEditMode = mode === 'edit' && initialRecipe;
 
         // Remove existing modal if present
-        const existing = document.getElementById('add-recipe-modal');
+        const modalId = 'recipe-editor-modal';
+        const overlayId = 'recipe-editor-overlay';
+        const existing = document.getElementById(modalId);
         if (existing) {
             existing.remove();
+        }
+        const existingOverlay = document.getElementById(overlayId);
+        if (existingOverlay) {
+            existingOverlay.remove();
         }
 
         // Create overlay
         const overlay = document.createElement('div');
         overlay.className = 'add-recipe-overlay';
-        overlay.id = 'add-recipe-overlay';
+        overlay.id = overlayId;
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay && onClose) {
                 onClose();
@@ -35,9 +53,9 @@
         // Create modal
         const modal = document.createElement('div');
         modal.className = 'add-recipe-modal';
-        modal.id = 'add-recipe-modal';
+        modal.id = modalId;
         modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-labelledby', 'add-recipe-modal-title');
+        modal.setAttribute('aria-labelledby', 'recipe-editor-modal-title');
 
         // Build datalist for ingredient autocomplete
         const datalistId = 'ingredient-suggestions';
@@ -46,21 +64,29 @@
             datalistHtml = `<datalist id="${datalistId}">${ingredientSuggestions.map(ing => `<option value="${UI.escape(ing)}">`).join('')}</datalist>`;
         }
 
+        // Pre-fill values for edit mode
+        const initialTitle = isEditMode ? (initialRecipe.title || '') : '';
+        const initialDescription = isEditMode ? (initialRecipe.description || initialRecipe.fullDescription || '') : '';
+        const initialCuisine = isEditMode ? (initialRecipe.cuisine || '') : '';
+        const initialIngredients = isEditMode ? (initialRecipe.ingredients || []) : [];
+        const initialSteps = isEditMode ? (initialRecipe.steps || []) : [];
+        const initialImageDataUrl = isEditMode ? (initialRecipe.imageDataUrl || '') : '';
+
         modal.innerHTML = `
             <div class="add-recipe-modal-header">
-                <h3 id="add-recipe-modal-title">Add Recipe</h3>
-                <button class="add-recipe-close-btn" id="add-recipe-close-btn" aria-label="Close">×</button>
+                <h3 id="recipe-editor-modal-title">${isEditMode ? 'Edit Recipe' : 'Add Recipe'}</h3>
+                <button class="add-recipe-close-btn" id="recipe-editor-close-btn" aria-label="Close">×</button>
             </div>
             <div class="add-recipe-modal-body">
-                <form id="add-recipe-form">
+                <form id="recipe-editor-form">
                     <div class="add-recipe-field">
                         <label for="recipe-title-input">Title <span class="required">*</span></label>
-                        <input type="text" id="recipe-title-input" class="add-recipe-input" required placeholder="e.g., Chocolate Chip Cookies">
+                        <input type="text" id="recipe-title-input" class="add-recipe-input" required placeholder="e.g., Chocolate Chip Cookies" value="${UI.escape(initialTitle)}">
                     </div>
 
                     <div class="add-recipe-field">
                         <label for="recipe-description-input">Description</label>
-                        <textarea id="recipe-description-input" class="add-recipe-textarea" rows="3" placeholder="Optional description..."></textarea>
+                        <textarea id="recipe-description-input" class="add-recipe-textarea" rows="3" placeholder="Optional description...">${UI.escape(initialDescription)}</textarea>
                     </div>
 
                     <div class="add-recipe-field">
@@ -91,17 +117,20 @@
                         <label for="recipe-image-input">Picture (optional)</label>
                         <div class="add-recipe-image-section">
                             <input type="file" id="recipe-image-input" class="add-recipe-file-input" accept="image/*" style="display: none;">
-                            <button type="button" id="recipe-image-select-btn" class="add-recipe-image-btn">Choose Picture</button>
-                            <div id="recipe-image-preview-wrapper" class="add-recipe-image-preview-wrapper hidden">
-                                <img id="recipe-image-preview" class="add-recipe-image-preview" alt="Recipe preview">
+                            <button type="button" id="recipe-image-select-btn" class="add-recipe-image-btn">${initialImageDataUrl ? 'Replace Picture' : 'Choose Picture'}</button>
+                            <div id="recipe-image-preview-wrapper" class="add-recipe-image-preview-wrapper ${initialImageDataUrl ? '' : 'hidden'}">
+                                <img id="recipe-image-preview" class="add-recipe-image-preview" alt="Recipe preview" src="${initialImageDataUrl ? UI.escape(initialImageDataUrl) : ''}">
                                 <button type="button" id="recipe-image-remove-btn" class="add-recipe-image-remove-btn" aria-label="Remove picture">×</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="add-recipe-modal-actions">
-                        <button type="button" id="add-recipe-cancel-btn" class="add-recipe-btn add-recipe-btn-secondary">Cancel</button>
-                        <button type="submit" id="add-recipe-submit-btn" class="add-recipe-btn add-recipe-btn-primary">Save Recipe</button>
+                        ${isEditMode && onDelete ? `
+                            <button type="button" id="recipe-editor-delete-btn" class="add-recipe-btn add-recipe-btn-danger">Delete Recipe</button>
+                        ` : ''}
+                        <button type="button" id="recipe-editor-cancel-btn" class="add-recipe-btn add-recipe-btn-secondary">Cancel</button>
+                        <button type="submit" id="recipe-editor-submit-btn" class="add-recipe-btn add-recipe-btn-primary">${isEditMode ? 'Save Changes' : 'Save Recipe'}</button>
                     </div>
                 </form>
             </div>
@@ -110,9 +139,13 @@
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        // State for ingredients and steps
-        const ingredients = [];
-        const steps = [];
+        // State for ingredients and steps (pre-filled in edit mode)
+        const ingredients = [...initialIngredients];
+        const steps = [...initialSteps];
+        
+        // State for image handling
+        let selectedImageFile = null;
+        let removeImageFlag = false;
 
         // Helper to render list items
         const renderList = (listId, items, onRemove) => {
@@ -135,6 +168,18 @@
             });
         };
 
+        // Initial render of lists for edit mode
+        if (isEditMode) {
+            renderList('ingredients-list', ingredients, (index) => {
+                ingredients.splice(index, 1);
+                renderList('ingredients-list', ingredients, () => {});
+            });
+            renderList('steps-list', steps, (index) => {
+                steps.splice(index, 1);
+                renderList('steps-list', steps, () => {});
+            });
+        }
+
         // Ingredients list management
         const ingredientInput = document.getElementById('ingredient-input');
         const addIngredientBtn = document.getElementById('add-ingredient-btn');
@@ -151,13 +196,17 @@
             }
         };
 
-        addIngredientBtn.addEventListener('click', addIngredient);
-        ingredientInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addIngredient();
-            }
-        });
+        if (addIngredientBtn) {
+            addIngredientBtn.addEventListener('click', addIngredient);
+        }
+        if (ingredientInput) {
+            ingredientInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addIngredient();
+                }
+            });
+        }
 
         // Steps list management
         const stepInput = document.getElementById('step-input');
@@ -175,13 +224,17 @@
             }
         };
 
-        addStepBtn.addEventListener('click', addStep);
-        stepInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addStep();
-            }
-        });
+        if (addStepBtn) {
+            addStepBtn.addEventListener('click', addStep);
+        }
+        if (stepInput) {
+            stepInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addStep();
+                }
+            });
+        }
 
         // Image upload handling
         const imageInput = document.getElementById('recipe-image-input');
@@ -210,6 +263,7 @@
                 }
 
                 selectedImageFile = file;
+                removeImageFlag = false; // New file selected, don't remove
 
                 // Show preview
                 const reader = new FileReader();
@@ -223,13 +277,14 @@
 
         imageRemoveBtn.addEventListener('click', () => {
             selectedImageFile = null;
+            removeImageFlag = true; // Mark for removal
             imageInput.value = '';
             imagePreviewWrapper.classList.add('hidden');
             imagePreview.src = '';
         });
 
         // Form submission
-        const form = document.getElementById('add-recipe-form');
+        const form = document.getElementById('recipe-editor-form');
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -247,13 +302,13 @@
 
             if (ingredients.length === 0) {
                 alert('Please add at least one ingredient.');
-                ingredientInput.focus();
+                if (ingredientInput) ingredientInput.focus();
                 return;
             }
 
             if (steps.length === 0) {
                 alert('Please add at least one step.');
-                stepInput.focus();
+                if (stepInput) stepInput.focus();
                 return;
             }
 
@@ -261,21 +316,7 @@
             const fileFromInput = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
             const imageFileToUse = fileFromInput || selectedImageFile || null;
 
-            // Debug logging
-            const IMG_DEBUG = new URLSearchParams(location.search).has("imgDebug");
-            if (IMG_DEBUG) {
-                if (imageFileToUse) {
-                    console.log("[IMG_DEBUG] Selected file:", {
-                        name: imageFileToUse.name,
-                        size: imageFileToUse.size,
-                        type: imageFileToUse.type
-                    });
-                } else {
-                    console.log("[IMG_DEBUG] No image file selected");
-                }
-            }
-
-            // Build recipe object
+            // Build recipe object (for edit mode, preserve id and isUserCreated)
             const recipeObj = {
                 title: title,
                 description: description || '',
@@ -283,23 +324,40 @@
                 ingredients: ingredients,
                 steps: steps,
                 cuisine: cuisine || '',
-                time: 'N/A',
-                servings: 'N/A',
-                difficulty: 'N/A',
+                time: isEditMode ? (initialRecipe.time || 'N/A') : 'N/A',
+                servings: isEditMode ? (initialRecipe.servings || 'N/A') : 'N/A',
+                difficulty: isEditMode ? (initialRecipe.difficulty || 'N/A') : 'N/A',
                 imageType: 'photo',
                 photo: '',
-                illustration: '',
-                imageFile: imageFileToUse
+                illustration: ''
             };
 
-            if (onSubmit) {
-                onSubmit(recipeObj);
+            // Preserve id and isUserCreated in edit mode
+            if (isEditMode) {
+                recipeObj.id = initialRecipe.id;
+                recipeObj.isUserCreated = initialRecipe.isUserCreated !== undefined ? initialRecipe.isUserCreated : true;
+            }
+
+            if (onSave) {
+                onSave(recipeObj, imageFileToUse, removeImageFlag);
             }
         });
 
+        // Delete handler (only in edit mode)
+        if (isEditMode && onDelete) {
+            const deleteBtn = document.getElementById('recipe-editor-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+                        onDelete(initialRecipe.id);
+                    }
+                });
+            }
+        }
+
         // Close handlers
-        const closeBtn = document.getElementById('add-recipe-close-btn');
-        const cancelBtn = document.getElementById('add-recipe-cancel-btn');
+        const closeBtn = document.getElementById('recipe-editor-close-btn');
+        const cancelBtn = document.getElementById('recipe-editor-cancel-btn');
         
         const closeModal = () => {
             if (onClose) {
@@ -307,22 +365,54 @@
             }
         };
 
-        closeBtn.addEventListener('click', closeModal);
-        cancelBtn.addEventListener('click', closeModal);
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeModal);
+        }
 
         // Focus first input
         setTimeout(() => {
-            titleInput.focus();
+            const titleInput = document.getElementById('recipe-title-input');
+            if (titleInput) titleInput.focus();
         }, 100);
     };
 
     /**
-     * Close add recipe modal
+     * Legacy wrapper for backward compatibility
+     * @param {Object} options - Configuration object
      */
-    window.closeAddRecipeModal = function() {
-        const overlay = document.getElementById('add-recipe-overlay');
+    window.renderAddRecipeModal = function(options) {
+        if (!options) return;
+        const { onClose, onSubmit, ingredientSuggestions = [] } = options;
+        window.renderRecipeEditorModal({
+            mode: 'create',
+            initialRecipe: null,
+            ingredientSuggestions: ingredientSuggestions,
+            onClose: onClose,
+            onSave: (recipeObj, imageFile, removeImage) => {
+                recipeObj.imageFile = imageFile;
+                if (onSubmit) onSubmit(recipeObj);
+            },
+            onDelete: null
+        });
+    };
+
+    /**
+     * Close recipe editor modal
+     */
+    window.closeRecipeEditorModal = function() {
+        const overlay = document.getElementById('recipe-editor-overlay');
         if (overlay) {
             overlay.remove();
         }
+    };
+
+    /**
+     * Legacy wrapper for backward compatibility
+     */
+    window.closeAddRecipeModal = function() {
+        window.closeRecipeEditorModal();
     };
 })();

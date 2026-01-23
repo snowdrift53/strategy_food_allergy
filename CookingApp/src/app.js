@@ -2415,7 +2415,7 @@ const Recipes = {
                 onToggleLike: (recipe) => this.toggleLikeRecipe(recipe),
                 checkRecipeSuitability: (recipe) => this.checkRecipeSuitability(recipe),
                 isRecipeLiked: (recipeId) => isRecipeLiked(recipeId),
-                onEditPicture: (recipeId) => this.editRecipePicture(recipeId),
+                onEditRecipe: (recipeId) => this.openEditRecipeModal(recipeId),
                 emptyMessage: emptyMessage
             });
 
@@ -2601,7 +2601,7 @@ const Recipes = {
                 classifyRecipe: (recipe, allergies) => AllergyEngine.classifyRecipe(recipe, allergies),
                 escapeHtml: (text) => this.escapeHtml(text),
                 activeAllergies: activeAllergies,
-                onEditPicture: (recipeId) => this.editRecipePicture(recipeId)
+                onEditRecipe: (recipeId) => this.openEditRecipeModal(recipeId)
             });
 
             // Debug logging
@@ -2770,19 +2770,241 @@ const Recipes = {
     },
 
     /**
-     * Edit picture for a user-created recipe
+     * Open edit recipe modal for a user-created recipe
      * @param {string} recipeId - Recipe ID
      */
-    async editRecipePicture(recipeId) {
-        const recipe = this.currentRecipes.find(r => String(r.id) === String(recipeId));
-        if (!recipe) return;
+    openEditRecipeModal(recipeId) {
+        // Find recipe in current recipes first
+        let recipe = this.currentRecipes.find(r => String(r.id) === String(recipeId));
+        
+        // If not found in current recipes, search in active profile's local recipes
+        if (!recipe) {
+            const localRecipes = getProfileLocalRecipes();
+            recipe = localRecipes.find(r => String(r.id) === String(recipeId));
+        }
+        
+        if (!recipe) {
+            alert('Recipe not found.');
+            return;
+        }
 
         // Check if recipe is user-created
         const isUserCreated = recipe.isUserCreated || (recipe.id && String(recipe.id).startsWith('u_'));
         if (!isUserCreated) {
-            alert('Only user-created recipes can have their pictures edited.');
+            alert('Only user-created recipes can be edited.');
             return;
         }
+
+        // Store the active profile ID at modal open time for safety check
+        const activeProfileIdAtOpen = AppState.activeProfileId;
+
+        // Build ingredient suggestions
+        const ingredientSuggestions = buildIngredientSuggestions();
+
+        // Open edit modal
+        if (typeof window.renderRecipeEditorModal === 'function') {
+            window.renderRecipeEditorModal({
+                mode: 'edit',
+                initialRecipe: recipe,
+                ingredientSuggestions: ingredientSuggestions,
+                onClose: () => {
+                    if (typeof window.closeRecipeEditorModal === 'function') {
+                        window.closeRecipeEditorModal();
+                    }
+                },
+                onSave: async (updatedRecipeObj, imageFile, removeImage) => {
+                    // Safety check: ensure profile hasn't changed
+                    if (AppState.activeProfileId !== activeProfileIdAtOpen) {
+                        alert('Profile was switched. Please close and reopen the edit dialog.');
+                        return;
+                    }
+                    
+                    await this.saveEditedRecipe(recipeId, updatedRecipeObj, imageFile, removeImage);
+                },
+                onDelete: (recipeIdToDelete) => {
+                    // Safety check: ensure profile hasn't changed
+                    if (AppState.activeProfileId !== activeProfileIdAtOpen) {
+                        alert('Profile was switched. Please close and reopen the edit dialog.');
+                        return;
+                    }
+                    
+                    this.deleteUserRecipe(recipeIdToDelete);
+                }
+            });
+        }
+    },
+
+    /**
+     * Save edited recipe
+     * @param {string} recipeId - Recipe ID
+     * @param {Object} updatedRecipeObj - Updated recipe object (without image)
+     * @param {File|null} imageFile - New image file (if provided)
+     * @param {boolean} removeImage - Whether to remove the image
+     */
+    async saveEditedRecipe(recipeId, updatedRecipeObj, imageFile, removeImage) {
+        try {
+            // Process image if provided
+            let imageDataUrl = null;
+            if (imageFile) {
+                try {
+                    imageDataUrl = await fileToCompressedDataUrl(imageFile);
+                } catch (error) {
+                    alert('Failed to process image: ' + (error.message || 'Please try a different image.'));
+                    return;
+                }
+            }
+
+            // Get current local recipes
+            const localRecipes = getProfileLocalRecipes();
+            const recipeIndex = localRecipes.findIndex(r => String(r.id) === String(recipeId));
+            
+            if (recipeIndex < 0) {
+                alert('Recipe not found in storage.');
+                return;
+            }
+
+            // Update recipe
+            const existingRecipe = localRecipes[recipeIndex];
+            
+            // Preserve id and isUserCreated
+            updatedRecipeObj.id = existingRecipe.id;
+            updatedRecipeObj.isUserCreated = existingRecipe.isUserCreated !== undefined ? existingRecipe.isUserCreated : true;
+            
+            // Handle image
+            if (removeImage) {
+                delete updatedRecipeObj.imageDataUrl;
+            } else if (imageDataUrl) {
+                updatedRecipeObj.imageDataUrl = imageDataUrl;
+            } else if (existingRecipe.imageDataUrl) {
+                // Keep existing image if no change
+                updatedRecipeObj.imageDataUrl = existingRecipe.imageDataUrl;
+            }
+
+            // Build cuisine tags if Recipes module is available
+            if (typeof Recipes !== 'undefined' && Recipes.buildCuisineTags) {
+                updatedRecipeObj.cuisineTags = Recipes.buildCuisineTags(updatedRecipeObj);
+            }
+
+            // Replace recipe in array
+            localRecipes[recipeIndex] = updatedRecipeObj;
+
+            // Save to storage
+            try {
+                setProfileLocalRecipes(localRecipes);
+                saveState();
+            } catch (error) {
+                if (error.name === 'QuotaExceededError' || error.code === 22) {
+                    alert('Storage quota exceeded. Please remove some recipes or images to free up space.');
+                    return;
+                }
+                throw error;
+            }
+
+            // Close modal
+            if (typeof window.closeRecipeEditorModal === 'function') {
+                window.closeRecipeEditorModal();
+            }
+
+            // Update currentRecipes if recipe is in current view
+            const currentIndex = this.currentRecipes.findIndex(r => String(r.id) === String(recipeId));
+            if (currentIndex >= 0) {
+                this.currentRecipes[currentIndex] = { ...updatedRecipeObj };
+            }
+
+            // Re-render current view
+            const recipeDetail = $('#recipe-detail');
+            const recipeList = $('#recipe-list');
+            
+            if (recipeDetail && !recipeDetail.classList.contains('hidden')) {
+                // Currently viewing this recipe's detail - re-render detail
+                this.renderDetail(recipeId);
+            } else {
+                // Re-run current search to refresh grid
+                if (this.searchMode === 'local') {
+                    const searchInput = $('#recipe-search-input');
+                    const currentQuery = searchInput ? searchInput.value.trim() : '';
+                    this.searchLocal(currentQuery);
+                } else {
+                    // For online mode, just refresh the list
+                    this.renderList();
+                }
+            }
+        } catch (error) {
+            console.error('Error saving edited recipe:', error);
+            alert('Failed to save recipe: ' + (error.message || 'Please try again.'));
+        }
+    },
+
+    /**
+     * Delete a user-created recipe
+     * @param {string} recipeId - Recipe ID
+     */
+    deleteUserRecipe(recipeId) {
+        // Get current local recipes
+        const localRecipes = getProfileLocalRecipes();
+        const recipeIndex = localRecipes.findIndex(r => String(r.id) === String(recipeId));
+        
+        if (recipeIndex < 0) {
+            alert('Recipe not found.');
+            return;
+        }
+
+        // Remove from local recipes
+        localRecipes.splice(recipeIndex, 1);
+
+        // Also remove from favorites/liked if stored elsewhere (they're in the same array)
+        // No additional action needed since liked recipes are in the same localRecipes array
+
+        // Save to storage
+        try {
+            setProfileLocalRecipes(localRecipes);
+            saveState();
+        } catch (error) {
+            alert('Failed to delete recipe: ' + (error.message || 'Please try again.'));
+            return;
+        }
+
+        // Close modal
+        if (typeof window.closeRecipeEditorModal === 'function') {
+            window.closeRecipeEditorModal();
+        }
+
+        // Check if currently viewing this recipe's detail
+        const recipeDetail = $('#recipe-detail');
+        const recipeList = $('#recipe-list');
+        
+        if (recipeDetail && !recipeDetail.classList.contains('hidden')) {
+            // Currently viewing deleted recipe - go back to grid
+            recipeDetail.classList.add('hidden');
+            if (recipeList) {
+                recipeList.classList.remove('hidden');
+            }
+        }
+
+        // Remove from currentRecipes if present
+        const currentIndex = this.currentRecipes.findIndex(r => String(r.id) === String(recipeId));
+        if (currentIndex >= 0) {
+            this.currentRecipes.splice(currentIndex, 1);
+        }
+
+        // Refresh grid
+        if (this.searchMode === 'local') {
+            const searchInput = $('#recipe-search-input');
+            const currentQuery = searchInput ? searchInput.value.trim() : '';
+            this.searchLocal(currentQuery);
+        } else {
+            this.renderList();
+        }
+    },
+
+    /**
+     * Legacy: Edit picture for a user-created recipe (kept for backward compatibility, but redirects to edit modal)
+     * @param {string} recipeId - Recipe ID
+     */
+    async editRecipePicture(recipeId) {
+        // Redirect to full edit modal
+        this.openEditRecipeModal(recipeId);
+        return;
 
         // Show options: Change picture or Remove picture
         const hasImage = recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '';
