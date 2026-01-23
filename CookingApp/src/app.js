@@ -1737,18 +1737,24 @@ const Recipes = {
         // Store query for typo suggestions
         this.lastQuery = normalizedQuery;
         
-        // Reset online results immediately when query is empty
+        // CRITICAL: Reset online results immediately when query is empty
         if (!normalizedQuery) {
+            // Clear container and reset state to prevent duplication
             this.currentRecipes = [];
+            const recipeList = $('#recipe-list');
+            if (recipeList) {
+                recipeList.innerHTML = '';
+            }
             this.renderList();
             return;
         }
 
-        // Reset currentRecipes BEFORE fetching new results (replace, not append)
+        // CRITICAL: Reset currentRecipes BEFORE fetching (replace, never append)
         this.currentRecipes = [];
 
         const recipeList = $('#recipe-list');
         if (recipeList) {
+            // CRITICAL: Clear container before showing loading state
             recipeList.innerHTML = '<div class="recipe-loading">Searching...</div>';
         }
 
@@ -1762,14 +1768,17 @@ const Recipes = {
                 }
             });
             
-            // Apply client-side filtering (always filter, never return all)
-            // Replace currentRecipes with filtered results (never append)
+            // CRITICAL: Replace currentRecipes with filtered results (never append or concat)
+            // filterRecipes returns a new array, so we're replacing, not mutating
             this.currentRecipes = this.filterRecipes(onlineRecipes, normalizedQuery);
+            
+            // CRITICAL: renderList() will clear container and render fresh
             this.renderList();
         } catch (error) {
             console.warn('Online search failed:', error);
             // Reset on error to prevent stale results
             this.currentRecipes = [];
+            const recipeList = $('#recipe-list');
             if (recipeList) {
                 recipeList.innerHTML = '<div class="recipe-error">Online search unavailable.</div>';
             }
@@ -1953,6 +1962,7 @@ const Recipes = {
 
         if (!recipeList) return;
 
+        // CRITICAL: Always clear container completely before rendering to prevent duplication
         recipeList.innerHTML = '';
         recipeList.classList.remove('hidden');
         if (recipeDetail) {
@@ -1983,7 +1993,12 @@ const Recipes = {
             return;
         }
 
-        this.currentRecipes.forEach(recipe => {
+        // Render each recipe card - ensure we're working with a clean array (no duplicates)
+        const uniqueRecipes = this.currentRecipes.filter((recipe, index, self) => 
+            index === self.findIndex(r => String(r.id) === String(recipe.id))
+        );
+
+        uniqueRecipes.forEach(recipe => {
             recipeList.appendChild(this.createCard(recipe));
         });
     },
