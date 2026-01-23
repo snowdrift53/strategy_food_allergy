@@ -1520,145 +1520,18 @@ const Recipes = {
         const q = norm(query);
         if (!q) return recipes;
         
-        // Country to area demonym mapping (normalized keys/values)
-        const COUNTRY_TO_AREA = {
-            "france": "french",
-            "french": "french",
-            "italy": "italian",
-            "italian": "italian",
-            "germany": "german",
-            "german": "german",
-            "spain": "spanish",
-            "spanish": "spanish",
-            "portugal": "portuguese",
-            "portuguese": "portuguese",
-            "greece": "greek",
-            "greek": "greek",
-            "netherlands": "dutch",
-            "dutch": "dutch",
-            "holland": "dutch",
-            "switzerland": "swiss",
-            "swiss": "swiss",
-            "austria": "austrian",
-            "austrian": "austrian",
-            "belgium": "belgian",
-            "belgian": "belgian",
-            "morocco": "moroccan",
-            "moroccan": "moroccan",
-            "tunisia": "tunisian",
-            "tunisian": "tunisian",
-            "algeria": "algerian",
-            "algerian": "algerian",
-            "turkey": "turkish",
-            "turkish": "turkish",
-            "russia": "russian",
-            "russian": "russian",
-            "ukraine": "ukrainian",
-            "ukrainian": "ukrainian",
-            "poland": "polish",
-            "polish": "polish",
-            "sweden": "swedish",
-            "swedish": "swedish",
-            "norway": "norwegian",
-            "norwegian": "norwegian",
-            "denmark": "danish",
-            "danish": "danish",
-            "finland": "finnish",
-            "finnish": "finnish",
-            "ireland": "irish",
-            "irish": "irish",
-            "scotland": "scottish",
-            "scottish": "scottish",
-            "england": "english",
-            "english": "english",
-            "uk": "british",
-            "united kingdom": "british",
-            "britain": "british",
-            "british": "british",
-            "usa": "american",
-            "us": "american",
-            "united states": "american",
-            "american": "american",
-            "mexico": "mexican",
-            "mexican": "mexican",
-            "canada": "canadian",
-            "canadian": "canadian",
-            "brazil": "brazilian",
-            "brazilian": "brazilian",
-            "argentina": "argentinian",
-            "argentinian": "argentinian",
-            "chile": "chilean",
-            "chilean": "chilean",
-            "peru": "peruvian",
-            "peruvian": "peruvian",
-            "colombia": "colombian",
-            "colombian": "colombian",
-            "venezuela": "venezuelan",
-            "venezuelan": "venezuelan",
-            "china": "chinese",
-            "chinese": "chinese",
-            "japan": "japanese",
-            "japanese": "japanese",
-            "korea": "korean",
-            "south korea": "korean",
-            "korean": "korean",
-            "thailand": "thai",
-            "thai": "thai",
-            "vietnam": "vietnamese",
-            "vietnamese": "vietnamese",
-            "india": "indian",
-            "indian": "indian",
-            "pakistan": "pakistani",
-            "pakistani": "pakistani",
-            "indonesia": "indonesian",
-            "indonesian": "indonesian",
-            "philippines": "filipino",
-            "philippine": "filipino",
-            "filipino": "filipino",
-            "malaysia": "malaysian",
-            "malaysian": "malaysian",
-            "singapore": "singaporean",
-            "singaporean": "singaporean",
-            "australia": "australian",
-            "australian": "australian",
-            "new zealand": "new zealand",
-            "nz": "new zealand"
-        };
+        // Build set of terms to match using centralized taxonomy
+        let terms = new Set([q]);
         
-        // Regional keywords to areas/demonyms mapping
-        const REGION_TO_AREAS = {
-            "asia": ["chinese", "japanese", "korean", "thai", "vietnamese", "indian", "malaysian", "indonesian", "filipino"],
-            "asian": ["chinese", "japanese", "korean", "thai", "vietnamese", "indian", "malaysian", "indonesian", "filipino"],
-            "east asian": ["chinese", "japanese", "korean"],
-            "southeast asian": ["thai", "vietnamese", "malaysian", "indonesian", "filipino"],
-            "south asian": ["indian", "pakistani"],
-            
-            "mediterranean": ["greek", "italian", "spanish", "portuguese", "turkish", "moroccan", "tunisian", "algerian"],
-            "north africa": ["moroccan", "tunisian", "algerian"],
-            "north african": ["moroccan", "tunisian", "algerian"],
-            "maghreb": ["moroccan", "tunisian", "algerian"],
-            "middle east": ["turkish"],
-            "middle eastern": ["turkish"],
-            
-            "latin america": ["mexican", "peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
-            "latin american": ["mexican", "peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
-            "south america": ["peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"]
-        };
-        
-        // Build set of terms to match
-        const terms = new Set([q]);
-        
-        // Add mapped area from COUNTRY_TO_AREA if exists
-        if (COUNTRY_TO_AREA[q]) {
-            terms.add(COUNTRY_TO_AREA[q]);
+        // Use centralized taxonomy if available
+        if (typeof window !== 'undefined' && typeof window.expandCuisineQueryTerms === 'function') {
+            const expandedTerms = window.expandCuisineQueryTerms(query);
+            if (expandedTerms && expandedTerms.size > 0) {
+                terms = expandedTerms;
+            }
         }
         
-        // Add regional areas if query matches a region
-        if (REGION_TO_AREAS[q]) {
-            REGION_TO_AREAS[q].forEach(x => terms.add(norm(x)));
-        }
-        
-        // Add detected areas from detectAreaFromQuery if available
+        // Also add detected areas from detectAreaFromQuery if available (for backwards compatibility)
         const detectAreaFromQueryFn = typeof window !== 'undefined' && window.detectAreaFromQuery 
             ? window.detectAreaFromQuery 
             : (typeof detectAreaFromQuery !== 'undefined' ? detectAreaFromQuery : null);
@@ -1701,6 +1574,38 @@ const Recipes = {
                 searchableText.includes(term) || area === term
             );
         });
+        
+        /* ===== Console Tests =====
+        // Uncomment to run tests:
+        // Test 1: Country name -> demonym
+        // const testRecipes = [{ title: "Paella", area: "Spanish" }];
+        // console.assert(this.filterRecipes(testRecipes, "spain").length >= 1, "Spain search failed");
+        // console.assert(this.filterRecipes(testRecipes, "spanish").length >= 1, "Spanish search failed");
+        
+        // Test 2: Regional search
+        // const mediterraneanRecipes = [{ title: "Pasta", area: "Italian" }, { title: "Tapas", area: "Spanish" }];
+        // console.assert(this.filterRecipes(mediterraneanRecipes, "mediterranean").length >= 1, "Mediterranean search failed");
+        
+        // Test 3: Asian search
+        // const asianRecipes = [{ title: "Sushi", area: "Japanese" }, { title: "Pad Thai", area: "Thai" }];
+        // console.assert(this.filterRecipes(asianRecipes, "china").length >= 0, "China search failed");
+        // console.assert(this.filterRecipes(asianRecipes, "asian").length >= 1, "Asian search failed");
+        
+        // Test 4: Latin American search
+        // const latinRecipes = [{ title: "Tacos", area: "Mexican" }];
+        // console.assert(this.filterRecipes(latinRecipes, "latin american").length >= 1, "Latin American search failed");
+        
+        // Test 5: European search
+        // const europeanRecipes = [{ title: "Croissant", area: "French" }, { title: "Pasta", area: "Italian" }];
+        // console.assert(this.filterRecipes(europeanRecipes, "european").length >= 1, "European search failed");
+        
+        // Test 6: Online search detection
+        // if (typeof window.detectAreaFromQuery === 'function') {
+        //     console.assert(window.detectAreaFromQuery("french") === "French", "French detection failed");
+        //     const europeanAreas = window.detectAreaFromQuery("european");
+        //     console.assert(Array.isArray(europeanAreas) && europeanAreas.includes("French") && europeanAreas.includes("Italian"), "European detection failed");
+        // }
+        */
     },
 
     searchLocal(query) {

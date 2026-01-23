@@ -1,29 +1,6 @@
 /**
- * Mapping from canonical cuisine names to TheMealDB area names
- * Case-insensitive matching is handled in the detection logic
- */
-const THEMEALDB_AREA_MAP = {
-    italian: 'Italian',
-    spanish: 'Spanish',
-    mexican: 'Mexican',
-    indian: 'Indian',
-    chinese: 'Chinese',
-    japanese: 'Japanese',
-    korean: 'Korean',
-    thai: 'Thai',
-    // Aliases
-    italy: 'Italian',
-    spain: 'Spanish',
-    mexico: 'Mexican',
-    india: 'Indian',
-    china: 'Chinese',
-    japan: 'Japanese',
-    korea: 'Korean',
-    thailand: 'Thai'
-};
-
-/**
  * Mapping from cuisine to family (broader category)
+ * Kept for backwards compatibility with mapMealToRecipe
  */
 const CUISINE_TO_FAMILY = {
     italian: 'mediterranean',
@@ -37,48 +14,20 @@ const CUISINE_TO_FAMILY = {
 };
 
 /**
- * Group mappings: family/category to list of areas
- */
-const GROUP_TO_AREAS = {
-    mediterranean: ['Italian', 'Spanish'],
-    asian: ['Chinese', 'Japanese', 'Korean', 'Thai', 'Indian'],
-    latin: ['Mexican']
-};
-
-/**
  * Detect if query matches a known area or group (case-insensitive)
+ * Uses centralized cuisine taxonomy for stable, expandable mappings
  * @param {string} query - Search query
  * @returns {string|string[]|null} TheMealDB area name(s) if match found, null otherwise
  */
 function detectAreaFromQuery(query) {
     if (!query || !query.trim()) return null;
     
-    const queryLower = query.trim().toLowerCase();
-    
-    // Check direct mapping for single area
-    if (THEMEALDB_AREA_MAP[queryLower]) {
-        return THEMEALDB_AREA_MAP[queryLower];
+    // Use centralized taxonomy if available
+    if (typeof window !== 'undefined' && typeof window.detectTheMealDbAreasFromQuery === 'function') {
+        return window.detectTheMealDbAreasFromQuery(query);
     }
     
-    // Check for group matches (mediterranean, asian, latin)
-    if (GROUP_TO_AREAS[queryLower]) {
-        return GROUP_TO_AREAS[queryLower];
-    }
-    
-    // Check if query contains any area name (for broader searches)
-    for (const [key, area] of Object.entries(THEMEALDB_AREA_MAP)) {
-        if (queryLower === key || queryLower.includes(key)) {
-            return area;
-        }
-    }
-    
-    // Check if query matches any group name
-    for (const [group, areas] of Object.entries(GROUP_TO_AREAS)) {
-        if (queryLower === group || queryLower.includes(group)) {
-            return areas;
-        }
-    }
-    
+    // Fallback to null if taxonomy not loaded
     return null;
 }
 
