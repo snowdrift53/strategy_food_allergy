@@ -8,6 +8,16 @@
     --border: rgba(43, 43, 43, 0.16);
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
     --radius: 14px;
+    
+    /* MeloryCook Minimalist Baker-inspired palette */
+    --mc-bg: #fbf8f2;
+    --mc-surface: #ffffff;
+    --mc-ink: #2f2a22;
+    --mc-muted: #6b6257;
+    --mc-border: #e6ded2;
+    --mc-green: #232a17;
+    --mc-beige: #e9decd;
+    --mc-accent: #c8a978;
 }
 
 * {
@@ -17,8 +27,8 @@
 }
 
 html, body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--mc-bg);
+    color: var(--mc-ink);
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 16px;
     line-height: 1.45;
@@ -32,7 +42,7 @@ h1, h2, h3 {
 }
 
 p, .muted, .secondary-text {
-    color: var(--muted);
+    color: var(--mc-muted);
 }
 
 .container {
@@ -149,11 +159,11 @@ header {
 .profile-settings-btn {
     width: 100%;
     padding: 10px 16px;
-    background: var(--accent);
+    background: var(--mc-green);
     color: white;
     border: none;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--mc-border);
+    border-bottom: 1px solid var(--mc-border);
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 0.95rem;
     font-weight: 500;
@@ -166,7 +176,7 @@ header {
 }
 
 .profile-settings-btn:hover {
-    background: var(--brand);
+    background: #1a1f10;
 }
 
 .profile-settings-btn:focus {
@@ -770,21 +780,22 @@ header {
 
 /* Shopping List Styles */
 .shopping-container {
-    background: #FFFEF9;
+    background: var(--mc-surface);
     border-radius: 15px;
     padding: 40px;
-    box-shadow: 0 4px 15px rgba(92, 64, 51, 0.15);
-    border: 1px solid rgba(92, 64, 51, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--mc-border);
     max-width: 800px;
     margin: 0 auto;
 }
 
 .section-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 2rem;
-    color: #5C4033;
+    color: var(--mc-ink);
     margin-bottom: 30px;
     font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .add-item-section {
@@ -794,24 +805,26 @@ header {
 }
 
 .grocery-input {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     flex: 1;
     padding: 12px 16px;
-    border: 2px solid #E6D3B3;
+    border: 1px solid var(--mc-border);
     border-radius: 8px;
     font-size: 1rem;
-    color: #5C4033;
-    background: white;
+    color: var(--mc-ink);
+    background: var(--mc-surface);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .grocery-input:focus {
     outline: none;
-    border-color: #8B7355;
+    border-color: var(--mc-accent);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 0 0 2px rgba(200, 169, 120, 0.15);
 }
 
 .add-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #8B7355;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: var(--mc-green);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -819,6 +832,7 @@ header {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20);
     font-weight: 500;
 }
 
@@ -1140,9 +1154,9 @@ header {
 }
 
 .forecast-section-title {
-    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 1.8rem;
-    color: var(--text);
+    color: var(--mc-ink);
     margin-bottom: 20px;
     font-weight: 600;
     letter-spacing: 0.2px;
@@ -1167,13 +1181,14 @@ header {
 }
 
 .recipe-forecast-card {
-    background: var(--surface);
-    border: 2px solid var(--border);
+    background: var(--mc-surface);
+    border: 1px solid var(--mc-border);
     border-radius: var(--radius);
     padding: 15px;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .recipe-forecast-card.ready-card {
@@ -1211,9 +1226,9 @@ header {
 }
 
 .recipe-forecast-card h4 {
-    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 1.2rem;
-    color: var(--text);
+    color: var(--mc-ink);
     margin-bottom: 10px;
     font-weight: 600;
     letter-spacing: 0.2px;
@@ -1222,7 +1237,7 @@ header {
 .forecast-meta {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 0.9rem;
-    color: var(--muted);
+    color: var(--mc-muted);
     margin-bottom: 10px;
 }
 
@@ -1451,7 +1466,7 @@ header {
     text-align: center;
     padding: 40px;
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    color: var(--muted);
+    color: var(--mc-muted);
     font-size: 1.1rem;
 }
 
@@ -1463,18 +1478,18 @@ header {
 }
 
 .recipe-card {
-    background: var(--surface);
+    background: var(--mc-surface);
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--mc-border);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
 }
 
 .recipe-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 8px 25px rgba(92, 64, 51, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .recipe-image {
@@ -1620,17 +1635,17 @@ header {
 }
 
 .recipe-title {
-    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 1.5rem;
     margin-bottom: 10px;
-    color: var(--text);
+    color: var(--mc-ink);
     font-weight: 600;
     letter-spacing: 0.2px;
 }
 
 .recipe-description {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    color: var(--muted);
+    color: var(--mc-muted);
     font-size: 0.95rem;
     line-height: 1.6;
     margin-bottom: 15px;
@@ -1641,7 +1656,7 @@ header {
     display: flex;
     gap: 15px;
     font-size: 0.9rem;
-    color: var(--muted);
+    color: var(--mc-muted);
 }
 
 .recipe-meta span {
@@ -1651,14 +1666,14 @@ header {
 }
 
 .recipe-detail {
-    background: var(--surface);
+    background: var(--mc-surface);
     border-radius: var(--radius);
     padding-top: 14px;
     padding-bottom: 22px;
     padding-left: 30px;
     padding-right: 30px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--mc-border);
     animation: fadeIn 0.3s ease;
     margin-top: 0;
     min-height: auto;
@@ -1682,7 +1697,7 @@ header {
 
 .back-btn {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    background: var(--accent);
+    background: var(--mc-green);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -1692,13 +1707,13 @@ header {
     margin-top: 0;
     margin-bottom: 26px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    box-shadow: var(--shadow);
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20);
 }
 
 .back-btn:hover {
-    background: var(--brand);
+    background: #1a1f10;
     transform: translateX(-5px);
-    box-shadow: var(--shadow);
+    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25);
 }
 
 
@@ -1763,9 +1778,9 @@ header {
 }
 
 .detail-title {
-    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 2.5rem;
-    color: var(--text);
+    color: var(--mc-ink);
     margin-bottom: 15px;
     font-weight: 600;
     letter-spacing: 0.2px;
@@ -1777,7 +1792,7 @@ header {
     flex-wrap: wrap;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #E6D3B3;
+    border-bottom: 2px solid var(--mc-border);
 }
 
 .detail-meta-item {
@@ -1786,14 +1801,14 @@ header {
     align-items: center;
     gap: 8px;
     font-size: 1.1rem;
-    color: var(--muted);
+    color: var(--mc-muted);
 }
 
 .detail-description {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 1.1rem;
     line-height: 1.8;
-    color: var(--text);
+    color: var(--mc-ink);
     margin-bottom: 30px;
 }
 
@@ -2202,77 +2217,79 @@ button, .btn {
 
 /* ===== Inputs ===== */
 input[type="text"], input[type="search"], .recipe-search-input {
-    background: rgba(255, 255, 255, 0.55) !important;
-    border: 1px solid var(--border) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
     border-radius: 12px !important;
-    color: var(--text) !important;
-    box-shadow: none !important;
+    color: var(--mc-ink) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
 }
 
 input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus {
     outline: none !important;
-    border-color: rgba(47, 52, 31, 0.45) !important;
-    box-shadow: 0 0 0 3px rgba(47, 52, 31, 0.12) !important;
+    border-color: var(--mc-accent) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 0 0 2px rgba(200, 169, 120, 0.15) !important;
 }
 
 /* ===== Toggle buttons (Local / Online) ===== */
 .recipe-search-btn {
-    background: rgba(255, 255, 255, 0.25) !important;
-    border: 1px solid var(--border) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
     border-radius: 12px !important;
-    box-shadow: none !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     transition: background 160ms ease, transform 160ms ease, border-color 160ms ease !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
-    color: var(--text) !important;
+    color: var(--mc-ink) !important;
 }
 
 .recipe-search-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.40) !important;
-    border-color: rgba(43, 43, 43, 0.24) !important;
+    border-color: var(--mc-beige) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
 }
 
 .recipe-search-btn.active {
-    background: var(--brand) !important;
+    background: var(--mc-green) !important;
     color: #ffffff !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
+    border-color: var(--mc-green) !important;
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
 }
 
 .recipe-search-btn.active:hover {
-    background: rgba(47, 52, 31, 0.90) !important;
+    background: var(--mc-green) !important;
+    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
 }
 
 /* ===== Additional Inputs (Shopping List, etc.) ===== */
 .grocery-input, .profile-input, .allergy-input, textarea {
-    background: rgba(255, 255, 255, 0.55) !important;
-    border: 1px solid var(--border) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
     border-radius: 12px !important;
-    color: var(--text) !important;
-    box-shadow: none !important;
+    color: var(--mc-ink) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
 }
 
 .grocery-input:focus, .profile-input:focus, .allergy-input:focus, textarea:focus {
     outline: none !important;
-    border-color: rgba(47, 52, 31, 0.45) !important;
-    box-shadow: 0 0 0 3px rgba(47, 52, 31, 0.12) !important;
+    border-color: var(--mc-accent) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 0 0 2px rgba(200, 169, 120, 0.15) !important;
 }
 
 /* ===== General Buttons (Shopping List Add, etc.) ===== */
 /* Primary action buttons (Add, Save) */
 .add-btn, .save-btn, .profile-btn {
-    background: var(--accent) !important;
+    background: var(--mc-green) !important;
     color: #ffffff !important;
-    border: 1px solid transparent !important;
+    border: 1px solid var(--mc-green) !important;
     border-radius: 12px !important;
-    box-shadow: none !important;
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
     transition: background 160ms ease, transform 160ms ease !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
 }
 
 .add-btn:hover, .save-btn:hover, .profile-btn:hover {
-    background: rgba(139, 115, 91, 0.90) !important;
+    background: #1a1f10 !important;
+    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
 }
 
 /* Secondary buttons */
@@ -2347,8 +2364,10 @@ header, .header-brand-row, .header-brand, .header-banner, .header-logo {
 
 /* ===== Tabs / Buttons Polish ===== */
 .nav-btn {
-    border: 1.5px solid var(--stroke) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
+    color: var(--mc-ink) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     padding: 12px 24px !important;
     border-radius: 12px !important;
     transition: all 200ms ease !important;
@@ -2356,16 +2375,21 @@ header, .header-brand-row, .header-brand, .header-banner, .header-logo {
 }
 
 .nav-btn:hover {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10) !important;
+    border-color: var(--mc-beige) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
     transform: translateY(-1px) !important;
 }
 
 .nav-btn.active {
-    box-shadow: 0 2px 8px rgba(139, 115, 91, 0.20) !important;
+    background: var(--mc-green) !important;
+    color: #ffffff !important;
+    border-color: var(--mc-green) !important;
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
 }
 
 .nav-btn.active:hover {
-    box-shadow: 0 3px 10px rgba(139, 115, 91, 0.25) !important;
+    background: var(--mc-green) !important;
+    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
     transform: translateY(-1px) !important;
 }
 
@@ -2373,47 +2397,58 @@ header, .header-brand-row, .header-brand, .header-banner, .header-logo {
 input[type="text"], 
 input[type="search"], 
 .recipe-search-input {
-    border: 1.5px solid var(--stroke) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
+    color: var(--mc-ink) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
     transition: all 200ms ease !important;
 }
 
 input[type="text"]:focus, 
 input[type="search"]:focus, 
 .recipe-search-input:focus {
-    border-color: var(--brand) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 3px var(--accentSoft) !important;
+    border-color: var(--mc-accent) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 0 0 2px rgba(200, 169, 120, 0.15) !important;
+    outline: none !important;
 }
 
 /* ===== Recipe Cards Polish ===== */
 .recipe-card {
-    border: 1px solid var(--stroke) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
     transition: transform 200ms ease, box-shadow 200ms ease !important;
 }
 
 .recipe-card:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* ===== Toggle Buttons Polish ===== */
 .recipe-search-btn {
-    border: 1.5px solid var(--stroke) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    background: var(--mc-surface) !important;
+    border: 1px solid var(--mc-border) !important;
+    color: var(--mc-ink) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     transition: all 200ms ease !important;
 }
 
 .recipe-search-btn:hover:not(.active) {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10) !important;
+    border-color: var(--mc-beige) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
     transform: translateY(-1px) !important;
 }
 
 .recipe-search-btn.active {
-    box-shadow: 0 2px 8px rgba(47, 52, 31, 0.20) !important;
+    background: var(--mc-green) !important;
+    color: #ffffff !important;
+    border-color: var(--mc-green) !important;
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
 }
 
 .recipe-search-btn.active:hover {
-    box-shadow: 0 3px 10px rgba(47, 52, 31, 0.25) !important;
+    background: var(--mc-green) !important;
+    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
     transform: translateY(-1px) !important;
 }
