@@ -656,30 +656,44 @@ function buildIngredientSuggestions() {
 
 const state = loadState();
 
+// Legacy AppState for backward compatibility during transition
+const AppState = {
+    get groceryList() { return getProfileShoppingList(); },
+    set groceryList(value) { setProfileShoppingList(value); },
+    get profiles() { return state.userProfiles; },
+    set profiles(value) { state.userProfiles = value; },
+    get activeProfileId() { return state.userActiveProfileId; },
+    set activeProfileId(value) { state.userActiveProfileId = value; },
+    get profileLogs() { return state.profileLogs; },
+    set profileLogs(value) { state.profileLogs = value; },
+    get localRecipes() { return getProfileLocalRecipes(); },
+    set localRecipes(value) { setProfileLocalRecipes(value); },
+};
+
+
 /************************************
  * 4) PROFILES MODULE
  ************************************/
 
 function ensureDefaultProfile() {
     // Migration: ensure all profiles have avatarDataUrl field
-    state.userProfiles.forEach(profile => {
+    AppState.profiles.forEach(profile => {
         if (profile.avatarDataUrl === undefined) {
             profile.avatarDataUrl = null;
         }
     });
     
-    if (state.userProfiles.length === 0) {
+    if (AppState.profiles.length === 0) {
         const defaultProfile = {
             id: Id.uid(),
             name: 'Default',
             allergies: [],
             avatarDataUrl: null
         };
-        state.userProfiles.push(defaultProfile);
-        state.userActiveProfileId = defaultProfile.id;
-        // Sync profile-owned state activeProfileId with user profile ID
-        state.activeProfileId = defaultProfile.id;
+        AppState.profiles.push(defaultProfile);
+        AppState.activeProfileId = defaultProfile.id;
         // Create corresponding profile-owned state with fresh empty arrays
+        state.activeProfileId = defaultProfile.id;
         if (!state.profiles[defaultProfile.id]) {
             state.profiles[defaultProfile.id] = {
                 localRecipes: [],
@@ -689,13 +703,13 @@ function ensureDefaultProfile() {
             };
         }
         saveState();
-    } else if (!state.userActiveProfileId || !state.userProfiles.find(p => p.id === state.userActiveProfileId)) {
-        state.userActiveProfileId = state.userProfiles[0].id;
-        // Sync profile-owned state activeProfileId with user profile ID
-        state.activeProfileId = state.userProfiles[0].id;
+    } else if (!AppState.activeProfileId || !AppState.profiles.find(p => p.id === AppState.activeProfileId)) {
+        AppState.activeProfileId = AppState.profiles[0].id;
+        // Sync profile-owned state
+        state.activeProfileId = AppState.profiles[0].id;
         // Ensure profile-owned state exists
-        if (!state.profiles[state.userProfiles[0].id]) {
-            state.profiles[state.userProfiles[0].id] = {
+        if (!state.profiles[AppState.profiles[0].id]) {
+            state.profiles[AppState.profiles[0].id] = {
                 localRecipes: [],
                 shoppingList: [],
                 allergyFilters: [],
@@ -705,16 +719,16 @@ function ensureDefaultProfile() {
         saveState();
     } else {
         // Ensure current active profile has profile-owned state
-        if (!state.profiles[state.userActiveProfileId]) {
-            state.profiles[state.userActiveProfileId] = {
+        if (!state.profiles[AppState.activeProfileId]) {
+            state.profiles[AppState.activeProfileId] = {
                 localRecipes: [],
                 shoppingList: [],
                 allergyFilters: [],
                 symptomLog: []
             };
         }
-        // Sync state.activeProfileId with state.userActiveProfileId
-        state.activeProfileId = state.userActiveProfileId;
+        // Sync state.activeProfileId with AppState.activeProfileId
+        state.activeProfileId = AppState.activeProfileId;
     }
 }
 
@@ -848,7 +862,7 @@ const Profiles = {
             if (clearBtn) {
                 clearBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
+                    const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
                     if (activeProfile) {
                         activeProfile.allergies = [];
                         allergiesInput.value = '';
@@ -878,7 +892,7 @@ const Profiles = {
     },
 
     switchProfile(profileId) {
-        state.userActiveProfileId = profileId;
+        AppState.activeProfileId = profileId;
         // Sync profile-owned state activeProfileId with user profile ID
         state.activeProfileId = profileId;
         // Ensure profile-owned state exists for this profile
@@ -911,12 +925,11 @@ const Profiles = {
             allergies: [],
             avatarDataUrl: null
         };
-        state.userProfiles.push(newProfile);
-        state.userActiveProfileId = newProfile.id;
+        AppState.profiles.push(newProfile);
+        AppState.activeProfileId = newProfile.id;
         
-        // Sync profile-owned state activeProfileId with user profile ID
-        state.activeProfileId = newProfile.id;
         // Create corresponding profile-owned state with fresh empty arrays (not shared by reference)
+        state.activeProfileId = newProfile.id;
         state.profiles[newProfile.id] = {
             localRecipes: [],
             shoppingList: [],
@@ -935,7 +948,7 @@ const Profiles = {
         const rawAllergies = Text.splitList(allergiesText);
         const allergies = normalizeUserAllergies(rawAllergies);
 
-        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
+        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         if (activeProfile) {
             activeProfile.allergies = allergies;
             saveState();
@@ -944,28 +957,28 @@ const Profiles = {
     },
 
     deleteProfile() {
-        if (state.userProfiles.length <= 1) {
+        if (AppState.profiles.length <= 1) {
             alert('Cannot delete the last remaining profile.');
             return;
         }
 
         if (!confirm('Are you sure you want to delete this profile?')) return;
 
-        const deletedProfileId = state.userActiveProfileId;
-        state.userProfiles = state.userProfiles.filter(p => p.id !== state.userActiveProfileId);
+        const deletedProfileId = AppState.activeProfileId;
+        AppState.profiles = AppState.profiles.filter(p => p.id !== AppState.activeProfileId);
         
         // Delete corresponding profile-owned state
         if (state.profiles[deletedProfileId]) {
             delete state.profiles[deletedProfileId];
         }
         
-        if (state.userProfiles.length > 0) {
-            state.userActiveProfileId = state.userProfiles[0].id;
-            // Sync profile-owned state activeProfileId with user profile ID
-            state.activeProfileId = state.userProfiles[0].id;
+        if (AppState.profiles.length > 0) {
+            AppState.activeProfileId = AppState.profiles[0].id;
+            // Sync profile-owned state
+            state.activeProfileId = AppState.profiles[0].id;
             // Ensure profile-owned state exists
-            if (!state.profiles[state.userProfiles[0].id]) {
-                state.profiles[state.userProfiles[0].id] = {
+            if (!state.profiles[AppState.profiles[0].id]) {
+                state.profiles[AppState.profiles[0].id] = {
                     localRecipes: [],
                     shoppingList: [],
                     allergyFilters: [],
@@ -973,7 +986,7 @@ const Profiles = {
                 };
             }
         } else {
-            state.userActiveProfileId = null;
+            AppState.activeProfileId = null;
             state.activeProfileId = 'default';
         }
 
@@ -988,17 +1001,17 @@ const Profiles = {
         const profileAvatar = $('#profile-avatar');
 
         select.innerHTML = '';
-        state.userProfiles.forEach(profile => {
+        AppState.profiles.forEach(profile => {
             const option = document.createElement('option');
             option.value = profile.id;
             option.textContent = profile.name;
-            if (profile.id === state.userActiveProfileId) {
+            if (profile.id === AppState.activeProfileId) {
                 option.selected = true;
             }
             select.appendChild(option);
         });
 
-        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
+        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         const clearBtn = $('#profile-allergies-clear-btn');
         
         if (activeProfile) {
@@ -1046,7 +1059,7 @@ const Profiles = {
         }
 
         const deleteBtn = $('#profile-delete-btn');
-        if (state.userProfiles.length <= 1) {
+        if (AppState.profiles.length <= 1) {
             deleteBtn.disabled = true;
             deleteBtn.style.opacity = '0.5';
             deleteBtn.style.cursor = 'not-allowed';
@@ -1072,7 +1085,7 @@ const Profiles = {
         }
 
         // Get active profile ID before any async operations
-        const activeProfileId = state.userActiveProfileId;
+        const activeProfileId = AppState.activeProfileId;
         if (!activeProfileId) {
             alert('No active profile found.');
             return;
@@ -1096,7 +1109,7 @@ const Profiles = {
 
             // Find and update the correct profile in the profiles array
             // Get reference to the actual profiles array
-            const profiles = state.userProfiles;
+            const profiles = AppState.profiles;
             const profileIndex = profiles.findIndex(p => p.id === activeProfileId);
             
             if (profileIndex < 0) {
@@ -1105,6 +1118,7 @@ const Profiles = {
             }
 
             // Update the profile object directly in the array
+            // Since AppState.profiles returns state.userProfiles, this modifies the source
             profiles[profileIndex].avatarDataUrl = avatarDataUrl;
             
             // Explicitly update state.userProfiles to ensure consistency
@@ -1159,7 +1173,7 @@ const Profiles = {
      * Remove avatar from active profile
      */
     removeAvatar() {
-        const activeProfileId = state.userActiveProfileId;
+        const activeProfileId = AppState.activeProfileId;
         if (!activeProfileId) {
             alert('No active profile found.');
             return;
@@ -1170,7 +1184,7 @@ const Profiles = {
         }
 
         // Find and update the correct profile in the profiles array
-        const profiles = state.userProfiles;
+        const profiles = AppState.profiles;
         const profileIndex = profiles.findIndex(p => p.id === activeProfileId);
         
         if (profileIndex < 0) {
@@ -1304,10 +1318,10 @@ const Log = {
 
     getProfileLogs(profileId) {
         if (!profileId) return [];
-        if (!state.profileLogs[profileId]) {
-            state.profileLogs[profileId] = [];
+        if (!AppState.profileLogs[profileId]) {
+            AppState.profileLogs[profileId] = [];
         }
-        return state.profileLogs[profileId];
+        return AppState.profileLogs[profileId];
     },
 
     saveEntry() {
@@ -1315,7 +1329,7 @@ const Log = {
         const text = textarea.value.trim();
         if (!text) return;
 
-        const profileId = state.userActiveProfileId;
+        const profileId = AppState.activeProfileId;
         if (!profileId) return;
 
         const logs = this.getProfileLogs(profileId);
@@ -1325,7 +1339,7 @@ const Log = {
             text: text
         };
         logs.push(entry);
-        state.profileLogs[profileId] = logs;
+        AppState.profileLogs[profileId] = logs;
         saveState();
 
         textarea.value = '';
@@ -1333,10 +1347,10 @@ const Log = {
     },
 
     deleteEntry(entryId) {
-        const profileId = state.userActiveProfileId;
-        if (!profileId || !state.profileLogs[profileId]) return;
+        const profileId = AppState.activeProfileId;
+        if (!profileId || !AppState.profileLogs[profileId]) return;
 
-        state.profileLogs[profileId] = state.profileLogs[profileId].filter(entry => entry.id !== entryId);
+        AppState.profileLogs[profileId] = AppState.profileLogs[profileId].filter(entry => entry.id !== entryId);
         saveState();
         renderApp();
     },
@@ -1359,7 +1373,7 @@ const Log = {
 
     render() {
         const entriesContainer = $('#log-entries');
-        const profileId = state.userActiveProfileId;
+        const profileId = AppState.activeProfileId;
         const indicator = $('#log-fab-indicator');
 
         if (!profileId) {
@@ -1741,6 +1755,7 @@ const Recipes = {
     lastQuery: '', // Track last query for typo suggestions
     searchDebounceTimer: null, // Debounce timer for search input
     onlineSearchRequestId: 0, // Request token to prevent stale responses
+    onlineAbortController: null, // AbortController for canceling in-flight online searches
 
     /**
      * Normalize query: trim + toLowerCase + collapse spaces
@@ -1948,14 +1963,14 @@ const Recipes = {
                 updateClearButton();
                 // Local mode: run immediately (no debounce)
                 if (this.searchMode === 'local') {
-                    this.handleSearch();
+                    this.runSearch({ source: 'input' });
                 } else {
                     // Online mode: use debounce
                     if (this.searchDebounceTimer) {
                         clearTimeout(this.searchDebounceTimer);
                     }
                     this.searchDebounceTimer = setTimeout(() => {
-                        this.handleSearch();
+                        this.runSearch({ source: 'input' });
                     }, 300);
                 }
             };
@@ -1970,7 +1985,7 @@ const Recipes = {
                         this.searchDebounceTimer = null;
                     }
                     updateClearButton();
-                    this.handleSearch();
+                    this.runSearch({ source: 'enter' });
                 }
             });
 
@@ -1985,7 +2000,8 @@ const Recipes = {
                     searchInput.value = '';
                     searchInput.focus();
                     updateClearButton();
-                    this.handleSearch();
+                    // Use runSearch with empty query to show default state
+                    this.runSearch({ query: '', source: 'clear' });
                 });
             }
 
@@ -2002,7 +2018,8 @@ const Recipes = {
                 }
                 this.searchMode = 'local';
                 this.updateToggleButtons();
-                this.handleSearch();
+                // Use runSearch to trigger search with current query
+                this.runSearch({ mode: 'local', source: 'button' });
             });
         }
 
@@ -2015,7 +2032,8 @@ const Recipes = {
                 }
                 this.searchMode = 'online';
                 this.updateToggleButtons();
-                this.handleSearch();
+                // Use runSearch to trigger search with current query
+                this.runSearch({ mode: 'online', source: 'button' });
             });
         }
 
@@ -2065,18 +2083,66 @@ const Recipes = {
         }
     },
 
-    handleSearch() {
-        const searchInput = $('#recipe-search-input');
-        const query = searchInput ? searchInput.value.trim() : '';
+    /**
+     * Centralized search entry point
+     * All search triggers must call this function
+     * @param {Object} options - Search options
+     * @param {string} options.query - Search query (if not provided, reads from input)
+     * @param {string} options.mode - Search mode: 'local' | 'online' (if not provided, uses current mode)
+     * @param {string} options.source - Source of search trigger: 'input' | 'enter' | 'button' | 'clear' (for logging)
+     */
+    async runSearch({ query, mode, source } = {}) {
+        const SEARCH_DEBUG = new URLSearchParams(location.search).has("searchDebug");
+        
+        // Determine query
+        let finalQuery = query;
+        if (finalQuery === undefined) {
+            const searchInput = $('#recipe-search-input');
+            finalQuery = searchInput ? searchInput.value.trim() : '';
+        }
+        
+        // Determine mode
+        const finalMode = mode !== undefined ? mode : this.searchMode;
+        
+        // Log search trigger
+        if (SEARCH_DEBUG) {
+            console.log(`[SEARCH] source=${source || 'unknown'}, mode=${finalMode}, query="${finalQuery}", reqId=${this.onlineSearchRequestId + 1}`);
+        }
         
         // Store query for typo suggestions
-        this.lastQuery = query;
-
-        if (this.searchMode === 'online') {
-            this.searchOnline(query);
-        } else {
-            this.searchLocal(query);
+        this.lastQuery = finalQuery;
+        
+        // Handle online mode: abort previous request and create new AbortController
+        if (finalMode === 'online') {
+            // Abort previous request if exists
+            if (this.onlineAbortController) {
+                this.onlineAbortController.abort();
+                if (SEARCH_DEBUG) {
+                    console.log('[SEARCH] aborted previous request');
+                }
+            }
+            
+            // Create new AbortController for this request
+            this.onlineAbortController = new AbortController();
+            
+            // Increment request ID at start to track this request
+            this.onlineSearchRequestId++;
         }
+        
+        // Execute search based on mode
+        if (finalMode === 'online') {
+            await this.searchOnline(finalQuery);
+        } else {
+            this.searchLocal(finalQuery);
+        }
+    },
+
+    handleSearch() {
+        // Legacy method - redirects to runSearch for backward compatibility
+        // This should be removed once all call sites are updated
+        const searchInput = $('#recipe-search-input');
+        const query = searchInput ? searchInput.value.trim() : '';
+        this.runSearch({ query, source: 'legacy' });
     },
 
     /**
@@ -2085,6 +2151,10 @@ const Recipes = {
      */
     refreshViewAfterProfileChange() {
         // A) Cancel/invalidate any in-flight online searches
+        // Abort previous request if exists
+        if (this.onlineAbortController) {
+            this.onlineAbortController.abort();
+        }
         this.onlineSearchRequestId++;
         
         // Clear any pending debounce timer
@@ -2116,27 +2186,15 @@ const Recipes = {
         // Debug logging
         const PROFILE_DEBUG = new URLSearchParams(location.search).has("profileDebug");
         if (PROFILE_DEBUG) {
-            const activeProfileId = state.userActiveProfileId;
+            const activeProfileId = AppState.activeProfileId;
             console.log("[PROFILE] switched to", activeProfileId, "query=", currentQuery, "mode=", currentMode);
         }
 
         // D) Re-run the current search using the current query and current mode
         // Use setTimeout to ensure state is fully updated before re-running search
         setTimeout(() => {
-            if (currentQuery) {
-                // If search input has text, re-run search
-                this.handleSearch();
-            } else {
-                // If empty query, re-render the default list for the active mode
-                if (currentMode === 'local') {
-                    // For local mode, show all local recipes (base + liked)
-                    this.searchLocal('');
-                } else {
-                    // For online mode, show empty state with message
-                    this.currentRecipes = [];
-                    this.renderList();
-                }
-            }
+            // Use runSearch to ensure consistent behavior
+            this.runSearch({ query: currentQuery, mode: currentMode, source: 'profile-change' });
         }, 0);
     },
 
@@ -2422,11 +2480,10 @@ const Recipes = {
     },
 
     async searchOnline(query) {
+        const SEARCH_DEBUG = new URLSearchParams(location.search).has("searchDebug");
+        
         // Normalize query: trim whitespace
         const normalizedQuery = query ? query.trim() : '';
-        
-        // Store query for typo suggestions
-        this.lastQuery = normalizedQuery;
         
         // CRITICAL: Reset online results immediately when query is empty
         if (!normalizedQuery) {
@@ -2452,8 +2509,9 @@ const Recipes = {
             return;
         }
 
-        // Increment request ID at start to track this request
-        const reqId = ++this.onlineSearchRequestId;
+        // Get request ID and AbortController (set by runSearch)
+        const reqId = this.onlineSearchRequestId;
+        const signal = this.onlineAbortController ? this.onlineAbortController.signal : null;
 
         // CRITICAL: Reset currentRecipes BEFORE fetching (replace, never append)
         this.currentRecipes = [];
@@ -2468,11 +2526,14 @@ const Recipes = {
         }
 
         try {
-            const onlineRecipes = await searchRecipesOnline(normalizedQuery);
+            const onlineRecipes = await searchRecipesOnline(normalizedQuery, { signal });
             
             // CRITICAL: Check if this response is stale before applying results
             if (reqId !== this.onlineSearchRequestId) {
                 // Stale response, ignore it
+                if (SEARCH_DEBUG) {
+                    console.log(`[SEARCH] stale response ignored (reqId=${reqId}, current=${this.onlineSearchRequestId})`);
+                }
                 return;
             }
             
@@ -2486,6 +2547,9 @@ const Recipes = {
             // CRITICAL: Check again before applying results (double-check for race conditions)
             if (reqId !== this.onlineSearchRequestId) {
                 // Stale response, ignore it
+                if (SEARCH_DEBUG) {
+                    console.log(`[SEARCH] stale response ignored after processing (reqId=${reqId}, current=${this.onlineSearchRequestId})`);
+                }
                 return;
             }
             
@@ -2496,15 +2560,29 @@ const Recipes = {
             // CRITICAL: Final check before rendering
             if (reqId !== this.onlineSearchRequestId) {
                 // Stale response, ignore it
+                if (SEARCH_DEBUG) {
+                    console.log(`[SEARCH] stale response ignored before render (reqId=${reqId}, current=${this.onlineSearchRequestId})`);
+                }
                 return;
             }
             
             // CRITICAL: renderList() will clear container and render fresh
             this.renderList();
         } catch (error) {
+            // Ignore abort errors silently (they're expected when canceling previous requests)
+            if (error.name === 'AbortError') {
+                if (SEARCH_DEBUG) {
+                    console.log(`[SEARCH] request aborted (reqId=${reqId})`);
+                }
+                return;
+            }
+            
             // CRITICAL: Check if this error is from a stale request
             if (reqId !== this.onlineSearchRequestId) {
                 // Stale error, ignore it
+                if (SEARCH_DEBUG) {
+                    console.log(`[SEARCH] stale error ignored (reqId=${reqId}, current=${this.onlineSearchRequestId})`);
+                }
                 return;
             }
             
@@ -2592,7 +2670,7 @@ const Recipes = {
     },
 
     checkRecipeSuitability(recipe) {
-        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
+        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         if (!activeProfile || !activeProfile.allergies || activeProfile.allergies.length === 0) {
             return null;
         }
@@ -2640,7 +2718,7 @@ const Recipes = {
     },
 
     getUnsafeRecipeDetails(recipe) {
-        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
+        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         if (!activeProfile || !activeProfile.allergies || activeProfile.allergies.length === 0) {
             return null;
         }
@@ -2804,7 +2882,7 @@ const Recipes = {
                 if (searchInput) {
                     searchInput.value = suggestion;
                     this.lastQuery = suggestion;
-                    this.handleSearch();
+                    this.runSearch({ query: suggestion, source: 'suggestion' });
                 }
             });
         }
@@ -2904,7 +2982,7 @@ const Recipes = {
         recipeDetail.classList.remove('hidden');
 
         // Get active allergies for classification
-        const activeProfile = state.userProfiles.find(p => p.id === state.userActiveProfileId);
+        const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         const activeAllergies = activeProfile ? (activeProfile.allergies || []) : [];
 
         // Use UI render function
@@ -3110,7 +3188,7 @@ const Recipes = {
         }
 
         // Store the active profile ID at modal open time for safety check
-        const activeProfileIdAtOpen = state.userActiveProfileId;
+        const activeProfileIdAtOpen = AppState.activeProfileId;
 
         // Build ingredient suggestions
         const ingredientSuggestions = buildIngredientSuggestions();
@@ -3128,7 +3206,7 @@ const Recipes = {
                 },
                 onSave: async (updatedRecipeObj, imageFile, removeImage) => {
                     // Safety check: ensure profile hasn't changed
-                    if (state.userActiveProfileId !== activeProfileIdAtOpen) {
+                    if (AppState.activeProfileId !== activeProfileIdAtOpen) {
                         alert('Profile was switched. Please close and reopen the edit dialog.');
                         return;
                     }
@@ -3137,7 +3215,7 @@ const Recipes = {
                 },
                 onDelete: (recipeIdToDelete) => {
                     // Safety check: ensure profile hasn't changed
-                    if (state.userActiveProfileId !== activeProfileIdAtOpen) {
+                    if (AppState.activeProfileId !== activeProfileIdAtOpen) {
                         alert('Profile was switched. Please close and reopen the edit dialog.');
                         return;
                     }
@@ -3233,15 +3311,10 @@ const Recipes = {
                 // Currently viewing this recipe's detail - re-render detail
                 this.renderDetail(recipeId);
             } else {
-                // Re-run current search to refresh grid
-                if (this.searchMode === 'local') {
-                    const searchInput = $('#recipe-search-input');
-                    const currentQuery = searchInput ? searchInput.value.trim() : '';
-                    this.searchLocal(currentQuery);
-                } else {
-                    // For online mode, just refresh the list
-                    this.renderList();
-                }
+                // Re-run current search to refresh grid using runSearch
+                const searchInput = $('#recipe-search-input');
+                const currentQuery = searchInput ? searchInput.value.trim() : '';
+                this.runSearch({ query: currentQuery, source: 'recipe-edit' });
             }
         } catch (error) {
             console.error('Error saving edited recipe:', error);
@@ -3301,14 +3374,10 @@ const Recipes = {
             this.currentRecipes.splice(currentIndex, 1);
         }
 
-        // Refresh grid
-        if (this.searchMode === 'local') {
-            const searchInput = $('#recipe-search-input');
-            const currentQuery = searchInput ? searchInput.value.trim() : '';
-            this.searchLocal(currentQuery);
-        } else {
-            this.renderList();
-        }
+        // Refresh grid using runSearch
+        const searchInput = $('#recipe-search-input');
+        const currentQuery = searchInput ? searchInput.value.trim() : '';
+        this.runSearch({ query: currentQuery, source: 'recipe-delete' });
     },
 
     /**
@@ -3693,8 +3762,6 @@ const AllergyInfo = {
  ************************************/
 
 const Forecast = {
-    _listenersAttached: false,
-
     normalizeIngredient(ingredient) {
         return ingredient
             .toLowerCase()
@@ -3894,55 +3961,7 @@ const Forecast = {
         renderApp();
     },
 
-    initOnce() {
-        // Attach event delegation listeners only once
-        if (this._listenersAttached) return;
-
-        const forecastContent = $('#forecast-content');
-        if (forecastContent) {
-            // Use event delegation for dynamic buttons and cards
-            forecastContent.addEventListener('click', (e) => {
-                // Handle "Go to Shopping List" button
-                if (e.target.id === 'go-to-shopping-btn' || e.target.closest('#go-to-shopping-btn')) {
-                    Navigation.switchView('shopping');
-                    return;
-                }
-
-                // Handle missing ingredient "+" buttons
-                if (e.target.classList.contains('add-missing-btn')) {
-                    e.stopPropagation();
-                    const btn = e.target;
-                    // Don't add if button is disabled (already in list)
-                    if (btn.disabled || btn.classList.contains('added')) {
-                        return;
-                    }
-                    const ingredient = btn.getAttribute('data-ingredient');
-                    if (ingredient) {
-                        this.addSuggestedItem(ingredient);
-                    }
-                    return;
-                }
-
-                // Handle ready-card clicks
-                const readyCard = e.target.closest('.ready-card');
-                if (readyCard) {
-                    const recipeId = readyCard.getAttribute('data-recipe-id');
-                    if (recipeId) {
-                        Recipes.renderDetail(recipeId);
-                        Navigation.switchView('recipes');
-                    }
-                    return;
-                }
-            });
-        }
-
-        this._listenersAttached = true;
-    },
-
     render() {
-        // Ensure event delegation is set up
-        this.initOnce();
-
         const forecastContent = $('#forecast-content');
         const p = getActiveProfile();
         
@@ -3980,7 +3999,11 @@ const Forecast = {
                     <button class="nav-btn" id="go-to-shopping-btn">Go to Shopping List</button>
                 </div>
             `;
-            // No need to attach listener - handled by event delegation in initOnce()
+
+            const goBtn = $('#go-to-shopping-btn');
+            if (goBtn) {
+                goBtn.addEventListener('click', () => Navigation.switchView('shopping'));
+            }
             return;
         }
 
@@ -4107,7 +4130,29 @@ const Forecast = {
 
         forecastContent.innerHTML = html;
 
-        // No need to attach listeners - handled by event delegation in initOnce()
+        // Add event listeners for missing ingredient "+" buttons
+        $$('.add-missing-btn', forecastContent).forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Don't add if button is disabled (already in list)
+                if (btn.disabled || btn.classList.contains('added')) {
+                    return;
+                }
+                const ingredient = btn.getAttribute('data-ingredient');
+                this.addSuggestedItem(ingredient);
+            });
+        });
+
+        // Make ready-cards clickable (open recipe detail and switch view)
+        $$('.ready-card', forecastContent).forEach(card => {
+            card.addEventListener('click', () => {
+                const recipeId = card.getAttribute('data-recipe-id');
+                if (!recipeId) return;
+
+                Recipes.renderDetail(recipeId);
+                Navigation.switchView('recipes');
+            });
+        });
     },
 
     escapeHtml(text) {
@@ -4160,7 +4205,6 @@ const App = {
         Navigation.init();
         Profiles.init();
         Log.init();
-        Forecast.initOnce(); // Initialize event delegation for Forecast
         this.initAddRecipe();
     },
 

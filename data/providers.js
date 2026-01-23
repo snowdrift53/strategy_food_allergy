@@ -124,10 +124,12 @@ function detectAreaFromQuery(query) {
  * @param {string} mealId - TheMealDB meal ID
  * @returns {Promise<Object>} Full meal object
  */
-async function fetchMealDetails(mealId) {
+async function fetchMealDetails(mealId, options = {}) {
+    const { signal } = options;
+    
     try {
         const url = `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${encodeURIComponent(mealId)}`;
-        const response = await fetch(url);
+        const response = await fetch(url, { signal });
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -141,6 +143,10 @@ async function fetchMealDetails(mealId) {
         
         return data.meals[0];
     } catch (error) {
+        // Ignore abort errors silently
+        if (error.name === 'AbortError') {
+            throw error; // Re-throw to let caller handle
+        }
         console.warn(`Failed to fetch meal details for ID ${mealId}:`, error);
         return null;
     }
@@ -212,15 +218,21 @@ function mapMealToRecipe(meal) {
  * @param {string|string[]} areaOrAreas - Single area name or array of area names
  * @returns {Promise<Array>} Array of full meal objects
  */
-async function fetchMealsByArea(areaOrAreas) {
+async function fetchMealsByArea(areaOrAreas, options = {}) {
+    const { signal } = options;
     const areas = Array.isArray(areaOrAreas) ? areaOrAreas : [areaOrAreas];
     const allMeals = [];
     
     // Fetch meals for each area
     for (const area of areas) {
+        // Check if aborted before each iteration
+        if (signal && signal.aborted) {
+            throw new DOMException('Aborted', 'AbortError');
+        }
+        
         try {
             const url = `https://www.themealdb.com/api/json/v1/1/filter.php?a=${encodeURIComponent(area)}`;
-            const response = await fetch(url);
+            const response = await fetch(url, { signal });
             
             if (!response.ok) {
                 console.warn(`Failed to fetch area ${area}: HTTP ${response.status}`);
@@ -232,7 +244,7 @@ async function fetchMealsByArea(areaOrAreas) {
             if (data.meals && data.meals.length > 0) {
                 // filter.php returns basic info only (idMeal, strMeal, strMealThumb)
                 // Need to fetch full details for each meal
-                const mealPromises = data.meals.map(meal => fetchMealDetails(meal.idMeal));
+                const mealPromises = data.meals.map(meal => fetchMealDetails(meal.idMeal, { signal }));
                 const mealDetails = await Promise.all(mealPromises);
                 
                 // Filter out null results
@@ -240,6 +252,10 @@ async function fetchMealsByArea(areaOrAreas) {
                 allMeals.push(...validMeals);
             }
         } catch (error) {
+            // Ignore abort errors silently
+            if (error.name === 'AbortError') {
+                throw error; // Re-throw to let caller handle
+            }
             console.warn(`Failed to fetch area ${area}:`, error);
             continue;
         }
@@ -256,10 +272,12 @@ async function fetchMealsByArea(areaOrAreas) {
     });
 }
 
-async function searchRecipesOnline(query) {
+async function searchRecipesOnline(query, options = {}) {
     if (!query || !query.trim()) {
         return [];
     }
+
+    const { signal } = options;
 
     try {
         const queryTrimmed = query.trim();
@@ -269,11 +287,11 @@ async function searchRecipesOnline(query) {
         
         if (detectedArea) {
             // Use area filter endpoint (handles single area or array of areas)
-            meals = await fetchMealsByArea(detectedArea);
+            meals = await fetchMealsByArea(detectedArea, { signal });
         } else {
             // Fall back to name-based search
             const url = `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(queryTrimmed)}`;
-            const response = await fetch(url);
+            const response = await fetch(url, { signal });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -293,6 +311,10 @@ async function searchRecipesOnline(query) {
         // Convert TheMealDB format to app format
         return meals.map(meal => mapMealToRecipe(meal));
     } catch (error) {
+        // Ignore abort errors silently
+        if (error.name === 'AbortError') {
+            throw error; // Re-throw to let caller handle
+        }
         console.warn('Failed to search recipes online:', error);
         return [];
     }
