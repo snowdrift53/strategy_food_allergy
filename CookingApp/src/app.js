@@ -1509,8 +1509,174 @@ const Recipes = {
         if (!Array.isArray(recipes)) return [];
         if (!query || typeof query !== 'string') return recipes;
         
-        const queryLower = query.trim().toLowerCase();
-        if (!queryLower) return recipes;
+        // Normalizer function: lowercases, trims, removes diacritics
+        const norm = (s) => (s || "")
+            .toString()
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+        
+        const q = norm(query);
+        if (!q) return recipes;
+        
+        // Country to area demonym mapping (normalized keys/values)
+        const COUNTRY_TO_AREA = {
+            "france": "french",
+            "french": "french",
+            "italy": "italian",
+            "italian": "italian",
+            "germany": "german",
+            "german": "german",
+            "spain": "spanish",
+            "spanish": "spanish",
+            "portugal": "portuguese",
+            "portuguese": "portuguese",
+            "greece": "greek",
+            "greek": "greek",
+            "netherlands": "dutch",
+            "dutch": "dutch",
+            "holland": "dutch",
+            "switzerland": "swiss",
+            "swiss": "swiss",
+            "austria": "austrian",
+            "austrian": "austrian",
+            "belgium": "belgian",
+            "belgian": "belgian",
+            "morocco": "moroccan",
+            "moroccan": "moroccan",
+            "tunisia": "tunisian",
+            "tunisian": "tunisian",
+            "algeria": "algerian",
+            "algerian": "algerian",
+            "turkey": "turkish",
+            "turkish": "turkish",
+            "russia": "russian",
+            "russian": "russian",
+            "ukraine": "ukrainian",
+            "ukrainian": "ukrainian",
+            "poland": "polish",
+            "polish": "polish",
+            "sweden": "swedish",
+            "swedish": "swedish",
+            "norway": "norwegian",
+            "norwegian": "norwegian",
+            "denmark": "danish",
+            "danish": "danish",
+            "finland": "finnish",
+            "finnish": "finnish",
+            "ireland": "irish",
+            "irish": "irish",
+            "scotland": "scottish",
+            "scottish": "scottish",
+            "england": "english",
+            "english": "english",
+            "uk": "british",
+            "united kingdom": "british",
+            "britain": "british",
+            "british": "british",
+            "usa": "american",
+            "us": "american",
+            "united states": "american",
+            "american": "american",
+            "mexico": "mexican",
+            "mexican": "mexican",
+            "canada": "canadian",
+            "canadian": "canadian",
+            "brazil": "brazilian",
+            "brazilian": "brazilian",
+            "argentina": "argentinian",
+            "argentinian": "argentinian",
+            "chile": "chilean",
+            "chilean": "chilean",
+            "peru": "peruvian",
+            "peruvian": "peruvian",
+            "colombia": "colombian",
+            "colombian": "colombian",
+            "venezuela": "venezuelan",
+            "venezuelan": "venezuelan",
+            "china": "chinese",
+            "chinese": "chinese",
+            "japan": "japanese",
+            "japanese": "japanese",
+            "korea": "korean",
+            "south korea": "korean",
+            "korean": "korean",
+            "thailand": "thai",
+            "thai": "thai",
+            "vietnam": "vietnamese",
+            "vietnamese": "vietnamese",
+            "india": "indian",
+            "indian": "indian",
+            "pakistan": "pakistani",
+            "pakistani": "pakistani",
+            "indonesia": "indonesian",
+            "indonesian": "indonesian",
+            "philippines": "filipino",
+            "philippine": "filipino",
+            "filipino": "filipino",
+            "malaysia": "malaysian",
+            "malaysian": "malaysian",
+            "singapore": "singaporean",
+            "singaporean": "singaporean",
+            "australia": "australian",
+            "australian": "australian",
+            "new zealand": "new zealand",
+            "nz": "new zealand"
+        };
+        
+        // Regional keywords to areas/demonyms mapping
+        const REGION_TO_AREAS = {
+            "asia": ["chinese", "japanese", "korean", "thai", "vietnamese", "indian", "malaysian", "indonesian", "filipino"],
+            "asian": ["chinese", "japanese", "korean", "thai", "vietnamese", "indian", "malaysian", "indonesian", "filipino"],
+            "east asian": ["chinese", "japanese", "korean"],
+            "southeast asian": ["thai", "vietnamese", "malaysian", "indonesian", "filipino"],
+            "south asian": ["indian", "pakistani"],
+            
+            "mediterranean": ["greek", "italian", "spanish", "portuguese", "turkish", "moroccan", "tunisian", "algerian"],
+            "north africa": ["moroccan", "tunisian", "algerian"],
+            "north african": ["moroccan", "tunisian", "algerian"],
+            "maghreb": ["moroccan", "tunisian", "algerian"],
+            "middle east": ["turkish"],
+            "middle eastern": ["turkish"],
+            
+            "latin america": ["mexican", "peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
+            "latin american": ["mexican", "peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"],
+            "south america": ["peruvian", "colombian", "venezuelan", "chilean", "argentinian", "brazilian"]
+        };
+        
+        // Build set of terms to match
+        const terms = new Set([q]);
+        
+        // Add mapped area from COUNTRY_TO_AREA if exists
+        if (COUNTRY_TO_AREA[q]) {
+            terms.add(COUNTRY_TO_AREA[q]);
+        }
+        
+        // Add regional areas if query matches a region
+        if (REGION_TO_AREAS[q]) {
+            REGION_TO_AREAS[q].forEach(x => terms.add(norm(x)));
+        }
+        
+        // Add detected areas from detectAreaFromQuery if available
+        const detectAreaFromQueryFn = typeof window !== 'undefined' && window.detectAreaFromQuery 
+            ? window.detectAreaFromQuery 
+            : (typeof detectAreaFromQuery !== 'undefined' ? detectAreaFromQuery : null);
+        
+        if (detectAreaFromQueryFn) {
+            const detected = detectAreaFromQueryFn(q);
+            if (detected) {
+                if (Array.isArray(detected)) {
+                    detected.forEach(x => {
+                        if (typeof x === 'string') {
+                            terms.add(norm(x));
+                        }
+                    });
+                } else if (typeof detected === 'string') {
+                    terms.add(norm(detected));
+                }
+            }
+        }
         
         return recipes.filter(recipe => {
             if (!recipe) return false;
@@ -1524,14 +1690,16 @@ const Recipes = {
             const cuisineTags = Array.isArray(recipe.cuisineTags) 
                 ? recipe.cuisineTags.join(' ').toLowerCase() 
                 : '';
-            const area = (recipe.area || '').toLowerCase();
+            const area = norm(recipe.area || '');
             const cuisine = (recipe.cuisine || '').toLowerCase();
             const family = (recipe.family || '').toLowerCase();
             
             const searchableText = `${title} ${description} ${ingredients} ${cuisineTags} ${area} ${cuisine} ${family}`;
             
-            // Match via includes (case-insensitive)
-            return searchableText.includes(queryLower);
+            // Match if searchableText includes any term OR area equals any term
+            return Array.from(terms).some(term => 
+                searchableText.includes(term) || area === term
+            );
         });
     },
 
