@@ -659,17 +659,8 @@ const state = loadState();
 // Legacy AppState for backward compatibility during transition
 // AppState is now a pure wrapper around state - all reads and writes go through state
 // Setters automatically persist changes via saveState() to ensure data is saved
+// NOTE: groceryList removed - grocery list feature now uses state directly via helper functions
 const AppState = {
-    get groceryList() { 
-        // Read from state via helper function
-        return getProfileShoppingList(); 
-    },
-    set groceryList(value) { 
-        // Write to state via helper function
-        setProfileShoppingList(value);
-        // Auto-save to ensure persistence (old code expects this)
-        saveState();
-    },
     get profiles() { 
         // Direct read from state
         return state.userProfiles; 
