@@ -1849,8 +1849,11 @@ const Recipes = {
         this.currentRecipes = [];
 
         const recipeList = $('#recipe-list');
-        if (recipeList) {
-            // CRITICAL: Clear container before showing loading state
+        if (recipeList && typeof window.renderLoading === 'function') {
+            // Use UI render function for loading state
+            window.renderLoading(recipeList, 'Searching...');
+        } else if (recipeList) {
+            // Fallback
             recipeList.innerHTML = '<div class="recipe-loading">Searching...</div>';
         }
 
@@ -1899,7 +1902,11 @@ const Recipes = {
             // Reset on error to prevent stale results
             this.currentRecipes = [];
             const recipeList = $('#recipe-list');
-            if (recipeList) {
+            if (recipeList && typeof window.renderError === 'function') {
+                // Use UI render function for error state
+                window.renderError(recipeList, 'Online search unavailable.');
+            } else if (recipeList) {
+                // Fallback
                 recipeList.innerHTML = '<div class="recipe-error">Online search unavailable.</div>';
             }
         }
@@ -2095,32 +2102,66 @@ const Recipes = {
         // Note: currentRecipes is set by searchLocal/searchOnline, so we don't refresh it here
         // This ensures filtered results are preserved
 
+        // Determine empty message
+        let emptyMessage = 'No recipes found.';
         if (this.currentRecipes.length === 0) {
-            // Show different message for online mode when query is empty
             if (this.searchMode === 'online' && (!this.lastQuery || !this.lastQuery.trim())) {
-                recipeList.innerHTML = '<div class="recipe-empty">Type a country, cuisine, or region to search online recipes.</div>';
-            } else {
-                recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
+                emptyMessage = 'Type a country, cuisine, or region to search online recipes.';
             }
-            
-            // Show typo suggestion if we have a query
-            if (this.lastQuery && this.lastQuery.trim()) {
+        }
+
+        // Use UI render function
+        if (typeof window.renderRecipesGrid === 'function') {
+            window.renderRecipesGrid({
+                recipes: this.currentRecipes,
+                containerEl: recipeList,
+                onRecipeClick: (recipeId) => this.renderDetail(recipeId),
+                onToggleLike: (recipe) => this.toggleLikeRecipe(recipe),
+                checkRecipeSuitability: (recipe) => this.checkRecipeSuitability(recipe),
+                isRecipeLiked: (recipeId) => isRecipeLiked(recipeId),
+                emptyMessage: emptyMessage
+            });
+
+            // Show typo suggestion if we have a query and no results
+            if (this.currentRecipes.length === 0 && this.lastQuery && this.lastQuery.trim()) {
                 const suggestion = this.suggestCorrection(this.lastQuery);
                 if (suggestion) {
                     this.showSuggestion(suggestion);
                 }
             }
-            return;
+
+            // Debug logging
+            const UI_DEBUG = new URLSearchParams(location.search).has("uiDebug");
+            if (UI_DEBUG) {
+                const cardCount = recipeList.querySelectorAll('.recipe-card').length;
+                console.log("[UI_DEBUG] Rendered cards:", cardCount);
+            }
+        } else {
+            // Fallback to old rendering if UI functions not available
+            if (this.currentRecipes.length === 0) {
+                if (this.searchMode === 'online' && (!this.lastQuery || !this.lastQuery.trim())) {
+                    recipeList.innerHTML = '<div class="recipe-empty">Type a country, cuisine, or region to search online recipes.</div>';
+                } else {
+                    recipeList.innerHTML = '<div class="recipe-empty">No recipes found.</div>';
+                }
+                
+                if (this.lastQuery && this.lastQuery.trim()) {
+                    const suggestion = this.suggestCorrection(this.lastQuery);
+                    if (suggestion) {
+                        this.showSuggestion(suggestion);
+                    }
+                }
+                return;
+            }
+
+            const uniqueRecipes = this.currentRecipes.filter((recipe, index, self) => 
+                index === self.findIndex(r => String(r.id) === String(recipe.id))
+            );
+
+            uniqueRecipes.forEach(recipe => {
+                recipeList.appendChild(this.createCard(recipe));
+            });
         }
-
-        // Render each recipe card - ensure we're working with a clean array (no duplicates)
-        const uniqueRecipes = this.currentRecipes.filter((recipe, index, self) => 
-            index === self.findIndex(r => String(r.id) === String(recipe.id))
-        );
-
-        uniqueRecipes.forEach(recipe => {
-            recipeList.appendChild(this.createCard(recipe));
-        });
     },
 
     /**
@@ -2246,135 +2287,157 @@ const Recipes = {
         const recipeDetail = $('#recipe-detail');
         const detailContent = $('#detail-content');
 
+        if (!recipeList || !recipeDetail || !detailContent) return;
+
         recipeList.classList.add('hidden');
         recipeDetail.classList.remove('hidden');
 
-        // Image resolution: use recipe.imageType to choose between recipe.illustration vs recipe.photo
-        const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
-        let mainImageUrl = '';
-        let secondaryImageUrl = '';
-        
-        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
-            mainImageUrl = recipe.illustration;
-            secondaryImageUrl = recipe.photo || recipe.illustration;
-        } else if (recipe.photo && recipe.photo.trim() !== '') {
-            mainImageUrl = recipe.photo;
-            secondaryImageUrl = recipe.illustration || recipe.photo;
-        }
-        
-        // Fallback to placeholder if still empty
-        if (!mainImageUrl || mainImageUrl.trim() === '') {
-            mainImageUrl = 'images/recipes/placeholder-recipe.jpg';
-        }
-        if (!secondaryImageUrl || secondaryImageUrl.trim() === '') {
-            secondaryImageUrl = 'images/recipes/placeholder-recipe.jpg';
-        }
-        
-        const mainImageClass = recipe.imageType === 'illustration' ? 'detail-image illustration' : 'detail-image photo';
-        const secondaryImageClass = recipe.imageType === 'illustration' ? 'detail-image photo' : 'detail-image illustration';
-        const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
-
+        // Get active allergies for classification
         const activeProfile = AppState.profiles.find(p => p.id === AppState.activeProfileId);
         const activeAllergies = activeProfile ? (activeProfile.allergies || []) : [];
-        const classification = AllergyEngine.classifyRecipe(recipe, activeAllergies);
-        
-        let suitabilityHtml = '';
-        
-        if (classification.status === 'safe') {
-            suitabilityHtml = `
-                <div class="recipe-suitability recipe-suitability-safe">
-                    <span class="mini-flag flag-safe">OK</span>
-                    <span class="recipe-suitability-text">OK for your profile</span>
-                </div>
-            `;
-        } else if (classification.status === 'substitutable') {
-            const uniqueIngredients = [...new Set(classification.hitIngredients)];
-            const substitutionsKeys = Object.keys(classification.substitutionsByAllergen);
+
+        // Use UI render function
+        if (typeof window.renderRecipeDetail === 'function') {
+            window.renderRecipeDetail({
+                recipe: recipe,
+                containerEl: detailContent,
+                classifyRecipe: (recipe, allergies) => AllergyEngine.classifyRecipe(recipe, allergies),
+                escapeHtml: (text) => this.escapeHtml(text),
+                activeAllergies: activeAllergies
+            });
+
+            // Debug logging
+            const UI_DEBUG = new URLSearchParams(location.search).has("uiDebug");
+            if (UI_DEBUG) {
+                const hasTitle = !!detailContent.querySelector('h1, h2, .recipe-title');
+                console.assert(hasTitle, "Detail title missing");
+                if (hasTitle) {
+                    console.log("[UI_DEBUG] Recipe detail rendered successfully");
+                }
+            }
+        } else {
+            // Fallback to old rendering if UI functions not available
+            const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
+            let mainImageUrl = '';
+            let secondaryImageUrl = '';
             
-            suitabilityHtml = `
-                <div class="recipe-suitability recipe-suitability-replaceable">
-                    <div class="adapt-flag" style="display: inline-block; margin-bottom: 12px;">
-                        <div style="margin-bottom: 4px;">
-                            <span class="mini-flag flag-changes">ADAPT</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #6B4E3D; line-height: 1.3; text-align: left;">
-                            Adapt &<br>enjoy!
-                        </div>
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <div style="margin-bottom: 8px;">
-                            <strong>Problem ingredients:</strong>
-                            <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
-                                ${uniqueIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div>
-                            <strong>Suggested substitutions:</strong>
-                            <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
-                                ${substitutionsKeys.map(allergenKey => {
-                                    const subs = classification.substitutionsByAllergen[allergenKey];
-                                    return `<li><strong>${this.escapeHtml(allergenKey)}</strong>: ${subs.map(s => this.escapeHtml(s)).join(', ')}</li>`;
-                                }).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else if (classification.status === 'avoid') {
-            const uniqueIngredients = [...new Set(classification.hitIngredients)];
+            if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+                mainImageUrl = recipe.illustration;
+                secondaryImageUrl = recipe.photo || recipe.illustration;
+            } else if (recipe.photo && recipe.photo.trim() !== '') {
+                mainImageUrl = recipe.photo;
+                secondaryImageUrl = recipe.illustration || recipe.photo;
+            }
             
-            suitabilityHtml = `
-                <div class="recipe-suitability recipe-suitability-unsafe">
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <span class="mini-flag flag-avoid">AVOID</span>
-                        <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Avoid (too many conflicts)</span>
+            if (!mainImageUrl || mainImageUrl.trim() === '') {
+                mainImageUrl = 'images/recipes/placeholder-recipe.jpg';
+            }
+            if (!secondaryImageUrl || secondaryImageUrl.trim() === '') {
+                secondaryImageUrl = 'images/recipes/placeholder-recipe.jpg';
+            }
+            
+            const mainImageClass = recipe.imageType === 'illustration' ? 'detail-image illustration' : 'detail-image photo';
+            const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
+
+            const classification = AllergyEngine.classifyRecipe(recipe, activeAllergies);
+            let suitabilityHtml = '';
+            
+            if (classification.status === 'safe') {
+                suitabilityHtml = `
+                    <div class="recipe-suitability recipe-suitability-safe">
+                        <span class="mini-flag flag-safe">OK</span>
+                        <span class="recipe-suitability-text">OK for your profile</span>
                     </div>
-                    <div style="margin-top: 10px;">
-                        <div style="margin-bottom: 8px;">
-                            <strong>Problem ingredients:</strong>
-                            <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
-                                ${uniqueIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
-                            </ul>
+                `;
+            } else if (classification.status === 'substitutable') {
+                const uniqueIngredients = [...new Set(classification.hitIngredients)];
+                const substitutionsKeys = Object.keys(classification.substitutionsByAllergen);
+                
+                suitabilityHtml = `
+                    <div class="recipe-suitability recipe-suitability-replaceable">
+                        <div class="adapt-flag" style="display: inline-block; margin-bottom: 12px;">
+                            <div style="margin-bottom: 4px;">
+                                <span class="mini-flag flag-changes">ADAPT</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #6B4E3D; line-height: 1.3; text-align: left;">
+                                Adapt &<br>enjoy!
+                            </div>
                         </div>
-                        <div style="font-size: 1.1rem; line-height: 1.5;">No suitable substitutions found</div>
+                        <div style="margin-top: 10px;">
+                            <div style="margin-bottom: 8px;">
+                                <strong>Problem ingredients:</strong>
+                                <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                    ${uniqueIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div>
+                                <strong>Suggested substitutions:</strong>
+                                <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                    ${substitutionsKeys.map(allergenKey => {
+                                        const subs = classification.substitutionsByAllergen[allergenKey];
+                                        return `<li><strong>${this.escapeHtml(allergenKey)}</strong>: ${subs.map(s => this.escapeHtml(s)).join(', ')}</li>`;
+                                    }).join('')}
+                                </ul>
+                            </div>
+                        </div>
                     </div>
+                `;
+            } else if (classification.status === 'avoid') {
+                const uniqueIngredients = [...new Set(classification.hitIngredients)];
+                
+                suitabilityHtml = `
+                    <div class="recipe-suitability recipe-suitability-unsafe">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span class="mini-flag flag-avoid">AVOID</span>
+                            <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Avoid (too many conflicts)</span>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <div style="margin-bottom: 8px;">
+                                <strong>Problem ingredients:</strong>
+                                <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                    ${uniqueIngredients.map(ing => `<li>${this.escapeHtml(ing)}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div style="font-size: 1.1rem; line-height: 1.5;">No suitable substitutions found</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            detailContent.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-images">
+                        <div class="${mainImageClass}">
+                            <img src="${mainImageUrl}" alt="${recipe.title}" onerror="this.onerror=null; this.src='${placeholderUrl}';"> 
+                        </div>
+                    </div>
+                    <h1 class="detail-title">${recipe.title}</h1>
+                    <div class="detail-meta">
+                        <div class="detail-meta-item"><span>⏱️</span><span>${recipe.time}</span></div>
+                        <div class="detail-meta-item"><span>👥</span><span>${recipe.servings} servings</span></div>
+                        <div class="detail-meta-item"><span>⭐</span><span>${recipe.difficulty}</span></div>
+                    </div>
+                    ${suitabilityHtml}
+                    <p class="detail-description">${recipe.fullDescription}</p>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Ingredients</h3>
+                    <ul class="ingredients-list">
+                        ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Instructions</h3>
+                    <ol class="steps-list">
+                        ${recipe.steps.map(step => `<li>${step}</li>`).join('')}
+                    </ol>
                 </div>
             `;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
-        detailContent.innerHTML = `
-            <div class="detail-header">
-                <div class="detail-images">
-                    <div class="${mainImageClass}">
-                        <img src="${mainImageUrl}" alt="${recipe.title}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
-                    </div>
-                </div>
-                <h1 class="detail-title">${recipe.title}</h1>
-                <div class="detail-meta">
-                    <div class="detail-meta-item"><span>⏱️</span><span>${recipe.time}</span></div>
-                    <div class="detail-meta-item"><span>👥</span><span>${recipe.servings} servings</span></div>
-                    <div class="detail-meta-item"><span>⭐</span><span>${recipe.difficulty}</span></div>
-                </div>
-                ${suitabilityHtml}
-                <p class="detail-description">${recipe.fullDescription}</p>
-            </div>
-
-            <div class="detail-section">
-                <h3>Ingredients</h3>
-                <ul class="ingredients-list">
-                    ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
-                </ul>
-            </div>
-
-            <div class="detail-section">
-                <h3>Instructions</h3>
-                <ol class="steps-list">
-                    ${recipe.steps.map(step => `<li>${step}</li>`).join('')}
-                </ol>
-            </div>
-        `;
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     escapeHtml(text) {
