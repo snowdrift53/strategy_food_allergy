@@ -323,41 +323,46 @@ header {
 }
 
 .profile-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #8B7355;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: var(--mc-ink);
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 6px;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-weight: 500;
     white-space: nowrap;
+    box-shadow: none;
 }
 
 .profile-btn:hover {
-    background: #6B4E3D;
-    transform: translateY(-1px);
+    background: var(--mc-ink);
+    opacity: 0.85;
+    transform: none;
 }
 
 .profile-delete-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #D2B48C;
-    color: white;
-    border: none;
-    padding: 8px 16px;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: transparent;
+    color: var(--mc-muted);
+    border: 1px solid var(--mc-border);
+    padding: 10px 20px;
     border-radius: 6px;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-weight: 500;
     width: 100%;
+    box-shadow: none;
 }
 
 .profile-delete-btn:hover:not(:disabled) {
-    background: #B8860B;
-    transform: translateY(-1px);
+    background: var(--mc-beige);
+    color: var(--mc-ink);
+    border-color: var(--mc-border);
+    transform: none;
 }
 
 .profile-delete-btn:disabled {
@@ -664,39 +669,39 @@ header {
 .main-nav {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 0;
     margin-bottom: 50px;
     flex-wrap: wrap;
     padding: 0;
+    border-bottom: 1px solid var(--mc-border);
 }
 
 .nav-btn {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    background: var(--mc-surface);
-    color: var(--mc-ink);
-    border: 1px solid var(--mc-border);
-    padding: 14px 28px;
-    border-radius: 8px;
-    font-size: 1rem;
+    background: transparent;
+    color: var(--mc-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 20px;
+    border-radius: 0;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
     letter-spacing: 0.01em;
+    position: relative;
 }
 
 .nav-btn:hover {
-    background: var(--mc-beige);
     color: var(--mc-ink);
-    border-color: var(--mc-accent);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    background: transparent;
 }
 
 .nav-btn.active {
-    background: var(--mc-green);
-    color: white;
-    border-color: var(--mc-green);
-    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20);
+    background: transparent;
+    color: var(--mc-ink);
+    border-bottom-color: var(--mc-ink);
+    font-weight: 600;
 }
 
 /* Recipe Search Toggle Buttons */
@@ -762,36 +767,38 @@ header {
 }
 
 .recipe-search-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #E8E8E8;
-    color: #8B8B8B;
-    border: 2px solid #D0D0D0;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: transparent;
+    color: var(--mc-muted);
+    border: 1px solid var(--mc-border);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-weight: 500;
 }
 
 /* Inactive hover - must remain muted */
 .recipe-search-btn:hover:not(.active) {
-    background: #D8D8D8;
-    color: #6B6B6B;
-    border-color: #C0C0C0;
+    background: var(--mc-beige);
+    color: var(--mc-ink);
+    border-color: var(--mc-border);
 }
 
 /* Active state - must override all other states */
 .recipe-search-btn.active {
-    background: #8B7355 !important;
-    color: white !important;
-    border-color: #8B7355 !important;
-    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+    background: var(--mc-ink);
+    color: white;
+    border-color: var(--mc-ink);
+    box-shadow: none;
+    font-weight: 500;
 }
 
 .recipe-search-btn.active:hover {
-    background: #6B4E3D !important;
-    border-color: #6B4E3D !important;
+    background: var(--mc-ink);
+    border-color: var(--mc-ink);
+    opacity: 0.9;
 }
 
 .view-section {
@@ -854,22 +861,23 @@ header {
 
 .add-btn {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    background: var(--mc-green);
+    background: var(--mc-ink);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 11px 24px;
+    border-radius: 6px;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20);
+    transition: all 0.2s ease;
+    box-shadow: none;
     font-weight: 500;
 }
 
 .add-btn:hover {
-    background: #6B4E3D;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+    background: var(--mc-ink);
+    opacity: 0.85;
+    transform: none;
+    box-shadow: none;
 }
 
 .grocery-list {
@@ -951,23 +959,25 @@ header {
 }
 
 .clear-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #D2B48C;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: transparent;
+    color: var(--mc-muted);
+    border: 1px solid var(--mc-border);
+    padding: 11px 24px;
+    border-radius: 6px;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     width: 100%;
     font-weight: 500;
 }
 
 .clear-btn:hover {
-    background: #B8860B;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+    background: var(--mc-beige);
+    color: var(--mc-ink);
+    border-color: var(--mc-border);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Allergy Information Styles */
@@ -1025,22 +1035,24 @@ header {
 }
 
 .search-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #8B7355;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: var(--mc-ink);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 11px 24px;
+    border-radius: 6px;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-weight: 500;
+    box-shadow: none;
 }
 
 .search-btn:hover {
-    background: #6B4E3D;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+    background: var(--mc-ink);
+    opacity: 0.85;
+    transform: none;
+    box-shadow: none;
 }
 
 .replacement-result {
@@ -1744,23 +1756,26 @@ header {
 
 .back-btn {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    background: var(--mc-green);
-    color: white;
+    background: transparent;
+    color: var(--mc-muted);
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 8px 0;
+    border-radius: 0;
+    font-size: 0.95rem;
     cursor: pointer;
     margin-top: 0;
-    margin-bottom: 26px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20);
+    margin-bottom: 32px;
+    transition: all 0.2s ease;
+    box-shadow: none;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .back-btn:hover {
-    background: #1a1f10;
-    transform: translateX(-5px);
-    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25);
+    color: var(--mc-ink);
+    transform: translateX(-3px);
+    box-shadow: none;
 }
 
 
@@ -2312,30 +2327,36 @@ input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus
 
 /* ===== Toggle buttons (Local / Online) ===== */
 .recipe-search-btn {
-    background: var(--mc-surface) !important;
+    background: transparent !important;
     border: 1px solid var(--mc-border) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
-    transition: background 160ms ease, transform 160ms ease, border-color 160ms ease !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
-    color: var(--mc-ink) !important;
+    color: var(--mc-muted) !important;
+    padding: 10px 20px !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
 }
 
 .recipe-search-btn:hover:not(.active) {
-    border-color: var(--mc-beige) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
+    background: var(--mc-beige) !important;
+    border-color: var(--mc-border) !important;
+    color: var(--mc-ink) !important;
+    box-shadow: none !important;
 }
 
 .recipe-search-btn.active {
-    background: var(--mc-green) !important;
+    background: var(--mc-ink) !important;
     color: #ffffff !important;
-    border-color: var(--mc-green) !important;
-    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
+    border-color: var(--mc-ink) !important;
+    box-shadow: none !important;
 }
 
 .recipe-search-btn.active:hover {
-    background: var(--mc-green) !important;
-    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
+    background: var(--mc-ink) !important;
+    opacity: 0.9 !important;
+    box-shadow: none !important;
 }
 
 /* ===== Additional Inputs (Shopping List, etc.) ===== */
@@ -2357,34 +2378,44 @@ input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus
 /* ===== General Buttons (Shopping List Add, etc.) ===== */
 /* Primary action buttons (Add, Save) */
 .add-btn, .save-btn, .profile-btn {
-    background: var(--mc-green) !important;
+    background: var(--mc-ink) !important;
     color: #ffffff !important;
-    border: 1px solid var(--mc-green) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
-    transition: background 160ms ease, transform 160ms ease !important;
+    border: none !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
+    padding: 11px 24px !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
 }
 
 .add-btn:hover, .save-btn:hover, .profile-btn:hover {
-    background: #1a1f10 !important;
-    box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
+    background: var(--mc-ink) !important;
+    opacity: 0.85 !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 /* Secondary buttons */
 .profile-delete-btn {
-    background: rgba(255, 255, 255, 0.25) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 12px !important;
+    background: transparent !important;
+    border: 1px solid var(--mc-border) !important;
+    border-radius: 6px !important;
     box-shadow: none !important;
-    transition: background 160ms ease, transform 160ms ease, border-color 160ms ease !important;
+    transition: all 0.2s ease !important;
     font-family: ui-serif, Georgia, "Times New Roman", serif !important;
-    color: var(--text) !important;
+    color: var(--mc-muted) !important;
+    padding: 10px 20px !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
 }
 
 .profile-delete-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.40) !important;
-    border-color: rgba(43, 43, 43, 0.24) !important;
+    background: var(--mc-beige) !important;
+    color: var(--mc-ink) !important;
+    border-color: var(--mc-border) !important;
+    transform: none !important;
 }
 
 /* ===== Click/Layering Safety Patch ===== */
@@ -2443,27 +2474,31 @@ header, .header-brand-row, .header-brand, .header-banner, .header-logo {
 
 /* ===== Tabs / Buttons Polish ===== */
 .nav-btn {
-    background: var(--mc-surface) !important;
-    border: 1px solid var(--mc-border) !important;
-    color: var(--mc-ink) !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
-    padding: 12px 24px !important;
-    border-radius: 12px !important;
-    transition: all 200ms ease !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: var(--mc-muted) !important;
+    box-shadow: none !important;
+    padding: 12px 20px !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease !important;
     font-weight: 500 !important;
 }
 
 .nav-btn:hover {
-    border-color: var(--mc-beige) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
-    transform: translateY(-1px) !important;
+    background: transparent !important;
+    border-bottom-color: transparent !important;
+    color: var(--mc-ink) !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .nav-btn.active {
-    background: var(--mc-green) !important;
-    color: #ffffff !important;
-    border-color: var(--mc-green) !important;
-    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20) !important;
+    background: transparent !important;
+    color: var(--mc-ink) !important;
+    border-bottom-color: var(--mc-ink) !important;
+    box-shadow: none !important;
+    font-weight: 600 !important;
 }
 
 .nav-btn.active:hover {
