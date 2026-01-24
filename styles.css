@@ -348,9 +348,19 @@ header {
 }
 
 .profile-btn:hover {
-    background: var(--mc-ink);
-    opacity: 0.85;
+    background: #1a1a1a;
+    color: white;
     transform: none;
+}
+
+.profile-btn:active {
+    background: #0f0f0f;
+    color: white;
+}
+
+.profile-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 .profile-delete-btn {
@@ -373,6 +383,16 @@ header {
     color: var(--mc-ink);
     border-color: var(--mc-border);
     transform: none;
+}
+
+.profile-delete-btn:active:not(:disabled) {
+    background: #d9c9b5;
+    color: var(--mc-ink);
+}
+
+.profile-delete-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 .profile-delete-btn:disabled {
@@ -537,8 +557,14 @@ header {
 }
 
 .log-close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
     transform: scale(1.1);
+}
+
+.log-close-btn:active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .log-close-btn:focus {
@@ -595,8 +621,19 @@ header {
 }
 
 .log-btn:hover {
-    background: #6B4E3D;
+    background: #5a3d2e;
+    color: white;
     transform: translateY(-1px);
+}
+
+.log-btn:active {
+    background: #4a2f1f;
+    color: white;
+}
+
+.log-btn:focus-visible {
+    outline: 2px solid #8B7355;
+    outline-offset: 2px;
 }
 
 .log-entries {
@@ -662,8 +699,19 @@ header {
 }
 
 .log-delete-btn:hover {
-    background: #B8860B;
+    background: #9a6f09;
+    color: white;
     transform: scale(1.1);
+}
+
+.log-delete-btn:active {
+    background: #7a5707;
+    color: white;
+}
+
+.log-delete-btn:focus-visible {
+    outline: 2px solid #D2B48C;
+    outline-offset: 2px;
 }
 
 .log-empty {
@@ -708,11 +756,27 @@ header {
     background: transparent;
 }
 
+.nav-btn:active {
+    color: var(--mc-ink);
+    background: transparent;
+}
+
+.nav-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
+}
+
 .nav-btn.active {
     background: transparent;
     color: var(--mc-ink);
     border-bottom-color: var(--mc-ink);
     font-weight: 600;
+}
+
+.nav-btn.active:hover {
+    background: transparent;
+    color: var(--mc-ink);
+    border-bottom-color: var(--mc-ink);
 }
 
 /* Recipe Search Toggle Buttons */
@@ -808,9 +872,24 @@ header {
 }
 
 .recipe-search-btn.active:hover {
-    background: var(--mc-ink);
-    border-color: var(--mc-ink);
-    opacity: 0.9;
+    background: #1a1a1a;
+    color: white;
+    border-color: #1a1a1a;
+}
+
+.recipe-search-btn:active {
+    background: var(--mc-beige);
+    color: var(--mc-ink);
+}
+
+.recipe-search-btn.active:active {
+    background: #0f0f0f;
+    color: white;
+}
+
+.recipe-search-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 .view-section {
@@ -886,10 +965,20 @@ header {
 }
 
 .add-btn:hover {
-    background: var(--mc-ink);
-    opacity: 0.85;
+    background: #1a1a1a;
+    color: white;
     transform: none;
     box-shadow: none;
+}
+
+.add-btn:active {
+    background: #0f0f0f;
+    color: white;
+}
+
+.add-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 .grocery-list {
@@ -957,8 +1046,19 @@ header {
 }
 
 .remove-btn:hover {
-    background: #B8860B;
+    background: #9a6f09;
+    color: white;
     transform: scale(1.1);
+}
+
+.remove-btn:active {
+    background: #7a5707;
+    color: white;
+}
+
+.remove-btn:focus-visible {
+    outline: 2px solid #D2B48C;
+    outline-offset: 2px;
 }
 
 .empty-message {
@@ -991,6 +1091,16 @@ header {
     border-color: var(--mc-border);
     transform: none;
     box-shadow: none;
+}
+
+.clear-btn:active {
+    background: #d9c9b5;
+    color: var(--mc-ink);
+}
+
+.clear-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 /* Allergy Information Styles */
@@ -1063,10 +1173,20 @@ header {
 }
 
 .search-btn:hover {
-    background: var(--mc-ink);
-    opacity: 0.85;
+    background: #1a1a1a;
+    color: white;
     transform: none;
     box-shadow: none;
+}
+
+.search-btn:active {
+    background: #0f0f0f;
+    color: white;
+}
+
+.search-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 .replacement-result {
@@ -1471,8 +1591,19 @@ header {
 }
 
 .add-suggestion-btn:hover:not(:disabled):not(.added) {
-    background: #6B4E3D;
+    background: #5a3d2e;
+    color: white;
     transform: scale(1.05);
+}
+
+.add-suggestion-btn:active:not(:disabled):not(.added) {
+    background: #4a2f1f;
+    color: white;
+}
+
+.add-suggestion-btn:focus-visible:not(:disabled):not(.added) {
+    outline: 2px solid #6B4E3D;
+    outline-offset: 2px;
 }
 
 /* Apply base add-btn styles to suggestion buttons */
@@ -1481,7 +1612,8 @@ header {
 }
 
 .add-suggestion-btn.add-btn:hover:not(:disabled):not(.added) {
-    background: #909090;
+    background: #7a7a7a;
+    color: white;
 }
 
 .add-suggestion-btn.add-btn.added {
@@ -1489,8 +1621,14 @@ header {
 }
 
 .add-suggestion-btn.add-btn.added:hover {
-    background: #6B8E23;
+    background: #5a7a1c;
+    color: white;
     transform: none;
+}
+
+.add-suggestion-btn.add-btn.added:active {
+    background: #4a6a15;
+    color: white;
 }
 
 .add-suggestion-btn[disabled],
@@ -1817,6 +1955,15 @@ header {
     color: var(--mc-ink);
     transform: translateX(-3px);
     box-shadow: none;
+}
+
+.back-btn:active {
+    color: #1a1a1a;
+}
+
+.back-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 
@@ -2349,18 +2496,31 @@ header {
     transition: all 0.2s ease;
     z-index: 10;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    /* Make icon grey/neutral */
-    filter: grayscale(100%) brightness(0.6);
     color: #808080;
+}
+
+.like-btn svg,
+.like-btn * {
+    fill: currentColor;
+    color: inherit;
 }
 
 .like-btn:hover {
     background: rgba(255, 255, 255, 1);
     border-color: #909090;
+    color: var(--mc-ink);
     transform: scale(1.1);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
-    /* Slightly less grey on hover, but still neutral */
-    filter: grayscale(80%) brightness(0.7);
+    filter: none;
+}
+
+.like-btn:active {
+    transform: scale(1.05);
+}
+
+.like-btn:focus-visible {
+    outline: 2px solid var(--mc-ink);
+    outline-offset: 2px;
 }
 
 .like-btn.liked {
@@ -2445,6 +2605,7 @@ button, .btn {
 
 .nav-btn.active:hover {
     background: rgba(139, 115, 91, 0.90) !important;
+    color: #ffffff !important;
 }
 
 /* ===== Inputs ===== */
@@ -2492,9 +2653,15 @@ input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus
 }
 
 .recipe-search-btn.active:hover {
-    background: var(--mc-ink) !important;
-    opacity: 0.9 !important;
+    background: #1a1a1a !important;
+    color: white !important;
+    border-color: #1a1a1a !important;
     box-shadow: none !important;
+}
+
+.recipe-search-btn:focus-visible {
+    outline: 2px solid var(--mc-ink) !important;
+    outline-offset: 2px !important;
 }
 
 /* ===== Additional Inputs (Shopping List, etc.) ===== */
@@ -2529,10 +2696,20 @@ input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus
 }
 
 .add-btn:hover, .save-btn:hover, .profile-btn:hover {
-    background: var(--mc-ink) !important;
-    opacity: 0.85 !important;
+    background: #1a1a1a !important;
+    color: white !important;
     box-shadow: none !important;
     transform: none !important;
+}
+
+.add-btn:active, .save-btn:active, .profile-btn:active {
+    background: #0f0f0f !important;
+    color: white !important;
+}
+
+.add-btn:focus-visible, .save-btn:focus-visible, .profile-btn:focus-visible {
+    outline: 2px solid var(--mc-ink) !important;
+    outline-offset: 2px !important;
 }
 
 /* Secondary buttons */
@@ -2641,6 +2818,7 @@ header, .header-brand-row, .header-brand, .header-banner, .header-logo {
 
 .nav-btn.active:hover {
     background: var(--mc-green) !important;
+    color: #ffffff !important;
     box-shadow: 0 3px 8px rgba(35, 42, 23, 0.25) !important;
     transform: translateY(-1px) !important;
 }
@@ -3186,8 +3364,19 @@ input[type="search"]:focus,
 
 .edit-picture-btn:hover {
     background: rgba(0, 0, 0, 0.9);
+    color: white;
     transform: scale(1.1);
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.edit-picture-btn:active {
+    background: rgba(0, 0, 0, 1);
+    color: white;
+}
+
+.edit-picture-btn:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
 }
 
 .edit-picture-btn:focus {
