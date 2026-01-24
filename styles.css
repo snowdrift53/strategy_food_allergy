@@ -31,14 +31,16 @@ html, body {
     color: var(--mc-ink);
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-size: 16px;
-    line-height: 1.45;
+    line-height: 1.6;
     min-height: 100vh;
-    padding: 20px;
+    padding: 0;
 }
 
 h1, h2, h3 {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    font-weight: 600;
 }
 
 p, .muted, .secondary-text {
@@ -46,14 +48,15 @@ p, .muted, .secondary-text {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
+    padding: 0 40px;
 }
 
 header {
     text-align: center;
     color: var(--text);
-    margin-bottom: 40px;
+    margin-bottom: 60px;
     padding: 0;
     min-height: auto;
     height: auto;
@@ -65,7 +68,7 @@ header {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 10px 0 18px 0;
+    margin: 20px 0 30px 0;
 }
 
 .brand-banner {
@@ -661,43 +664,48 @@ header {
 .main-nav {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 30px;
+    gap: 12px;
+    margin-bottom: 50px;
     flex-wrap: wrap;
+    padding: 0;
 }
 
 .nav-btn {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #FFFEF9;
-    color: #5C4033;
-    border: 2px solid #8B7355;
-    padding: 12px 24px;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    background: var(--mc-surface);
+    color: var(--mc-ink);
+    border: 1px solid var(--mc-border);
+    padding: 14px 28px;
     border-radius: 8px;
     font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
 .nav-btn:hover {
-    background: #8B7355;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+    background: var(--mc-beige);
+    color: var(--mc-ink);
+    border-color: var(--mc-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .nav-btn.active {
-    background: #8B7355;
+    background: var(--mc-green);
     color: white;
-    box-shadow: 0 4px 10px rgba(92, 64, 51, 0.2);
+    border-color: var(--mc-green);
+    box-shadow: 0 2px 6px rgba(35, 42, 23, 0.20);
 }
 
 /* Recipe Search Toggle Buttons */
 .recipe-search-section {
     display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
+    gap: 12px;
+    margin-bottom: 50px;
     align-items: center;
+    max-width: 100%;
 }
 
 .recipe-search-input-wrapper {
@@ -790,6 +798,8 @@ header {
     animation: fadeIn 0.3s ease;
     display: block;
     min-height: auto;
+    padding: 0;
+    margin: 0;
 }
 
 #recipes-view {
@@ -810,11 +820,12 @@ header {
 
 .section-title {
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--mc-ink);
-    margin-bottom: 30px;
+    margin-bottom: 40px;
     font-weight: 600;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .add-item-section {
@@ -1491,9 +1502,10 @@ header {
 
 .recipe-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 25px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 40px;
+    margin-bottom: 60px;
+    padding: 0;
 }
 
 .recipe-card {
@@ -1513,7 +1525,7 @@ header {
 
 .recipe-image {
     width: 100%;
-    height: 200px;
+    height: 240px;
     overflow: hidden;
     position: relative;
     background: #E6D3B3;
@@ -1650,32 +1662,34 @@ header {
 }
 
 .recipe-info {
-    padding: 20px;
+    padding: 28px;
 }
 
 .recipe-title {
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    font-size: 1.75rem;
+    margin-bottom: 16px;
     color: var(--mc-ink);
     font-weight: 600;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
 }
 
 .recipe-description {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     color: var(--mc-muted);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 15px;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
 }
 
 .recipe-meta {
     font-family: ui-serif, Georgia, "Times New Roman", serif;
     display: flex;
-    gap: 15px;
-    font-size: 0.9rem;
+    gap: 20px;
+    font-size: 0.95rem;
     color: var(--mc-muted);
+    margin-top: 8px;
 }
 
 .recipe-meta span {
@@ -1687,10 +1701,10 @@ header {
 .recipe-detail {
     background: var(--mc-surface);
     border-radius: var(--radius);
-    padding-top: 14px;
-    padding-bottom: 22px;
-    padding-left: 30px;
-    padding-right: 30px;
+    padding-top: 50px;
+    padding-bottom: 60px;
+    padding-left: 60px;
+    padding-right: 60px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--mc-border);
     animation: fadeIn 0.3s ease;
@@ -1738,7 +1752,7 @@ header {
 
 .detail-header {
     margin-top: 0;
-    margin-bottom: 30px;
+    margin-bottom: 50px;
 }
 
 .detail-images {
@@ -1798,11 +1812,12 @@ header {
 
 .detail-title {
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 2.5rem;
+    font-size: 3rem;
     color: var(--mc-ink);
-    margin-bottom: 15px;
+    margin-bottom: 24px;
     font-weight: 600;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .detail-meta {
@@ -1926,17 +1941,18 @@ header {
 }
 
 .detail-section {
-    margin-bottom: 30px;
+    margin-bottom: 50px;
 }
 
 .detail-section h3 {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1.8rem;
-    color: #8B7355;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #E6D3B3;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-size: 2rem;
+    color: var(--mc-ink);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--mc-border);
     font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .ingredients-list {
@@ -2000,6 +2016,10 @@ header {
 }
 
 @media (max-width: 768px) {
+    .container {
+        padding: 0 20px;
+    }
+
     .brand-logo {
         width: clamp(100px, 20vw, 150px);
         height: clamp(100px, 20vw, 150px);
@@ -2007,19 +2027,20 @@ header {
 
     .recipe-grid {
         grid-template-columns: 1fr;
+        gap: 30px;
     }
 
     .recipe-detail {
-        padding-top: 12px;
-        padding-bottom: 18px;
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-top: 30px;
+        padding-bottom: 40px;
+        padding-left: 24px;
+        padding-right: 24px;
         margin-top: 0;
         min-height: auto;
     }
 
     .detail-title {
-        font-size: 1.8rem;
+        font-size: 2rem;
     }
 
     .detail-image {
@@ -2028,10 +2049,20 @@ header {
 
     .main-nav {
         flex-direction: column;
+        margin-bottom: 40px;
     }
 
     .nav-btn {
         width: 100%;
+    }
+
+    .recipe-search-section {
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 30px;
     }
 
     .shopping-container,
