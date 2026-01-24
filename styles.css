@@ -1880,9 +1880,9 @@ header {
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--mc-muted);
-    background: var(--mc-beige);
-    border: 1px solid var(--mc-border);
+    color: var(--text-muted);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 4px 10px;
     line-height: 1.4;
@@ -2078,9 +2078,9 @@ header {
     display: flex;
     gap: 32px;
     flex-wrap: wrap;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
     padding-bottom: 32px;
-    border-bottom: 2px solid var(--mc-border);
+    border-bottom: 1px solid var(--border);
 }
 
 .detail-meta-item {
@@ -2089,25 +2089,44 @@ header {
     align-items: center;
     gap: 8px;
     font-size: 1rem;
-    color: var(--mc-muted);
+    color: var(--text-muted);
 }
 
 .detail-description {
     font-family: var(--font-body);
     font-size: 1.1rem;
     line-height: 1.8;
-    color: var(--mc-ink);
+    color: var(--text);
     margin-bottom: 48px;
     max-width: 800px;
 }
 
+.detail-description a,
+.ingredients-list a,
+.steps-list a,
+.detail-section a {
+    color: var(--link);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.detail-description a:hover,
+.ingredients-list a:hover,
+.steps-list a:hover,
+.detail-section a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 .recipe-suitability {
-    padding: 24px;
+    padding: 32px;
     border-radius: 12px;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
     font-family: var(--font-body);
-    background: var(--mc-beige);
-    border: 1px solid var(--mc-border);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .recipe-suitability-safe {
@@ -2181,16 +2200,27 @@ header {
     margin: 8px 0;
     padding-left: 24px;
     font-size: 1rem;
-    line-height: 1.7;
+    line-height: 1.8;
     font-family: var(--font-body);
-    color: var(--mc-ink);
+    color: var(--text);
+}
+
+.suitability-list a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+.suitability-list a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 .suitability-message {
     font-size: 1rem;
-    line-height: 1.7;
+    line-height: 1.8;
     font-family: var(--font-body);
-    color: var(--mc-ink);
+    color: var(--text);
 }
 
 .unsafe-guidance {
@@ -2250,9 +2280,9 @@ header {
 }
 
 .detail-section {
-    margin-bottom: 64px;
-    padding: 40px 0;
-    border-top: 1px solid var(--mc-border);
+    margin-bottom: 72px;
+    padding: 48px 0;
+    border-top: 1px solid var(--border);
 }
 
 .detail-section:first-of-type {
@@ -2263,10 +2293,10 @@ header {
 .detail-section h3 {
     font-family: var(--font-heading);
     font-size: 2rem;
-    color: var(--mc-ink);
-    margin-bottom: 32px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--mc-border);
+    color: var(--text);
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -2279,13 +2309,13 @@ header {
 
 .ingredients-list li {
     font-family: var(--font-body);
-    padding: 16px 0;
-    padding-left: 36px;
+    padding: 18px 0;
+    padding-left: 40px;
     position: relative;
     font-size: 1rem;
-    line-height: 1.75;
-    color: var(--mc-ink);
-    border-bottom: 1px solid var(--mc-border);
+    line-height: 1.9;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
 }
 
 .ingredients-list li:last-child {
@@ -2296,10 +2326,10 @@ header {
     content: "✓";
     position: absolute;
     left: 0;
-    top: 16px;
-    color: var(--mc-accent);
+    top: 18px;
+    color: var(--accent-terracotta);
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .steps-list {
@@ -2311,13 +2341,13 @@ header {
 .steps-list li {
     font-family: var(--font-body);
     counter-increment: step-counter;
-    padding: 28px 0;
-    padding-left: 64px;
+    padding: 32px 0;
+    padding-left: 72px;
     position: relative;
     font-size: 1.05rem;
-    line-height: 1.8;
-    color: var(--mc-ink);
-    border-bottom: 1px solid var(--mc-border);
+    line-height: 1.95;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
 }
 
 .steps-list li:last-child {
@@ -2328,8 +2358,8 @@ header {
     content: counter(step-counter);
     position: absolute;
     left: 0;
-    top: 28px;
-    background: var(--mc-ink);
+    top: 32px;
+    background: var(--text);
     color: white;
     width: 36px;
     height: 36px;
