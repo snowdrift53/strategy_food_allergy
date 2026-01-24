@@ -89,23 +89,9 @@
             card.addEventListener('click', () => callbacks.onRecipeClick(recipe.id));
         }
 
-        // Image resolution: prioritize user-uploaded image, then use recipe.imageType to choose between recipe.illustration vs recipe.photo
+        // Image resolution: use shared helper
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
-        let imageUrl = '';
-        
-        // Check for user-uploaded image first (imageDataUrl)
-        if (recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '') {
-            imageUrl = recipe.imageDataUrl;
-        } else if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
-            imageUrl = recipe.illustration;
-        } else if (recipe.photo && recipe.photo.trim() !== '') {
-            imageUrl = recipe.photo;
-        }
-        
-        // If still no imageUrl, use placeholder
-        if (!imageUrl || imageUrl.trim() === '') {
-            imageUrl = 'images/recipes/placeholder-recipe.jpg';
-        }
+        const imageUrl = window.getRecipeImageSrc(recipe) || 'images/recipes/placeholder-recipe.jpg';
         
         const imageClass = recipe.imageType === 'illustration' ? 'recipe-image illustration' : 'recipe-image photo';
         const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';

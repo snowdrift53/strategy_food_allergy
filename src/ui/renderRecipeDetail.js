@@ -42,28 +42,20 @@
             onEditRecipe
         } = options;
 
-        // Image resolution: prioritize user-uploaded image, then use recipe.imageType to choose between recipe.illustration vs recipe.photo
+        // Image resolution: use shared helper
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
-        let mainImageUrl = '';
-        let secondaryImageUrl = '';
-        
-        // Check for user-uploaded image first (imageDataUrl)
-        if (recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '') {
-            mainImageUrl = recipe.imageDataUrl;
-            secondaryImageUrl = recipe.imageDataUrl;
-        } else if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
-            mainImageUrl = recipe.illustration;
-            secondaryImageUrl = recipe.photo || recipe.illustration;
-        } else if (recipe.photo && recipe.photo.trim() !== '') {
-            mainImageUrl = recipe.photo;
-            secondaryImageUrl = recipe.illustration || recipe.photo;
-        }
-        
-        // Fallback to placeholder if still empty
-        if (!mainImageUrl || mainImageUrl.trim() === '') {
-            mainImageUrl = 'images/recipes/placeholder-recipe.jpg';
-        }
-        if (!secondaryImageUrl || secondaryImageUrl.trim() === '') {
+        const mainImageSrc = window.getRecipeImageSrc(recipe);
+        const mainImageUrl = mainImageSrc || 'images/recipes/placeholder-recipe.jpg';
+        // For secondary image, try to get alternative if available, otherwise use same as main
+        let secondaryImageUrl = mainImageUrl;
+        if (mainImageSrc) {
+            // If we have a main image, try to get alternative (photo vs illustration)
+            if (recipe.imageType === 'illustration' && recipe.photo && recipe.photo.trim() !== '') {
+                secondaryImageUrl = recipe.photo;
+            } else if (recipe.imageType !== 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+                secondaryImageUrl = recipe.illustration;
+            }
+        } else {
             secondaryImageUrl = 'images/recipes/placeholder-recipe.jpg';
         }
         

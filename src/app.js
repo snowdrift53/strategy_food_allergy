@@ -2906,21 +2906,9 @@ const Recipes = {
         card.className = 'recipe-card';
         card.addEventListener('click', () => this.renderDetail(recipe.id));
 
-        // Image resolution: use recipe.imageType to choose between recipe.illustration vs recipe.photo
+        // Image resolution: use shared helper for consistent image resolution
         const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
-        let imageUrl = '';
-        
-        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
-            imageUrl = recipe.illustration;
-        } else if (recipe.photo && recipe.photo.trim() !== '') {
-            imageUrl = recipe.photo;
-        }
-        
-        // If still no imageUrl, use placeholder
-        if (!imageUrl || imageUrl.trim() === '') {
-            imageUrl = 'images/recipes/placeholder-recipe.jpg';
-        }
-        
+        const imageUrl = window.getRecipeImageSrc(recipe) || 'images/recipes/placeholder-recipe.jpg';
         const imageClass = recipe.imageType === 'illustration' ? 'recipe-image illustration' : 'recipe-image photo';
         const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
 
@@ -3007,22 +2995,20 @@ const Recipes = {
             }
         } else {
             // Fallback to old rendering if UI functions not available
+            // Image resolution: use shared helper for consistent image resolution
             const isOnlineRecipe = recipe.id && String(recipe.id).startsWith('online-');
-            let mainImageUrl = '';
-            let secondaryImageUrl = '';
-            
-            if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
-                mainImageUrl = recipe.illustration;
-                secondaryImageUrl = recipe.photo || recipe.illustration;
-            } else if (recipe.photo && recipe.photo.trim() !== '') {
-                mainImageUrl = recipe.photo;
-                secondaryImageUrl = recipe.illustration || recipe.photo;
-            }
-            
-            if (!mainImageUrl || mainImageUrl.trim() === '') {
-                mainImageUrl = 'images/recipes/placeholder-recipe.jpg';
-            }
-            if (!secondaryImageUrl || secondaryImageUrl.trim() === '') {
+            const mainImageSrc = window.getRecipeImageSrc(recipe);
+            const mainImageUrl = mainImageSrc || 'images/recipes/placeholder-recipe.jpg';
+            // For secondary image, try to get alternative if available, otherwise use same as main
+            let secondaryImageUrl = mainImageUrl;
+            if (mainImageSrc) {
+                // If we have a main image, try to get alternative (photo vs illustration)
+                if (recipe.imageType === 'illustration' && recipe.photo && recipe.photo.trim() !== '') {
+                    secondaryImageUrl = recipe.photo;
+                } else if (recipe.imageType !== 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+                    secondaryImageUrl = recipe.illustration;
+                }
+            } else {
                 secondaryImageUrl = 'images/recipes/placeholder-recipe.jpg';
             }
             
@@ -4042,21 +4028,15 @@ const Forecast = {
                     <p class="section-description">These recipes match your shopping list perfectly!</p>
                     <div class="recipe-forecast-grid">
                         ${canCookRecipes.map(analysis => {
-                            // Use recipe.imageType to choose between recipe.illustration vs recipe.photo
-                            let imageUrl = '';
-                            if (analysis.recipe.imageType === 'illustration' && analysis.recipe.illustration && analysis.recipe.illustration.trim() !== '') {
-                                imageUrl = analysis.recipe.illustration;
-                            } else if (analysis.recipe.photo && analysis.recipe.photo.trim() !== '') {
-                                imageUrl = analysis.recipe.photo;
-                            }
-                            if (!imageUrl || imageUrl.trim() === '') {
-                                imageUrl = 'images/recipes/placeholder-recipe.jpg';
-                            }
+                            // Use shared helper for consistent image resolution
+                            const imageSrc = window.getRecipeImageSrc(analysis.recipe);
+                            const imageUrl = imageSrc || 'images/recipes/placeholder-recipe.jpg';
                             const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
+                            const imageAlt = window.getRecipeImageAlt(analysis.recipe);
                             return `
                             <div class="recipe-forecast-card ready-card" data-recipe-id="${analysis.recipe.id}">
                                 <div class="forecast-recipe-image">
-                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
+                                    <img src="${imageUrl}" alt="${this.escapeHtml(imageAlt)}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
                                 </div>
                                 <h4>${this.escapeHtml(analysis.recipe.title)}</h4>
                                 <p class="forecast-meta">⏱️ ${analysis.recipe.time} | 👥 ${analysis.recipe.servings} servings</p>
@@ -4079,21 +4059,15 @@ const Forecast = {
                     <p class="section-description">These recipes are close to completion. Check what's missing below:</p>
                     <div class="recipe-forecast-grid">
                         ${partialRecipes.map(analysis => {
-                            // Use recipe.imageType to choose between recipe.illustration vs recipe.photo
-                            let imageUrl = '';
-                            if (analysis.recipe.imageType === 'illustration' && analysis.recipe.illustration && analysis.recipe.illustration.trim() !== '') {
-                                imageUrl = analysis.recipe.illustration;
-                            } else if (analysis.recipe.photo && analysis.recipe.photo.trim() !== '') {
-                                imageUrl = analysis.recipe.photo;
-                            }
-                            if (!imageUrl || imageUrl.trim() === '') {
-                                imageUrl = 'images/recipes/placeholder-recipe.jpg';
-                            }
+                            // Use shared helper for consistent image resolution
+                            const imageSrc = window.getRecipeImageSrc(analysis.recipe);
+                            const imageUrl = imageSrc || 'images/recipes/placeholder-recipe.jpg';
                             const placeholderUrl = 'images/recipes/placeholder-recipe.jpg';
+                            const imageAlt = window.getRecipeImageAlt(analysis.recipe);
                             return `
                             <div class="recipe-forecast-card partial-card">
                                 <div class="forecast-recipe-image">
-                                    <img src="${imageUrl}" alt="${this.escapeHtml(analysis.recipe.title)}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
+                                    <img src="${imageUrl}" alt="${this.escapeHtml(imageAlt)}" onerror="this.onerror=null; this.src='${placeholderUrl}';">
                                 </div>
                                 <h4>${this.escapeHtml(analysis.recipe.title)}</h4>
                                 <p class="forecast-meta">⏱️ ${analysis.recipe.time} | 👥 ${analysis.recipe.servings} servings</p>

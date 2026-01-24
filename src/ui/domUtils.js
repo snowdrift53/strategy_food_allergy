@@ -79,4 +79,52 @@
             return map[m];
         });
     };
+
+    /**
+     * Get recipe image source URL
+     * Prioritizes user-uploaded images, then falls back to various recipe image fields
+     * @param {Object} recipe - Recipe object
+     * @returns {string|null} Image URL or null if no image found
+     */
+    window.getRecipeImageSrc = function(recipe) {
+        if (!recipe) return null;
+        
+        // Priority 1: User-uploaded image (data URL)
+        if (recipe.imageDataUrl && recipe.imageDataUrl.trim() !== '') {
+            return recipe.imageDataUrl;
+        }
+        
+        // Priority 2: Generic imageUrl field
+        if (recipe.imageUrl && recipe.imageUrl.trim() !== '') {
+            return recipe.imageUrl;
+        }
+        
+        // Priority 3: Online recipe API fields
+        if (recipe.strMealThumb && recipe.strMealThumb.trim() !== '') {
+            return recipe.strMealThumb;
+        }
+        if (recipe.image && recipe.image.trim() !== '') {
+            return recipe.image;
+        }
+        
+        // Priority 4: Type-based selection (illustration vs photo)
+        if (recipe.imageType === 'illustration' && recipe.illustration && recipe.illustration.trim() !== '') {
+            return recipe.illustration;
+        }
+        if (recipe.photo && recipe.photo.trim() !== '') {
+            return recipe.photo;
+        }
+        
+        return null;
+    };
+
+    /**
+     * Get recipe image alt text
+     * @param {Object} recipe - Recipe object
+     * @returns {string} Alt text for the image
+     */
+    window.getRecipeImageAlt = function(recipe) {
+        if (!recipe) return 'Recipe image';
+        return recipe.title || recipe.name || recipe.strMeal || 'Recipe image';
+    };
 })();
