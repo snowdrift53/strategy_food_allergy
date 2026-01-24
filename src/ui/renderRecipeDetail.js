@@ -5,6 +5,22 @@
     'use strict';
 
     /**
+     * Get deterministic color class for a tag (c1-c6)
+     * @param {string} tagText - Tag text
+     * @returns {string} Color class (tag--c1 through tag--c6)
+     */
+    function getTagColorClass(tagText) {
+        if (!tagText || typeof tagText !== 'string') return 'tag--c1';
+        // Simple stable hash: sum of char codes mod 6
+        let sum = 0;
+        for (let i = 0; i < tagText.length; i++) {
+            sum += tagText.charCodeAt(i);
+        }
+        const colorIndex = (sum % 6) + 1; // 1-6
+        return `tag--c${colorIndex}`;
+    }
+
+    /**
      * Render recipe detail view
      * @param {Object} options - Configuration object
      * @param {Object} options.recipe - Recipe object
@@ -142,7 +158,7 @@
                 <h1 class="detail-title">${UI.escape(recipe.title || '')}</h1>
                 ${recipe.cuisineTags && Array.isArray(recipe.cuisineTags) && recipe.cuisineTags.length > 0 ? `
                 <div class="detail-tags">
-                    ${recipe.cuisineTags.map(tag => `<span class="tag-pill">${UI.escape(tag)}</span>`).join('')}
+                    ${recipe.cuisineTags.map(tag => `<span class="tag tag-pill ${getTagColorClass(tag)}">${UI.escape(tag)}</span>`).join('')}
                 </div>
                 ` : ''}
                 <div class="detail-meta">

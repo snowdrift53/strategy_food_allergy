@@ -1880,10 +1880,7 @@ header {
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--text-muted);
-    background: var(--surface-muted);
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 4px;
     padding: 4px 10px;
     line-height: 1.4;
 }
@@ -2066,12 +2063,50 @@ header {
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--text-muted);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 4px;
     padding: 4px 10px;
     line-height: 1.4;
+}
+
+/* Minimalist Baker-inspired tag colors */
+.tag--c1 {
+    background: #fef0e8;
+    border: 1px solid #f4a88a;
+    color: #b86a4d;
+}
+
+.tag--c2 {
+    background: #faf5f0;
+    border: 1px solid #c97d60;
+    color: #8b5a3c;
+}
+
+.tag--c3 {
+    background: #f0f5ed;
+    border: 1px solid #9fb88c;
+    color: #6b8e4f;
+}
+
+.tag--c4 {
+    background: #faf8f4;
+    border: 1px solid #d4c4b0;
+    color: #8b7355;
+}
+
+.tag--c5 {
+    background: #f5f3f0;
+    border: 1px solid #a8a098;
+    color: #5a5a5a;
+}
+
+.tag--c6 {
+    background: #fef2f0;
+    border: 1px solid #e8b8b0;
+    color: #b86a5a;
+}
+
+.tag:hover {
+    opacity: 0.85;
 }
 
 .detail-meta {
