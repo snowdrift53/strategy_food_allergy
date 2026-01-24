@@ -126,6 +126,11 @@
             </div>
             <div class="recipe-info">
                 <h2 class="recipe-title">${UI.escape(recipe.title || '')}</h2>
+                ${recipe.cuisineTags && Array.isArray(recipe.cuisineTags) && recipe.cuisineTags.length > 0 ? `
+                <div class="recipe-tags">
+                    ${recipe.cuisineTags.map(tag => `<span class="tag-pill">${UI.escape(tag)}</span>`).join('')}
+                </div>
+                ` : ''}
                 <p class="recipe-description">${UI.escape(recipe.description || '')}</p>
                 <div class="recipe-meta">
                     <span>⏱️ ${UI.escape(recipe.time || '')}</span>
