@@ -73,24 +73,24 @@
                 
                 suitabilityHtml = `
                     <div class="recipe-suitability recipe-suitability-replaceable">
-                        <div class="adapt-flag" style="display: inline-block; margin-bottom: 12px;">
-                            <div style="margin-bottom: 4px;">
+                        <div class="adapt-flag">
+                            <div class="adapt-flag-header">
                                 <span class="mini-flag flag-changes">ADAPT</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: #6B4E3D; line-height: 1.3; text-align: left;">
+                            <div class="adapt-flag-text">
                                 Adapt &<br>enjoy!
                             </div>
                         </div>
-                        <div style="margin-top: 10px;">
-                            <div style="margin-bottom: 8px;">
+                        <div class="suitability-content">
+                            <div class="suitability-block">
                                 <strong>Problem ingredients:</strong>
-                                <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                <ul class="suitability-list">
                                     ${uniqueIngredients.map(ing => `<li>${escapeHtml(ing)}</li>`).join('')}
                                 </ul>
                             </div>
-                            <div>
+                            <div class="suitability-block">
                                 <strong>Suggested substitutions:</strong>
-                                <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                <ul class="suitability-list">
                                     ${substitutionsKeys.map(allergenKey => {
                                         const subs = classification.substitutionsByAllergen[allergenKey];
                                         return `<li><strong>${escapeHtml(allergenKey)}</strong>: ${subs.map(s => escapeHtml(s)).join(', ')}</li>`;
@@ -105,18 +105,18 @@
                 
                 suitabilityHtml = `
                     <div class="recipe-suitability recipe-suitability-unsafe">
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <div class="suitability-header">
                             <span class="mini-flag flag-avoid">AVOID</span>
-                            <span class="recipe-suitability-text" style="font-weight: 600; margin-left: 8px;">Avoid (too many conflicts)</span>
+                            <span class="recipe-suitability-text">Avoid (too many conflicts)</span>
                         </div>
-                        <div style="margin-top: 10px;">
-                            <div style="margin-bottom: 8px;">
+                        <div class="suitability-content">
+                            <div class="suitability-block">
                                 <strong>Problem ingredients:</strong>
-                                <ul style="margin: 4px 0; padding-left: 20px; font-size: 1.1rem; line-height: 1.5;">
+                                <ul class="suitability-list">
                                     ${uniqueIngredients.map(ing => `<li>${escapeHtml(ing)}</li>`).join('')}
                                 </ul>
                             </div>
-                            <div style="font-size: 1.1rem; line-height: 1.5;">No suitable substitutions found</div>
+                            <div class="suitability-message">No suitable substitutions found</div>
                         </div>
                     </div>
                 `;
@@ -140,6 +140,11 @@
                     </div>
                 </div>
                 <h1 class="detail-title">${UI.escape(recipe.title || '')}</h1>
+                ${recipe.cuisineTags && Array.isArray(recipe.cuisineTags) && recipe.cuisineTags.length > 0 ? `
+                <div class="detail-tags">
+                    ${recipe.cuisineTags.map(tag => `<span class="tag-pill">${UI.escape(tag)}</span>`).join('')}
+                </div>
+                ` : ''}
                 <div class="detail-meta">
                     <div class="detail-meta-item"><span>⏱️</span><span>${UI.escape(recipe.time || '')}</span></div>
                     <div class="detail-meta-item"><span>👥</span><span>${UI.escape(recipe.servings || '')} servings</span></div>
