@@ -92,7 +92,7 @@ header {
     background: var(--brand-olive);
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     padding: 0 16px;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: space-between;
     z-index: 50;
@@ -100,6 +100,7 @@ header {
     height: 60px;
     min-height: 60px;
     max-height: 60px;
+    visibility: visible !important;
 }
 
 .app-header__left {
@@ -129,7 +130,7 @@ header {
 }
 
 .app-header__right {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: flex-end;
     position: relative;
@@ -140,13 +141,14 @@ header {
     border-radius: 1px;
     padding-left: 16px;
     margin-left: 16px;
+    visibility: visible !important;
 }
 
 
 /* Profile Widget - Card Layout */
 .app-header__right .profile-widget {
     position: relative;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     top: auto;
     right: auto;
@@ -157,6 +159,7 @@ header {
     max-width: 100%;
     margin: 0;
     flex: 0 0 auto;
+    visibility: visible !important;
 }
 
 /* Fallback for profile widget if not in header */
@@ -167,6 +170,14 @@ header {
     z-index: 60;
     min-width: 280px;
     max-width: 320px;
+}
+
+/* Ensure profile widget in header is always visible */
+.app-header__right #header-profile-container .profile-widget,
+.app-header__right .profile-widget {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .profile-card {
@@ -202,7 +213,7 @@ header {
     height: 100%;
     display: inline-flex;
     align-items: center;
-    gap: 0;
+    gap: 8px;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 999px;
