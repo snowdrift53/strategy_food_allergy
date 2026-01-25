@@ -135,18 +135,24 @@ header {
     position: relative;
     min-width: 160px;
     flex: 0 0 auto;
+    height: 100%;
 }
 
 
 /* Profile Widget - Card Layout */
 .app-header__right .profile-widget {
     position: relative;
+    display: inline-flex;
+    align-items: center;
     top: auto;
     right: auto;
+    left: auto;
     z-index: 60;
-    min-width: 280px;
-    max-width: 320px;
+    width: auto;
+    min-width: auto;
+    max-width: 100%;
     margin: 0;
+    flex: 0 0 auto;
 }
 
 /* Fallback for profile widget if not in header */
@@ -166,6 +172,22 @@ header {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     overflow: visible;
     position: relative;
+    width: auto;
+    max-width: 100%;
+}
+
+/* Ensure profile card is positioning context for dropdown */
+.app-header__right .profile-card {
+    position: relative;
+}
+
+.app-header__right .profile-card {
+    flex: 0 0 auto;
+    width: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .profile-card-header {
@@ -174,6 +196,34 @@ header {
     gap: 12px;
     padding: 16px;
     background: transparent;
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.app-header__right .profile-card-header {
+    flex: 0 0 auto;
+    width: auto;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin: 0;
+    transform: translateY(1px);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.app-header__right .profile-card-header:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Hide profile info text in header to keep it compact */
+.app-header__right .profile-info {
+    display: none;
 }
 
 .profile-avatar {
@@ -195,6 +245,15 @@ header {
     position: relative;
 }
 
+.app-header__right .profile-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 4px rgba(92, 64, 51, 0.15);
+    flex-shrink: 0;
+}
+
 .profile-avatar.has-avatar {
     background: transparent;
 }
@@ -204,6 +263,13 @@ header {
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+}
+
+.app-header__right .profile-avatar-img {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    object-fit: cover;
 }
 
 .profile-avatar:hover {
@@ -219,6 +285,11 @@ header {
 .profile-info {
     flex: 1;
     min-width: 0;
+}
+
+.app-header__right .profile-info {
+    flex: 0 1 auto;
+    max-width: 200px;
 }
 
 .profile-name {
@@ -243,20 +314,33 @@ header {
 .profile-settings-btn {
     width: 100%;
     padding: 10px 16px;
-    background: var(--mc-green);
-    color: white;
+}
+
+.app-header__right .profile-settings-btn {
+    width: auto;
+    min-width: auto;
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
     border: none;
-    border-top: 1px solid var(--mc-border);
-    border-bottom: 1px solid var(--border);
-    font-family: ui-serif, Georgia, "Times New Roman", serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    display: flex;
+    background: transparent;
+    color: #faf8f4;
+    font-size: 0.85rem;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 4px;
+}
+
+.app-header__right .profile-card-header .profile-settings-btn {
+    color: #faf8f4;
+}
+
+.app-header__right .profile-card-header .profile-settings-chevron {
+    color: #faf8f4;
+}
+
+.app-header__right .profile-card-header .profile-settings-btn span {
+    color: #faf8f4;
 }
 
 .profile-settings-btn:hover {
@@ -285,12 +369,42 @@ header {
     opacity: 1;
     position: relative;
     z-index: 61;
+    box-sizing: border-box;
+}
+
+/* Dropdown positioning when in header */
+.app-header__right .profile-settings-body {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 340px;
+    max-width: min(90vw, 360px);
+    background: #f4efe6;
+    color: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: none;
+    opacity: 1;
+    z-index: 60;
+    box-sizing: border-box;
 }
 
 .profile-settings-body.collapsed {
     max-height: 0;
     padding: 0 16px;
     overflow: hidden;
+    opacity: 0;
+}
+
+.app-header__right .profile-settings-body.collapsed {
+    /* Maintain absolute positioning even when collapsed */
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 340px;
+    max-width: min(90vw, 360px);
+    background: #f4efe6;
     opacity: 0;
 }
 
@@ -311,6 +425,11 @@ header {
     font-weight: 500;
 }
 
+.app-header__right .profile-settings-body .profile-section label {
+    color: #1e1e1e;
+    font-weight: 600;
+}
+
 .profile-select {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     width: 100%;
@@ -321,6 +440,12 @@ header {
     color: #5C4033;
     background: white;
     cursor: pointer;
+}
+
+.app-header__right .profile-settings-body .profile-select {
+    background: #ffffff;
+    color: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .profile-select:focus {
@@ -348,6 +473,12 @@ header {
     font-size: 0.9rem;
     color: var(--text);
     background: white;
+}
+
+.app-header__right .profile-settings-body .profile-input {
+    background: #ffffff;
+    color: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .profile-allergies-input-wrapper .profile-input {
@@ -407,10 +538,21 @@ header {
     box-shadow: none;
 }
 
+.app-header__right .profile-settings-body .profile-btn {
+    background: var(--brand-olive);
+    color: #faf8f4;
+    border: none;
+}
+
 .profile-btn:hover {
     background: #1a1a1a;
     color: white;
     transform: none;
+}
+
+.app-header__right .profile-settings-body .profile-btn:hover {
+    background: #4a5a3a;
+    color: #faf8f4;
 }
 
 .profile-btn:active {
@@ -418,9 +560,32 @@ header {
     color: white;
 }
 
+.app-header__right .profile-settings-body .profile-btn:active {
+    background: #3a4a2a;
+    color: #faf8f4;
+}
+
 .profile-btn:focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
+}
+
+/* Secondary buttons (Change picture, Remove picture) */
+.app-header__right .profile-settings-body .profile-btn-secondary {
+    background: #ffffff;
+    color: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.app-header__right .profile-settings-body .profile-btn-secondary:hover {
+    background: #f8f8f8;
+    color: #1e1e1e;
+    border-color: rgba(0, 0, 0, 0.25);
+}
+
+.app-header__right .profile-settings-body .profile-btn-secondary:active {
+    background: #f0f0f0;
+    color: #1e1e1e;
 }
 
 .profile-delete-btn {
@@ -438,6 +603,12 @@ header {
     box-shadow: none;
 }
 
+.app-header__right .profile-settings-body .profile-delete-btn {
+    background: transparent;
+    color: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
 .profile-delete-btn:hover:not(:disabled) {
     background: transparent;
     color: var(--text);
@@ -445,9 +616,20 @@ header {
     transform: none;
 }
 
+.app-header__right .profile-settings-body .profile-delete-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1e1e1e;
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
 .profile-delete-btn:active:not(:disabled) {
     background: transparent;
     color: var(--text);
+}
+
+.app-header__right .profile-settings-body .profile-delete-btn:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.08);
+    color: #1e1e1e;
 }
 
 .profile-delete-btn:focus-visible {
@@ -2535,6 +2717,44 @@ header {
         min-width: 140px;
     }
 
+    .app-header__right .profile-widget {
+        display: inline-flex;
+        width: auto;
+        min-width: auto;
+        max-width: 100%;
+    }
+
+    .app-header__right .profile-card {
+        width: auto;
+        max-width: 100%;
+    }
+
+    .app-header__right .profile-info {
+        max-width: 150px;
+    }
+
+    .app-header__right .profile-settings-btn {
+        width: auto;
+        padding: 8px 12px;
+    }
+
+    .app-header__right .profile-settings-body {
+        width: min(90vw, 340px);
+        max-width: min(90vw, 360px);
+        right: 0;
+    }
+
+    .app-header__right .profile-settings-body.collapsed {
+        width: min(90vw, 340px);
+        max-width: min(90vw, 360px);
+        right: 0;
+    }
+
+    .app-header__right .profile-settings-btn {
+        width: auto;
+        padding: 8px 12px;
+    }
+
     .header-logo-text {
         font-size: 1.4rem;
         letter-spacing: 0.08em;
@@ -2546,11 +2766,12 @@ header {
         font-size: 1.2rem;
     }
 
-    .app-header__right .profile-widget,
+    /* Fallback for profile widget if not in header */
     .profile-widget {
         min-width: 240px;
         max-width: 280px;
     }
+
 
     .brand-logo {
         width: clamp(100px, 20vw, 150px);
@@ -2647,10 +2868,26 @@ header {
         padding: 12px;
     }
 
+    .app-header__right .profile-card-header {
+        padding: 0 10px;
+        gap: 8px;
+    }
+
     .profile-avatar {
         width: 48px;
         height: 48px;
         font-size: 1.3rem;
+    }
+
+    .app-header__right .profile-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+
+    .app-header__right .profile-avatar-img {
+        width: 32px;
+        height: 32px;
     }
 
     .profile-name {
