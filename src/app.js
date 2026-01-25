@@ -892,9 +892,56 @@ const Profiles = {
         if (isCollapsed) {
             body.classList.remove('collapsed');
             btn.setAttribute('aria-expanded', 'true');
+            this.setupOutsideClickHandler();
         } else {
+            this.closeProfilePanel();
+        }
+    },
+
+    closeProfilePanel() {
+        const body = $('#profile-settings-body');
+        const btn = $('#profile-settings-btn');
+        if (body && !body.classList.contains('collapsed')) {
             body.classList.add('collapsed');
             btn.setAttribute('aria-expanded', 'false');
+        }
+        this.removeOutsideClickHandler();
+    },
+
+    outsideClickHandler: null,
+
+    setupOutsideClickHandler() {
+        // Remove existing handler if any
+        this.removeOutsideClickHandler();
+        
+        // Create new handler
+        this.outsideClickHandler = (e) => {
+            const profileWidget = $('.profile-widget');
+            const profileSettingsBtn = $('#profile-settings-btn');
+            const profileSettingsBody = $('#profile-settings-body');
+            
+            if (!profileWidget || !profileSettingsBtn || !profileSettingsBody) {
+                return;
+            }
+            
+            // Check if click is outside profile widget
+            const clickedInside = profileWidget.contains(e.target) || 
+                                  profileSettingsBtn.contains(e.target) ||
+                                  profileSettingsBody.contains(e.target);
+            
+            if (!clickedInside) {
+                this.closeProfilePanel();
+            }
+        };
+        
+        // Attach listener with capture phase to catch clicks early
+        document.addEventListener('click', this.outsideClickHandler, true);
+    },
+
+    removeOutsideClickHandler() {
+        if (this.outsideClickHandler) {
+            document.removeEventListener('click', this.outsideClickHandler, true);
+            this.outsideClickHandler = null;
         }
     },
 
@@ -1729,6 +1776,11 @@ const Navigation = {
         const navButtons = $$('.nav-btn');
         navButtons.forEach(btn => {
             btn.addEventListener('click', () => {
+                // Close profile panel when navigating
+                if (Profiles && typeof Profiles.closeProfilePanel === 'function') {
+                    Profiles.closeProfilePanel();
+                }
+
                 const view = btn.getAttribute('data-view');
                 this.switchView(view);
                 this.updateActiveState(view);
@@ -1739,6 +1791,11 @@ const Navigation = {
         const drawerItems = $$('.drawer-item');
         drawerItems.forEach(item => {
             item.addEventListener('click', () => {
+                // Close profile panel when navigating
+                if (Profiles && typeof Profiles.closeProfilePanel === 'function') {
+                    Profiles.closeProfilePanel();
+                }
+
                 const view = item.getAttribute('data-view');
                 // Handle scanner as placeholder (navigate but show placeholder view)
                 if (view === 'scanner') {
@@ -1786,6 +1843,11 @@ const Navigation = {
         const homeCtaButtons = $$('.home-cta-btn');
         homeCtaButtons.forEach(btn => {
             btn.addEventListener('click', () => {
+                // Close profile panel when navigating
+                if (Profiles && typeof Profiles.closeProfilePanel === 'function') {
+                    Profiles.closeProfilePanel();
+                }
+
                 const view = btn.getAttribute('data-view');
                 this.switchView(view);
                 this.updateActiveState(view);
@@ -1794,6 +1856,11 @@ const Navigation = {
     },
 
     switchView(viewName) {
+        // Close profile panel when switching views
+        if (Profiles && typeof Profiles.closeProfilePanel === 'function') {
+            Profiles.closeProfilePanel();
+        }
+
         $$('.view-section').forEach(view => view.classList.add('hidden'));
 
         const targetView = $(`#${viewName}-view`);
