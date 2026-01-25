@@ -272,6 +272,11 @@ header {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Remove white border when dropdown is open to prevent white line artifact */
+body.profile-menu-open .app-header__right .profile-card {
+    border-color: transparent;
+}
+
 /* Show profile name in header, hide subtitle */
 .app-header__right .profile-info {
     display: block;
@@ -658,6 +663,9 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     padding: 0 20px;
     overflow: hidden;
     opacity: 0;
+    border: none !important;
+    box-shadow: none !important;
+    pointer-events: none;
 }
 
 .app-header__right .profile-settings-body.collapsed {
@@ -669,6 +677,9 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     max-width: min(90vw, 360px);
     background: #f4efe6;
     opacity: 0;
+    border: none !important;
+    box-shadow: none !important;
+    pointer-events: none;
 }
 
 /* Dropdown collapsed state when in overlay-root */
@@ -678,6 +689,8 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     max-height: 0;
     padding: 0 20px;
     overflow: hidden;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .profile-section {
