@@ -784,34 +784,48 @@ const Profiles = {
             dropdownBody.setAttribute('aria-labelledby', 'profile-settings-btn');
             dropdownBody.innerHTML = `
                 <div class="profile-panel__rail" aria-hidden="true"></div>
-                <div class="profile-section">
-                    <label for="profile-select">Active profile</label>
-                    <select id="profile-select" class="profile-select"></select>
-                </div>
-                <div class="profile-section">
-                    <label>Profile picture</label>
-                    <div class="profile-avatar-actions">
-                        <button id="profile-avatar-change-btn" class="profile-btn profile-btn-secondary">Change picture</button>
-                        <button id="profile-avatar-remove-btn" class="profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
+                <div class="profile-menu">
+                    <div class="profile-menu__section">
+                        <div class="profile-menu__sectionTitle">Active profile</div>
+                        <div class="profile-section">
+                            <label for="profile-select" class="sr-only">Active profile</label>
+                            <select id="profile-select" class="profile-select"></select>
+                        </div>
                     </div>
-                    <input type="file" id="profile-avatar-input" accept="image/*" style="display: none;">
-                </div>
-                <div class="profile-section">
-                    <label for="profile-name-input">New profile</label>
-                    <div class="profile-add-section">
-                        <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
-                        <button id="profile-add-btn" class="profile-btn">Add</button>
+                    <div class="profile-menu__section">
+                        <div class="profile-menu__sectionTitle">Profile picture</div>
+                        <div class="profile-section">
+                            <div class="profile-avatar-actions">
+                                <button id="profile-avatar-change-btn" class="profile-btn profile-btn-secondary">Change picture</button>
+                                <button id="profile-avatar-remove-btn" class="profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
+                            </div>
+                            <input type="file" id="profile-avatar-input" accept="image/*" style="display: none;">
+                        </div>
                     </div>
-                </div>
-                <div class="profile-section">
-                    <label for="profile-allergies-input">Allergies</label>
-                    <div class="profile-allergies-input-wrapper">
-                        <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
-                        <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                    <div class="profile-menu__section">
+                        <div class="profile-menu__sectionTitle">New profile</div>
+                        <div class="profile-section">
+                            <div class="profile-add-section">
+                                <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
+                                <button id="profile-add-btn" class="profile-btn">Add</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="profile-section">
-                    <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
+                    <div class="profile-menu__section">
+                        <div class="profile-menu__sectionTitle">Allergies</div>
+                        <div class="profile-section">
+                            <div class="profile-allergies-input-wrapper">
+                                <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
+                                <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-menu__section">
+                        <div class="profile-menu__sectionTitle">Delete</div>
+                        <div class="profile-section">
+                            <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
+                        </div>
+                    </div>
                 </div>
             `;
             overlayRoot.appendChild(dropdownBody);

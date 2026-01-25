@@ -562,6 +562,64 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     pointer-events: auto !important;
 }
 
+/* Profile Menu Container */
+.profile-menu {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Adjust dropdown body padding when using profile-menu */
+.profile-settings-body .profile-menu {
+    padding: 0;
+}
+
+#overlay-root .profile-settings-body .profile-menu {
+    padding: 0;
+}
+
+/* Profile Menu Section Cards */
+.profile-menu__section {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    margin-bottom: 0;
+    position: relative;
+    border-left: 4px solid #6B8E23;
+}
+
+/* Section Title */
+.profile-menu__sectionTitle {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e1e1e;
+    margin-bottom: 12px;
+    margin-top: 0;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+}
+
+/* Ensure section content is properly spaced */
+.profile-menu__section .profile-section {
+    margin: 0;
+    padding: 0;
+}
+
+/* Screen reader only class */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
 /* Ensure profile panel and all wrappers are fully opaque */
 .app-header__right .profile-widget,
 .app-header__right .profile-card,
