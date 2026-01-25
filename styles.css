@@ -1318,6 +1318,38 @@ header {
     margin-top: 20px;
 }
 
+.scanner-container {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 56px;
+    box-shadow: none;
+    border: 1px solid var(--border);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.scanner-placeholder {
+    text-align: center;
+    padding: 80px 40px;
+}
+
+.scanner-placeholder-text {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    color: var(--text);
+    margin-bottom: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.scanner-placeholder-description {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin: 0;
+}
+
 .forecast-intro {
     background: white;
     border: 2px solid #E6D3B3;
@@ -2475,6 +2507,22 @@ header {
         padding: 20px;
     }
 
+    .scanner-container {
+        padding: 40px 20px;
+    }
+
+    .scanner-placeholder {
+        padding: 60px 20px;
+    }
+
+    .scanner-placeholder-text {
+        font-size: 1.5rem;
+    }
+
+    .scanner-placeholder-description {
+        font-size: 1rem;
+    }
+
     .profile-widget {
         position: fixed;
         top: auto;
@@ -2983,6 +3031,12 @@ input[type="search"]:focus,
     transition: all 0.3s ease;
     padding: 0;
     margin: 0;
+}
+
+/* Log FAB positioned above Add Recipe FAB on recipes page */
+#recipes-view:not(.hidden) ~ * #log-fab,
+body:has(#recipes-view:not(.hidden)) #log-fab {
+    bottom: 220px !important;
 }
 
 .add-recipe-fab-icon {

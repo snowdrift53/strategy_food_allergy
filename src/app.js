@@ -1733,7 +1733,14 @@ const Navigation = {
         drawerItems.forEach(item => {
             item.addEventListener('click', () => {
                 const view = item.getAttribute('data-view');
-                // Skip placeholder items (like scanner)
+                // Handle scanner as placeholder (navigate but show placeholder view)
+                if (view === 'scanner') {
+                    this.switchView('scanner');
+                    this.updateActiveState('scanner');
+                    this.closeDrawer();
+                    return;
+                }
+                // Skip other disabled/placeholder items
                 if (item.disabled || item.classList.contains('drawer-item-placeholder')) {
                     return;
                 }
@@ -1785,11 +1792,47 @@ const Navigation = {
         const targetView = $(`#${viewName}-view`);
         if (targetView) targetView.classList.remove('hidden');
 
+        // Control widget visibility based on current view
+        this.updateWidgetVisibility(viewName);
+
         if (viewName === 'forecast') {
             Forecast.render();
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    updateWidgetVisibility(viewName) {
+        const profileWidget = $('.profile-widget');
+        const logFab = $('#log-fab');
+        const addRecipeFab = $('#add-recipe-fab');
+
+        // Hide all widgets by default
+        if (profileWidget) profileWidget.style.display = 'none';
+        if (logFab) {
+            logFab.style.display = 'none';
+            logFab.style.bottom = '24px'; // Reset to default position
+        }
+        if (addRecipeFab) addRecipeFab.style.display = 'none';
+
+        // Show widgets only on appropriate pages
+        if (viewName === 'recipes') {
+            // Recipes page: show add recipe FAB and log FAB
+            if (addRecipeFab) addRecipeFab.style.display = 'flex';
+            if (logFab) {
+                logFab.style.display = 'flex';
+                // Position log FAB above add recipe FAB (add recipe is at 120px, log FAB is 88px tall, add 12px gap)
+                logFab.style.setProperty('bottom', '220px', 'important');
+            }
+        } else if (viewName === 'allergies') {
+            // Allergy Information page: show log FAB only
+            if (logFab) {
+                logFab.style.display = 'flex';
+                // Reset to default position (no add recipe FAB above it)
+                logFab.style.setProperty('bottom', '24px', 'important');
+            }
+        }
+        // All other pages (home, shopping, forecast, scanner): no widgets
     },
 
     updateActiveState(viewName) {
@@ -4269,6 +4312,8 @@ const App = {
         Navigation.init();
         // Set initial active state for home view
         Navigation.updateActiveState('home');
+        // Set initial widget visibility for home view
+        Navigation.updateWidgetVisibility('home');
         Profiles.init();
         Log.init();
         this.initAddRecipe();
