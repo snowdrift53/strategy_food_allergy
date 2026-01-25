@@ -441,10 +441,16 @@ header {
     padding: 16px;
     transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
     overflow: hidden;
-    opacity: 1;
+    opacity: 1 !important;
     position: relative;
     z-index: 61;
     box-sizing: border-box;
+    background-color: #f6f1e8 !important;
+    background: #f6f1e8 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
 }
 
 /* Override padding for header dropdown */
@@ -479,16 +485,52 @@ header {
     right: 0;
     width: 340px;
     max-width: min(90vw, 360px);
-    background: #f4efe6;
+    background-color: #f6f1e8 !important;
+    background: #f6f1e8 !important;
     color: #1e1e1e;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--radius);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.12);
-    backdrop-filter: none;
-    opacity: 1;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    opacity: 1 !important;
     z-index: 60;
     box-sizing: border-box;
     padding: 20px;
+}
+
+/* Ensure profile panel and all wrappers are fully opaque */
+.app-header__right .profile-widget,
+.app-header__right .profile-card,
+.app-header__right .profile-settings-body {
+    opacity: 1 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    mix-blend-mode: normal !important;
+}
+
+/* Ensure profile panel surface is solid */
+.app-header__right .profile-settings-body:not(.collapsed) {
+    background-color: #f6f1e8 !important;
+    background: #f6f1e8 !important;
+    opacity: 1 !important;
+}
+
+/* Global override: Profile panel always fully opaque regardless of page context */
+.profile-settings-body,
+.profile-settings-body:not(.collapsed),
+.app-header__right .profile-settings-body,
+.app-header__right .profile-settings-body:not(.collapsed) {
+    opacity: 1 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    mix-blend-mode: normal !important;
+    background-color: #f6f1e8 !important;
+    background: #f6f1e8 !important;
 }
 
 .profile-settings-body.collapsed {
@@ -1314,11 +1356,19 @@ header {
     min-height: auto;
     padding: 0;
     margin: 0;
+    opacity: 1 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    mix-blend-mode: normal !important;
 }
 
 #recipes-view {
     display: block;
     min-height: auto;
+    opacity: 1 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    mix-blend-mode: normal !important;
 }
 
 /* Shopping List Styles */
