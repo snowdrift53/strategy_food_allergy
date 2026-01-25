@@ -1874,7 +1874,7 @@ const Navigation = {
         const targetView = $(`#${viewName}-view`);
         if (targetView) targetView.classList.remove('hidden');
 
-        // Update brand strip visibility (show on all pages except Home)
+        // Update brand strip visibility (show on all pages including Home)
         this.updateBrandStripVisibility(viewName);
 
         // Control widget visibility based on current view
@@ -1891,10 +1891,8 @@ const Navigation = {
         const brandStrip = $('#brand-strip');
         if (!brandStrip) return;
 
-        // Show brand strip on all pages except Home
-        if (viewName === 'home') {
-            brandStrip.style.display = 'none';
-        } else if (viewName === 'recipes' || viewName === 'shopping' || viewName === 'forecast' || viewName === 'allergies' || viewName === 'scanner') {
+        // Show brand strip on all pages including Home
+        if (viewName === 'home' || viewName === 'recipes' || viewName === 'shopping' || viewName === 'forecast' || viewName === 'allergies' || viewName === 'scanner') {
             brandStrip.style.display = 'flex';
         } else {
             // Safe default: hide if view is unknown/unresolved
@@ -4403,6 +4401,8 @@ const App = {
         Navigation.init();
         // Set initial active state for home view
         Navigation.updateActiveState('home');
+        // Set initial brand strip visibility for home view
+        Navigation.updateBrandStripVisibility('home');
         Profiles.init();
         // Create FAB stack container first
         this.createFabStack();
