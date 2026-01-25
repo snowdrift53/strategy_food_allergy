@@ -548,6 +548,20 @@ header {
     padding-right: 36px;
 }
 
+/* Disable pointer-events on recipe floating UI when profile menu is open (Recipes page only) */
+body.profile-menu-open #recipes-view .fab-stack,
+body.profile-menu-open #recipes-view .fab-stack > *,
+body.profile-menu-open #recipes-view .like-btn,
+body.profile-menu-open #recipes-view .recipe-badge,
+body.profile-menu-open #recipes-view .mini-flag {
+    pointer-events: none !important;
+}
+
+/* Ensure dropdown remains interactive */
+body.profile-menu-open #overlay-root .profile-settings-body {
+    pointer-events: auto !important;
+}
+
 /* Ensure profile panel and all wrappers are fully opaque */
 .app-header__right .profile-widget,
 .app-header__right .profile-card,

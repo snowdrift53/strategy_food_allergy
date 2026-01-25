@@ -935,6 +935,7 @@ const Profiles = {
             this.updateDropdownPosition();
             this.showBackdrop();
             this.setupOutsideClickHandler();
+            document.body.classList.add('profile-menu-open');
         } else {
             this.closeProfilePanel();
         }
@@ -961,6 +962,7 @@ const Profiles = {
         }
         this.hideBackdrop();
         this.removeOutsideClickHandler();
+        document.body.classList.remove('profile-menu-open');
     },
 
     outsideClickHandler: null,
