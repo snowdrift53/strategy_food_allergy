@@ -756,38 +756,6 @@ const Profiles = {
                     <span>Settings</span>
                     <span class="profile-settings-chevron">▼</span>
                 </button>
-                <div class="profile-settings-body collapsed" id="profile-settings-body" role="region" aria-labelledby="profile-settings-btn">
-                    <div class="profile-panel__rail" aria-hidden="true"></div>
-                    <div class="profile-section">
-                        <label for="profile-select">Active profile</label>
-                        <select id="profile-select" class="profile-select"></select>
-                    </div>
-                    <div class="profile-section">
-                        <label>Profile picture</label>
-                        <div class="profile-avatar-actions">
-                            <button id="profile-avatar-change-btn" class="profile-btn profile-btn-secondary">Change picture</button>
-                            <button id="profile-avatar-remove-btn" class="profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
-                        </div>
-                        <input type="file" id="profile-avatar-input" accept="image/*" style="display: none;">
-                    </div>
-                    <div class="profile-section">
-                        <label for="profile-name-input">New profile</label>
-                        <div class="profile-add-section">
-                            <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
-                            <button id="profile-add-btn" class="profile-btn">Add</button>
-                        </div>
-                    </div>
-                    <div class="profile-section">
-                        <label for="profile-allergies-input">Allergies</label>
-                        <div class="profile-allergies-input-wrapper">
-                            <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
-                            <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
-                        </div>
-                    </div>
-                    <div class="profile-section">
-                        <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
-                    </div>
-                </div>
             </div>
         `;
         // Append to header profile container if it exists, otherwise to body
@@ -796,6 +764,49 @@ const Profiles = {
             headerContainer.appendChild(widget);
         } else {
             document.body.appendChild(widget);
+        }
+
+        // Create dropdown body in overlay-root to escape stacking contexts
+        const overlayRoot = document.getElementById('overlay-root');
+        if (overlayRoot) {
+            const dropdownBody = document.createElement('div');
+            dropdownBody.className = 'profile-settings-body collapsed';
+            dropdownBody.id = 'profile-settings-body';
+            dropdownBody.setAttribute('role', 'region');
+            dropdownBody.setAttribute('aria-labelledby', 'profile-settings-btn');
+            dropdownBody.innerHTML = `
+                <div class="profile-panel__rail" aria-hidden="true"></div>
+                <div class="profile-section">
+                    <label for="profile-select">Active profile</label>
+                    <select id="profile-select" class="profile-select"></select>
+                </div>
+                <div class="profile-section">
+                    <label>Profile picture</label>
+                    <div class="profile-avatar-actions">
+                        <button id="profile-avatar-change-btn" class="profile-btn profile-btn-secondary">Change picture</button>
+                        <button id="profile-avatar-remove-btn" class="profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
+                    </div>
+                    <input type="file" id="profile-avatar-input" accept="image/*" style="display: none;">
+                </div>
+                <div class="profile-section">
+                    <label for="profile-name-input">New profile</label>
+                    <div class="profile-add-section">
+                        <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
+                        <button id="profile-add-btn" class="profile-btn">Add</button>
+                    </div>
+                </div>
+                <div class="profile-section">
+                    <label for="profile-allergies-input">Allergies</label>
+                    <div class="profile-allergies-input-wrapper">
+                        <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
+                        <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                    </div>
+                </div>
+                <div class="profile-section">
+                    <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
+                </div>
+            `;
+            overlayRoot.appendChild(dropdownBody);
         }
     },
 
@@ -807,6 +818,19 @@ const Profiles = {
                 this.toggleWidget();
             }
         });
+
+        // Update dropdown position on window resize/scroll when open
+        let resizeTimeout;
+        const updatePosition = () => {
+            const body = $('#profile-settings-body');
+            if (body && !body.classList.contains('collapsed')) {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => this.updateDropdownPosition(), 100);
+            }
+        };
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+
         $('#profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
         $('#profile-add-btn').addEventListener('click', () => this.addProfile());
         $('#profile-name-input').addEventListener('keypress', (e) => {
@@ -892,10 +916,23 @@ const Profiles = {
         if (isCollapsed) {
             body.classList.remove('collapsed');
             btn.setAttribute('aria-expanded', 'true');
+            this.updateDropdownPosition();
             this.setupOutsideClickHandler();
         } else {
             this.closeProfilePanel();
         }
+    },
+
+    updateDropdownPosition() {
+        const body = $('#profile-settings-body');
+        const btn = $('#profile-settings-btn');
+        if (!body || !btn) return;
+
+        const btnRect = btn.getBoundingClientRect();
+        
+        // Position dropdown below the button, aligned to the right edge
+        body.style.top = `${btnRect.bottom + 10}px`;
+        body.style.right = `${window.innerWidth - btnRect.right}px`;
     },
 
     closeProfilePanel() {
