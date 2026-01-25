@@ -3970,7 +3970,7 @@ const AllergyInfo = {
 
     searchReplacement() {
         const input = $('#allergy-search-input');
-        const searchTerm = input.value.trim().toLowerCase();
+        const searchTerm = input.value.trim();
         const resultDiv = $('#replacement-result');
 
         if (!searchTerm) {
@@ -3978,47 +3978,73 @@ const AllergyInfo = {
             return;
         }
 
-        let replacements = null;
-
-        // Check SUBSTITUTION_RULES for matching allergen
-        for (const [allergen, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
-            if (allergen.includes(searchTerm) || searchTerm.includes(allergen)) {
-                // Get all suggestions from all rules plus fallback
-                replacements = [];
-                ruleData.rules.forEach(rule => {
-                    rule.suggest.forEach(s => {
-                        if (!replacements.includes(s)) replacements.push(s);
-                    });
-                });
-                if (ruleData.fallback) {
-                    ruleData.fallback.forEach(s => {
-                        if (!replacements.includes(s)) replacements.push(s);
-                    });
-                }
-                break;
-            }
-        }
-
-        if (!replacements) {
-            for (const [allergen, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
-                if (allergen.includes(searchTerm) || searchTerm.split(' ').some(word => allergen.includes(word))) {
-                    replacements = [];
-                    ruleData.rules.forEach(rule => {
-                        rule.suggest.forEach(s => {
-                            if (!replacements.includes(s)) replacements.push(s);
-                        });
-                    });
-                    if (ruleData.fallback) {
-                        ruleData.fallback.forEach(s => {
-                            if (!replacements.includes(s)) replacements.push(s);
-                        });
-                    }
+        let replacements = [];
+        const searchTermLower = searchTerm.toLowerCase();
+        
+        // Use the same logic as Recipes.getSubstitutionsForProblem
+        // First, try to find matching allergen by canonical name
+        const canonicalAllergen = ALLERGEN_CANONICAL[searchTermLower] || searchTermLower;
+        
+        // Check if search term matches an allergen key in SUBSTITUTION_RULES
+        if (SUBSTITUTION_RULES.hasOwnProperty(canonicalAllergen)) {
+            const rules = SUBSTITUTION_RULES[canonicalAllergen];
+            const normalizedSearch = Recipes.normalizeIngredient(searchTerm);
+            
+            // Check each rule for matches (same logic as recipes)
+            for (const rule of rules.rules) {
+                const hasMatch = rule.match.some(keyword => normalizedSearch.includes(keyword.toLowerCase()));
+                if (hasMatch) {
+                    // Found a match - use this rule's suggestions
+                    replacements = [...rule.suggest];
                     break;
                 }
             }
+            
+            // If no rule matched, use fallback
+            if (replacements.length === 0 && rules.fallback) {
+                replacements = [...rules.fallback];
+            }
+        } else {
+            // Search term might be an ingredient, not an allergen
+            // Check all allergens in SUBSTITUTION_RULES to find ingredient matches
+            const normalizedSearch = Recipes.normalizeIngredient(searchTerm);
+            
+            for (const [allergenKey, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
+                // Check if search term matches any rule's match keywords
+                for (const rule of ruleData.rules) {
+                    const hasMatch = rule.match.some(keyword => normalizedSearch.includes(keyword.toLowerCase()));
+                    if (hasMatch) {
+                        // Found ingredient match - use this rule's suggestions
+                        replacements = [...rule.suggest];
+                        break;
+                    }
+                }
+                if (replacements.length > 0) break;
+            }
+            
+            // If still no match, try checking if search term is a keyword for any allergen
+            if (replacements.length === 0) {
+                for (const [allergenKey, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
+                    // Check if search term matches allergen name or keywords
+                    if (allergenKey.includes(searchTermLower) || searchTermLower.includes(allergenKey)) {
+                        // Collect all suggestions from all rules plus fallback
+                        ruleData.rules.forEach(rule => {
+                            rule.suggest.forEach(s => {
+                                if (!replacements.includes(s)) replacements.push(s);
+                            });
+                        });
+                        if (ruleData.fallback) {
+                            ruleData.fallback.forEach(s => {
+                                if (!replacements.includes(s)) replacements.push(s);
+                            });
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
-        if (replacements) {
+        if (replacements.length > 0) {
             resultDiv.innerHTML = `
                 <h4>Replacements for "${input.value}":</h4>
                 <ul class="replacement-list">
