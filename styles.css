@@ -17,6 +17,10 @@
     --link-hover: #b86a4d;
     --focus: #c97d60;
     
+    /* Floating widget colors */
+    --fab-bg: #D7E6C8;
+    --fab-bg-hover: #CFE0BE;
+    
     /* Legacy support (mapped to new tokens) */
     --surface: var(--surface);
     --muted: var(--text-muted);
@@ -773,20 +777,36 @@ header {
     cursor: not-allowed;
 }
 
+/* Floating Widget Stack Container */
+.fab-stack {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 14px;
+    z-index: 80;
+    pointer-events: none;
+}
+
+.fab-stack > * {
+    pointer-events: auto;
+}
+
 /* Log Floating Action Button */
 .log-fab {
-    position: fixed !important;
-    bottom: 24px !important;
-    right: 24px !important;
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
     width: 88px;
     height: 88px;
     border-radius: 50%;
-    background: #8B7355;
-    color: white;
-    border: none;
+    background: var(--fab-bg);
+    color: var(--text);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.3);
-    z-index: 9999 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -821,13 +841,13 @@ header {
 }
 
 .log-fab:hover {
-    background: #6B4E3D;
+    background: var(--fab-bg-hover);
     transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
 }
 
 .log-fab:focus {
-    outline: 2px solid #8B7355;
+    outline: 2px solid var(--fab-bg-hover);
     outline-offset: 2px;
 }
 
@@ -3029,9 +3049,13 @@ header {
         font-size: 0.8rem;
     }
 
+    .fab-stack {
+        right: 16px;
+        bottom: 16px;
+        gap: 12px;
+    }
+
     .log-fab {
-        bottom: 24px !important;
-        right: 24px !important;
         width: 88px;
         height: 88px;
     }
@@ -3049,7 +3073,7 @@ header {
     }
 
     .add-recipe-fab {
-        bottom: 120px !important;
+        /* Position handled by .fab-stack flex container */
     }
 
     .add-recipe-fab-badge {
@@ -3482,30 +3506,24 @@ input[type="search"]:focus,
 
 /* ===== Add Recipe FAB ===== */
 .add-recipe-fab {
-    position: fixed !important;
-    bottom: 120px !important;
-    right: 24px !important;
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
     width: 88px;
     height: 88px;
     border-radius: 50%;
-    background: #8B7355;
-    color: white;
-    border: none;
+    background: var(--fab-bg);
+    color: var(--text);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.3);
-    z-index: 9998 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
     padding: 0;
     margin: 0;
-}
-
-/* Log FAB positioned above Add Recipe FAB on recipes page */
-#recipes-view:not(.hidden) ~ * #log-fab,
-body:has(#recipes-view:not(.hidden)) #log-fab {
-    bottom: 220px !important;
 }
 
 .add-recipe-fab-icon {
@@ -3535,13 +3553,13 @@ body:has(#recipes-view:not(.hidden)) #log-fab {
 }
 
 .add-recipe-fab:hover {
-    background: #6B4E3D;
+    background: var(--fab-bg-hover);
     transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
 }
 
 .add-recipe-fab:focus {
-    outline: 2px solid #8B7355;
+    outline: 2px solid var(--fab-bg-hover);
     outline-offset: 2px;
 }
 

@@ -1281,16 +1281,24 @@ const Log = {
     },
 
     createWidget() {
+        // Get or create FAB stack container
+        let fabStack = document.getElementById('fab-stack');
+        if (!fabStack) {
+            fabStack = App.createFabStack();
+        }
+
         // Create floating action button
         const fab = document.createElement('button');
         fab.className = 'log-fab';
         fab.id = 'log-fab';
         fab.setAttribute('aria-label', 'Open log');
+        fab.style.display = 'none'; // Hide by default until visibility is set
         fab.innerHTML = `
             <span class="log-fab-icon">📜</span>
             <span class="log-fab-indicator hidden" id="log-fab-indicator" aria-hidden="true"></span>
         `;
-        document.body.appendChild(fab);
+        // Append to FAB stack (second in order)
+        fabStack.appendChild(fab);
 
         // Create overlay
         const overlay = document.createElement('div');
@@ -1877,36 +1885,27 @@ const Navigation = {
     },
 
     updateWidgetVisibility(viewName) {
-        const profileWidget = $('.profile-widget');
         const logFab = $('#log-fab');
         const addRecipeFab = $('#add-recipe-fab');
 
-        // Hide all widgets by default
-        if (profileWidget) profileWidget.style.display = 'none';
+        // Hide all floating widgets by default
         if (logFab) {
             logFab.style.display = 'none';
-            logFab.style.bottom = '24px'; // Reset to default position
         }
-        if (addRecipeFab) addRecipeFab.style.display = 'none';
+        if (addRecipeFab) {
+            addRecipeFab.style.display = 'none';
+        }
 
-        // Show widgets only on appropriate pages
+        // Show floating widgets only on appropriate pages
         if (viewName === 'recipes') {
-            // Recipes page: show add recipe FAB and log FAB
+            // Recipes page: show both floating widgets (add recipe FAB and log FAB)
             if (addRecipeFab) addRecipeFab.style.display = 'flex';
-            if (logFab) {
-                logFab.style.display = 'flex';
-                // Position log FAB above add recipe FAB (add recipe is at 120px, log FAB is 88px tall, add 12px gap)
-                logFab.style.setProperty('bottom', '220px', 'important');
-            }
+            if (logFab) logFab.style.display = 'flex';
         } else if (viewName === 'allergies') {
-            // Allergy Information page: show log FAB only
-            if (logFab) {
-                logFab.style.display = 'flex';
-                // Reset to default position (no add recipe FAB above it)
-                logFab.style.setProperty('bottom', '24px', 'important');
-            }
+            // Allergy Information page: show only the log widget
+            if (logFab) logFab.style.display = 'flex';
         }
-        // All other pages (home, shopping, forecast, scanner): no widgets
+        // All other pages (home, shopping, forecast, scanner): hide all floating widgets
     },
 
     updateActiveState(viewName) {
@@ -4386,11 +4385,26 @@ const App = {
         Navigation.init();
         // Set initial active state for home view
         Navigation.updateActiveState('home');
-        // Set initial widget visibility for home view
-        Navigation.updateWidgetVisibility('home');
         Profiles.init();
-        Log.init();
+        // Create FAB stack container first
+        this.createFabStack();
+        // Create widgets first (they will be hidden by default)
         this.initAddRecipe();
+        Log.init();
+        // Set initial widget visibility for home view (after widgets are created)
+        Navigation.updateWidgetVisibility('home');
+    },
+
+    createFabStack() {
+        // Create wrapper container for floating widgets if it doesn't exist
+        let fabStack = document.getElementById('fab-stack');
+        if (!fabStack) {
+            fabStack = document.createElement('div');
+            fabStack.id = 'fab-stack';
+            fabStack.className = 'fab-stack';
+            document.body.appendChild(fabStack);
+        }
+        return fabStack;
     },
 
     initAddRecipe() {

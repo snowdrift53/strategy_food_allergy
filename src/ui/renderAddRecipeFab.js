@@ -12,6 +12,15 @@
     window.renderAddRecipeFab = function(options) {
         if (!options || !options.onClick) return;
 
+        // Get or create FAB stack container
+        let fabStack = document.getElementById('fab-stack');
+        if (!fabStack) {
+            fabStack = document.createElement('div');
+            fabStack.id = 'fab-stack';
+            fabStack.className = 'fab-stack';
+            document.body.appendChild(fabStack);
+        }
+
         // Remove existing FAB if present
         const existing = document.getElementById('add-recipe-fab');
         if (existing) {
@@ -23,6 +32,7 @@
         fab.className = 'add-recipe-fab';
         fab.id = 'add-recipe-fab';
         fab.setAttribute('aria-label', 'Add recipe');
+        fab.style.display = 'none'; // Hide by default until visibility is set
         fab.innerHTML = `
             <span class="add-recipe-fab-icon">🍜</span>
             <span class="add-recipe-fab-badge" aria-hidden="true">➕</span>
@@ -34,6 +44,7 @@
             options.onClick();
         });
 
-        document.body.appendChild(fab);
+        // Append to FAB stack (first in order)
+        fabStack.appendChild(fab);
     };
 })();
