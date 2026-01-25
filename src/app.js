@@ -3960,10 +3960,50 @@ const ShoppingList = {
 
 const AllergyInfo = {
     init() {
-        $('#search-allergy-btn').addEventListener('click', () => this.searchReplacement());
-        $('#allergy-search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.searchReplacement();
-        });
+        const searchInput = $('#allergy-search-input');
+        const clearBtn = $('#allergy-search-clear-btn');
+        const searchBtn = $('#search-allergy-btn');
+        
+        // Update clear button visibility on input change
+        const updateClearButton = () => {
+            if (clearBtn) {
+                clearBtn.style.display = searchInput.value.trim().length > 0 ? 'flex' : 'none';
+            }
+        };
+
+        if (searchInput) {
+            searchInput.addEventListener('input', updateClearButton);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    updateClearButton();
+                    this.searchReplacement();
+                }
+            });
+        }
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                updateClearButton();
+                this.searchReplacement();
+            });
+        }
+
+        // Clear button click handler
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                    updateClearButton();
+                    // Clear the result display
+                    const resultDiv = $('#replacement-result');
+                    if (resultDiv) {
+                        resultDiv.classList.add('hidden');
+                    }
+                }
+            });
+        }
 
         this.renderAllergyCards();
     },

@@ -149,7 +149,10 @@
                     <h3>Find Replacement Ingredients</h3>
                     <p class="section-description">Type in an ingredient you're allergic to and find suitable replacements</p>
                     <div class="search-box">
-                        <input type="text" id="allergy-search-input" class="allergy-input" placeholder="Enter ingredient (e.g., milk, eggs, nuts)...">
+                        <div class="allergy-search-input-wrapper">
+                            <input type="text" id="allergy-search-input" class="allergy-input" placeholder="Enter ingredient (e.g., milk, eggs, nuts)...">
+                            <button id="allergy-search-clear-btn" class="allergy-search-clear-btn" title="Clear search" style="display: none;">×</button>
+                        </div>
                         <button id="search-allergy-btn" class="search-btn">Search</button>
                     </div>
                     <div id="replacement-result" class="replacement-result hidden"></div>

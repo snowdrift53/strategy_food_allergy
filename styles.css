@@ -1830,20 +1830,58 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     margin-bottom: 20px;
 }
 
+.allergy-search-input-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
 .allergy-input {
     font-family: var(--font-body);
     flex: 1;
-    padding: 14px 18px;
+    padding: 14px 40px 14px 18px;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 1rem;
     color: var(--text);
     background: var(--surface);
+    width: 100%;
 }
 
 .allergy-input:focus {
     outline: none;
     border-color: #8B7355;
+}
+
+.allergy-search-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #8B8B8B;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+.allergy-search-clear-btn:hover {
+    background: #E8E8E8;
+    color: #5C4033;
+}
+
+.allergy-search-clear-btn:active {
+    background: #D8D8D8;
 }
 
 .search-btn {
