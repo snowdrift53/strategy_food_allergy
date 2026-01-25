@@ -136,6 +136,10 @@ header {
     min-width: 160px;
     flex: 0 0 auto;
     height: 100%;
+    border-left: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 1px;
+    padding-left: 16px;
+    margin-left: 16px;
 }
 
 
@@ -181,15 +185,6 @@ header {
     position: relative;
 }
 
-.app-header__right .profile-card {
-    flex: 0 0 auto;
-    width: auto;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-}
-
 .profile-card-header {
     display: flex;
     align-items: center;
@@ -200,30 +195,67 @@ header {
     flex: 0 0 auto;
 }
 
-.app-header__right .profile-card-header {
+/* Profile chip container - wraps header and settings button */
+.app-header__right .profile-card {
     flex: 0 0 auto;
     width: auto;
     height: 100%;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    margin: 0;
-    transform: translateY(1px);
+    gap: 0;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 999px;
+    padding: 6px 10px;
     transition: background 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
 }
 
-.app-header__right .profile-card-header:hover {
+.app-header__right .profile-card-header {
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    transform: none;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    transition: none;
+    cursor: default;
+    pointer-events: none;
+}
+
+.app-header__right .profile-card:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Hide profile info text in header to keep it compact */
+/* Show profile name in header, hide subtitle */
 .app-header__right .profile-info {
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.app-header__right .profile-info .profile-subtitle {
     display: none;
+}
+
+.app-header__right .profile-info .profile-name {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #faf8f4;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
 .profile-avatar {
@@ -246,8 +278,8 @@ header {
 }
 
 .app-header__right .profile-avatar {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 999px;
     font-size: 0.95rem;
     box-shadow: 0 1px 4px rgba(92, 64, 51, 0.15);
@@ -266,8 +298,8 @@ header {
 }
 
 .app-header__right .profile-avatar-img {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 999px;
     object-fit: cover;
 }
@@ -341,6 +373,11 @@ header {
 
 .app-header__right .profile-card-header .profile-settings-btn span {
     color: #faf8f4;
+}
+
+/* Hide "Settings" text, show only caret in header */
+.app-header__right .profile-settings-btn span:first-child {
+    display: none;
 }
 
 .profile-settings-btn:hover {
