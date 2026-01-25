@@ -10,9 +10,47 @@
     <div class="container">
         <header>
             <div class="header-brand-row">
+                <button id="drawer-toggle-btn" class="drawer-toggle-btn" aria-label="Open navigation menu" title="Menu">
+                    <span class="drawer-toggle-icon">☰</span>
+                </button>
                 <div class="brand-banner" role="img" aria-label="MeloryCook"></div>
             </div>
         </header>
+
+        <!-- Navigation Drawer -->
+        <div id="drawer-overlay" class="drawer-overlay"></div>
+        <nav id="navigation-drawer" class="navigation-drawer">
+            <div class="drawer-header">
+                <h2 class="drawer-title">Menu</h2>
+                <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close navigation menu" title="Close">×</button>
+            </div>
+            <div class="drawer-content">
+                <button class="drawer-item active" data-view="home">
+                    <span class="drawer-item-icon">🏠</span>
+                    <span class="drawer-item-text">Home</span>
+                </button>
+                <button class="drawer-item" data-view="recipes">
+                    <span class="drawer-item-icon">📖</span>
+                    <span class="drawer-item-text">Recipes</span>
+                </button>
+                <button class="drawer-item" data-view="shopping">
+                    <span class="drawer-item-icon">🛒</span>
+                    <span class="drawer-item-text">Shopping List</span>
+                </button>
+                <button class="drawer-item" data-view="forecast">
+                    <span class="drawer-item-icon">📅</span>
+                    <span class="drawer-item-text">Weekly Forecast</span>
+                </button>
+                <button class="drawer-item" data-view="allergies">
+                    <span class="drawer-item-icon">⚠️</span>
+                    <span class="drawer-item-text">Allergy Information</span>
+                </button>
+                <button class="drawer-item drawer-item-placeholder" data-view="scanner" disabled>
+                    <span class="drawer-item-icon">📷</span>
+                    <span class="drawer-item-text">Scanner</span>
+                </button>
+            </div>
+        </nav>
 
         <nav class="main-nav">
             <button class="nav-btn active" data-view="recipes">Recipes</button>

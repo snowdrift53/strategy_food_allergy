@@ -1718,16 +1718,54 @@ const AllergyEngine = {
 
 const Navigation = {
     init() {
-        // Top navigation buttons
+        // Top navigation buttons (hidden but kept for JS compatibility)
         const navButtons = $$('.nav-btn');
         navButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const view = btn.getAttribute('data-view');
                 this.switchView(view);
-
-                navButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                this.updateActiveState(view);
             });
+        });
+
+        // Drawer navigation items
+        const drawerItems = $$('.drawer-item');
+        drawerItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const view = item.getAttribute('data-view');
+                // Skip placeholder items (like scanner)
+                if (item.disabled || item.classList.contains('drawer-item-placeholder')) {
+                    return;
+                }
+                this.switchView(view);
+                this.updateActiveState(view);
+                this.closeDrawer();
+            });
+        });
+
+        // Drawer toggle button
+        const drawerToggle = $('#drawer-toggle-btn');
+        if (drawerToggle) {
+            drawerToggle.addEventListener('click', () => this.openDrawer());
+        }
+
+        // Drawer close button
+        const drawerClose = $('#drawer-close-btn');
+        if (drawerClose) {
+            drawerClose.addEventListener('click', () => this.closeDrawer());
+        }
+
+        // Overlay click to close
+        const overlay = $('#drawer-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', () => this.closeDrawer());
+        }
+
+        // ESC key to close drawer
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isDrawerOpen()) {
+                this.closeDrawer();
+            }
         });
 
         // Home page CTA buttons
@@ -1736,15 +1774,7 @@ const Navigation = {
             btn.addEventListener('click', () => {
                 const view = btn.getAttribute('data-view');
                 this.switchView(view);
-
-                // Update nav button active state
-                navButtons.forEach(b => {
-                    if (b.getAttribute('data-view') === view) {
-                        b.classList.add('active');
-                    } else {
-                        b.classList.remove('active');
-                    }
-                });
+                this.updateActiveState(view);
             });
         });
     },
@@ -1760,6 +1790,47 @@ const Navigation = {
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    updateActiveState(viewName) {
+        // Update top nav buttons (hidden but kept for JS)
+        $$('.nav-btn').forEach(btn => {
+            if (btn.getAttribute('data-view') === viewName) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update drawer items
+        $$('.drawer-item').forEach(item => {
+            if (item.getAttribute('data-view') === viewName) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    },
+
+    openDrawer() {
+        const drawer = $('#navigation-drawer');
+        const overlay = $('#drawer-overlay');
+        if (drawer) drawer.classList.add('open');
+        if (overlay) overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    },
+
+    closeDrawer() {
+        const drawer = $('#navigation-drawer');
+        const overlay = $('#drawer-overlay');
+        if (drawer) drawer.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    },
+
+    isDrawerOpen() {
+        const drawer = $('#navigation-drawer');
+        return drawer && drawer.classList.contains('open');
     }
 };
 
@@ -4196,6 +4267,8 @@ const App = {
         ShoppingList.init();
         AllergyInfo.init();
         Navigation.init();
+        // Set initial active state for home view
+        Navigation.updateActiveState('home');
         Profiles.init();
         Log.init();
         this.initAddRecipe();

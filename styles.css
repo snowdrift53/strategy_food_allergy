@@ -92,6 +92,7 @@ header {
     justify-content: center;
     align-items: center;
     margin: 32px 0 48px 0;
+    position: relative;
 }
 
 .brand-banner {
@@ -739,7 +740,7 @@ header {
 
 /* Navigation */
 .main-nav {
-    display: flex;
+    display: none; /* Hidden visually but kept in DOM for JS compatibility */
     justify-content: center;
     gap: 0;
     margin-bottom: 64px;
@@ -3622,5 +3623,230 @@ input[type="search"]:focus,
     .home-cta-btn {
         width: 100%;
         min-width: auto;
+    }
+}
+
+/* ===== Navigation Drawer (YouTube-style) ===== */
+.drawer-toggle-btn {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+    color: var(--text);
+    font-size: 1.5rem;
+    padding: 0;
+    z-index: 100;
+}
+
+.drawer-toggle-btn:hover {
+    background: var(--surface-muted);
+    border-color: var(--text);
+}
+
+.drawer-toggle-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.drawer-toggle-btn:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.drawer-toggle-icon {
+    line-height: 1;
+}
+
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.drawer-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.navigation-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    background: var(--surface);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.navigation-drawer.open {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    min-height: 64px;
+}
+
+.drawer-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--text);
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.drawer-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    line-height: 1;
+    padding: 0;
+    font-family: var(--font-body);
+}
+
+.drawer-close-btn:hover {
+    background: var(--surface-muted);
+    color: var(--text);
+}
+
+.drawer-close-btn:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.drawer-content {
+    flex: 1;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.drawer-item {
+    font-family: var(--font-body);
+    background: transparent;
+    color: var(--text);
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-left: 3px solid transparent;
+}
+
+.drawer-item:hover:not(:disabled) {
+    background: var(--surface-muted);
+}
+
+.drawer-item:active:not(:disabled) {
+    background: var(--surface-muted);
+}
+
+.drawer-item:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+}
+
+.drawer-item.active {
+    background: var(--surface-muted);
+    color: var(--text);
+    border-left-color: var(--brand-forest);
+    font-weight: 600;
+}
+
+.drawer-item.active:hover {
+    background: var(--surface-muted);
+    border-left-color: var(--brand-forest);
+}
+
+.drawer-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.drawer-item-placeholder {
+    opacity: 0.6;
+}
+
+.drawer-item-icon {
+    font-size: 1.5rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.drawer-item-text {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .drawer-toggle-btn {
+        left: 10px;
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+    }
+
+    .navigation-drawer {
+        width: 260px;
+    }
+
+    .drawer-item {
+        padding: 14px 20px;
+        font-size: 0.95rem;
+    }
+
+    .drawer-item-icon {
+        font-size: 1.3rem;
+        width: 22px;
     }
 }
