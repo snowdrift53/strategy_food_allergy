@@ -21,8 +21,31 @@
             <button class="nav-btn" data-view="allergies">Allergy Information</button>
         </nav>
 
+        <!-- Home View -->
+        <div id="home-view" class="view-section">
+            <div class="home-container">
+                <div class="home-logo">
+                    <img src="images/brand/logo.png" alt="MeloryCook" class="home-logo-img">
+                </div>
+                <div class="home-hero">
+                    <img src="images/brand/home-hero.jpg" alt="Delicious meals" class="home-hero-img">
+                </div>
+                <div class="home-content">
+                    <h1 class="home-headline">Your Allergy-Aware Meal Planning Companion</h1>
+                    <p class="home-description">
+                        Plan your meals with confidence. MeloryCook helps you discover recipes, manage your shopping list, 
+                        and get weekly cooking forecasts—all while keeping your allergies and dietary needs in mind.
+                    </p>
+                    <div class="home-cta-buttons">
+                        <button class="home-cta-btn home-cta-primary" data-view="recipes">Browse Recipes</button>
+                        <button class="home-cta-btn home-cta-secondary" data-view="shopping">Open Shopping List</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Recipes View -->
-        <div id="recipes-view" class="view-section">
+        <div id="recipes-view" class="view-section hidden">
             <div class="recipe-search-section">
                 <div class="recipe-search-input-wrapper">
                     <input type="text" id="recipe-search-input" class="recipe-search-input" placeholder="Search recipes...">

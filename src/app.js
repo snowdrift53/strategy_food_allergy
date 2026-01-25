@@ -1718,6 +1718,7 @@ const AllergyEngine = {
 
 const Navigation = {
     init() {
+        // Top navigation buttons
         const navButtons = $$('.nav-btn');
         navButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1726,6 +1727,24 @@ const Navigation = {
 
                 navButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+            });
+        });
+
+        // Home page CTA buttons
+        const homeCtaButtons = $$('.home-cta-btn');
+        homeCtaButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.getAttribute('data-view');
+                this.switchView(view);
+
+                // Update nav button active state
+                navButtons.forEach(b => {
+                    if (b.getAttribute('data-view') === view) {
+                        b.classList.add('active');
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
             });
         });
     },
