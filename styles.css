@@ -372,6 +372,31 @@ header {
     box-sizing: border-box;
 }
 
+/* Override padding for header dropdown */
+.app-header__right .profile-settings-body:not(.collapsed) {
+    padding: 20px;
+}
+
+/* Profile panel identity rail */
+.app-header__right .profile-settings-body {
+    padding-right: 36px;
+    position: relative;
+}
+
+/* Profile panel rail element */
+.app-header__right .profile-panel__rail {
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    right: 14px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+
 /* Dropdown positioning when in header */
 .app-header__right .profile-settings-body {
     position: absolute;
@@ -383,16 +408,17 @@ header {
     color: #1e1e1e;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--radius);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.12);
     backdrop-filter: none;
     opacity: 1;
     z-index: 60;
     box-sizing: border-box;
+    padding: 20px;
 }
 
 .profile-settings-body.collapsed {
     max-height: 0;
-    padding: 0 16px;
+    padding: 0 20px;
     overflow: hidden;
     opacity: 0;
 }
@@ -425,9 +451,26 @@ header {
     font-weight: 500;
 }
 
+/* Profile panel section styling */
+.app-header__right .profile-settings-body .profile-section {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-left: 4px solid var(--brand-olive);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+.app-header__right .profile-settings-body .profile-section:last-child {
+    margin-bottom: 0;
+}
+
 .app-header__right .profile-settings-body .profile-section label {
     color: #1e1e1e;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
 }
 
 .profile-select {
@@ -446,6 +489,11 @@ header {
     background: #ffffff;
     color: #1e1e1e;
     border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    height: 40px;
+    padding: 0 14px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
 }
 
 .profile-select:focus {
@@ -479,6 +527,10 @@ header {
     background: #ffffff;
     color: #1e1e1e;
     border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    height: 40px;
+    padding: 0 14px;
+    box-sizing: border-box;
 }
 
 .profile-allergies-input-wrapper .profile-input {
@@ -507,6 +559,16 @@ header {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.app-header__right .profile-settings-body .profile-allergies-clear-btn {
+    background: #ffffff;
+    color: #1e1e1e;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
 .profile-allergies-clear-btn:hover {
     background: #F0F0F0;
     border-color: #B0B0B0;
@@ -521,6 +583,10 @@ header {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.app-header__right .profile-settings-body .profile-avatar-actions {
+    gap: 10px;
 }
 
 .profile-btn {
@@ -542,6 +608,11 @@ header {
     background: var(--brand-olive);
     color: #faf8f4;
     border: none;
+    min-height: 40px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-btn:hover {
@@ -575,6 +646,11 @@ header {
     background: #ffffff;
     color: #1e1e1e;
     border: 1px solid rgba(0, 0, 0, 0.15);
+    min-height: 40px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .app-header__right .profile-settings-body .profile-btn-secondary:hover {
@@ -607,6 +683,13 @@ header {
     background: transparent;
     color: #1e1e1e;
     border: 1px solid rgba(0, 0, 0, 0.2);
+    min-height: 40px;
+    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .profile-delete-btn:hover:not(:disabled) {

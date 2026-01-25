@@ -757,6 +757,7 @@ const Profiles = {
                     <span class="profile-settings-chevron">▼</span>
                 </button>
                 <div class="profile-settings-body collapsed" id="profile-settings-body" role="region" aria-labelledby="profile-settings-btn">
+                    <div class="profile-panel__rail" aria-hidden="true"></div>
                     <div class="profile-section">
                         <label for="profile-select">Active profile</label>
                         <select id="profile-select" class="profile-select"></select>
