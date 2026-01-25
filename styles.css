@@ -148,6 +148,28 @@ header {
     visibility: visible !important;
 }
 
+/* Brand Strip */
+.brand-strip {
+    min-height: 76px;
+    padding: 10px 24px;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4efe6;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-bottom: 16px;
+}
+
+.brand-strip__logo {
+    width: 70%;
+    max-width: 760px;
+    max-height: 64px;
+    height: auto;
+    object-fit: contain;
+    opacity: 1;
+}
+
 
 /* Profile Widget - Card Layout */
 .app-header__right .profile-widget {
@@ -3074,6 +3096,17 @@ header {
 
     .add-recipe-fab {
         /* Position handled by .fab-stack flex container */
+    }
+
+    .brand-strip {
+        min-height: 66px;
+        padding: 8px 16px;
+        margin-bottom: 12px;
+    }
+
+    .brand-strip__logo {
+        width: 92%;
+        max-height: 52px;
     }
 
     .add-recipe-fab-badge {

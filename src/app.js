@@ -1874,6 +1874,9 @@ const Navigation = {
         const targetView = $(`#${viewName}-view`);
         if (targetView) targetView.classList.remove('hidden');
 
+        // Update brand strip visibility (show on all pages except Home)
+        this.updateBrandStripVisibility(viewName);
+
         // Control widget visibility based on current view
         this.updateWidgetVisibility(viewName);
 
@@ -1882,6 +1885,21 @@ const Navigation = {
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    updateBrandStripVisibility(viewName) {
+        const brandStrip = $('#brand-strip');
+        if (!brandStrip) return;
+
+        // Show brand strip on all pages except Home
+        if (viewName === 'home') {
+            brandStrip.style.display = 'none';
+        } else if (viewName === 'recipes' || viewName === 'shopping' || viewName === 'forecast' || viewName === 'allergies' || viewName === 'scanner') {
+            brandStrip.style.display = 'flex';
+        } else {
+            // Safe default: hide if view is unknown/unresolved
+            brandStrip.style.display = 'none';
+        }
     },
 
     updateWidgetVisibility(viewName) {
