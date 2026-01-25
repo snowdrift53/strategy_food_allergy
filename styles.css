@@ -1216,6 +1216,7 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
+    color: white; /* White text for Log title */
 }
 
 .log-close-btn {
@@ -3931,6 +3932,7 @@ input[type="search"]:focus,
     font-size: 1.3rem;
     font-weight: 600;
     margin: 0;
+    color: white; /* White text for Add Recipe title */
 }
 
 .add-recipe-close-btn {
@@ -4132,12 +4134,12 @@ input[type="search"]:focus,
 }
 
 .add-recipe-btn-secondary {
-    background: #E6D3B3;
-    color: #5C4033;
+    background: #8B7355; /* Same shade as save button */
+    color: white; /* White text to match save button */
 }
 
 .add-recipe-btn-secondary:hover {
-    background: #d4c0a0;
+    background: #6B4E3D; /* Same hover shade as save button */
 }
 
 .add-recipe-image-section {
