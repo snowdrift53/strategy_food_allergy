@@ -612,6 +612,76 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     padding: 0;
 }
 
+/* Unified button style for all profile dropdown buttons */
+.profile-menu__button {
+    background: #000000 !important; /* Black background */
+    color: #ffffff !important; /* White text */
+    border: none !important;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    font-family: var(--font-body, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    box-shadow: none;
+}
+
+.profile-menu__button:hover {
+    background: #1a1a1a !important; /* Slightly lighter black on hover */
+    color: #ffffff !important;
+}
+
+.profile-menu__button:active {
+    background: #2a2a2a !important; /* Lighter black on active */
+    color: #ffffff !important;
+}
+
+.profile-menu__button:focus-visible {
+    outline: 2px solid #8B7355;
+    outline-offset: 2px;
+}
+
+.profile-menu__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Override delete button styles to match unified black button style */
+.profile-menu__button.profile-delete-btn {
+    background: #000000 !important; /* Black background */
+    color: #ffffff !important; /* White text */
+    border: none !important;
+}
+
+.profile-menu__button.profile-delete-btn:hover:not(:disabled) {
+    background: #1a1a1a !important; /* Slightly lighter black on hover */
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.profile-menu__button.profile-delete-btn:active:not(:disabled) {
+    background: #2a2a2a !important; /* Lighter black on active */
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* Clear button: smaller size to fit inside the input wrapper border */
+.profile-allergies-input-wrapper .profile-menu__button {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-height: 32px !important; /* Smaller to fit inside section */
+    padding: 6px 12px !important; /* Smaller padding */
+    font-size: 0.85rem !important; /* Slightly smaller font */
+}
+
 /* Screen reader only class */
 .sr-only {
     position: absolute;

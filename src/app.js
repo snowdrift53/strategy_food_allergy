@@ -796,8 +796,8 @@ const Profiles = {
                         <div class="profile-menu__sectionTitle">Profile picture</div>
                         <div class="profile-section">
                             <div class="profile-avatar-actions">
-                                <button id="profile-avatar-change-btn" class="profile-btn profile-btn-secondary">Change picture</button>
-                                <button id="profile-avatar-remove-btn" class="profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
+                                <button id="profile-avatar-change-btn" class="profile-menu__button profile-btn profile-btn-secondary">Change picture</button>
+                                <button id="profile-avatar-remove-btn" class="profile-menu__button profile-btn profile-btn-secondary" style="display: none;">Remove picture</button>
                             </div>
                             <input type="file" id="profile-avatar-input" accept="image/*" style="display: none;">
                         </div>
@@ -807,7 +807,7 @@ const Profiles = {
                         <div class="profile-section">
                             <div class="profile-add-section">
                                 <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
-                                <button id="profile-add-btn" class="profile-btn">Add</button>
+                                <button id="profile-add-btn" class="profile-menu__button profile-btn">Add</button>
                             </div>
                         </div>
                     </div>
@@ -816,14 +816,14 @@ const Profiles = {
                         <div class="profile-section">
                             <div class="profile-allergies-input-wrapper">
                                 <input type="text" id="profile-allergies-input" class="profile-input" placeholder="e.g., milk, eggs, nuts">
-                                <button id="profile-allergies-clear-btn" class="profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
+                                <button id="profile-allergies-clear-btn" class="profile-menu__button profile-allergies-clear-btn" title="Clear allergies" style="display: none;">Clear</button>
                             </div>
                         </div>
                     </div>
                     <div class="profile-menu__section">
                         <div class="profile-menu__sectionTitle">Delete</div>
                         <div class="profile-section">
-                            <button id="profile-delete-btn" class="profile-delete-btn">Delete Active Profile</button>
+                            <button id="profile-delete-btn" class="profile-menu__button profile-delete-btn">Delete Active Profile</button>
                         </div>
                     </div>
                 </div>
