@@ -789,7 +789,13 @@ const Profiles = {
                 </div>
             </div>
         `;
-        document.body.appendChild(widget);
+        // Append to header profile container if it exists, otherwise to body
+        const headerContainer = document.getElementById('header-profile-container');
+        if (headerContainer) {
+            headerContainer.appendChild(widget);
+        } else {
+            document.body.appendChild(widget);
+        }
     },
 
     attachEvents() {

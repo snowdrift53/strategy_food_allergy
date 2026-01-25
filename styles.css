@@ -79,39 +79,82 @@ p, .muted, .secondary-text {
 header {
     text-align: center;
     color: var(--text);
-    margin-bottom: 80px;
+    margin-bottom: 0;
     padding: 0;
     min-height: auto;
     height: auto;
     overflow: visible;
 }
 
-.header-brand-row {
-    width: 100%;
+.app-header {
+    position: sticky;
+    top: 0;
+    background: var(--brand-olive);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0 16px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin: 32px 0 48px 0;
-    position: relative;
+    justify-content: space-between;
+    z-index: 50;
+    margin-bottom: 0;
+    height: 60px;
+    min-height: 60px;
+    max-height: 60px;
 }
 
-.brand-banner {
-    width: min(820px, 92vw);
-    height: 240px;
-    background-image: url("images/brand/logo-banner.jpeg");
-    background-repeat: no-repeat;
-    background-size: 100% auto;
-    background-position: center 50%;
-    border-radius: 12px;
+.app-header__left {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.app-header__center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 20px;
+}
+
+.header-logo-text {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #faf8f4;
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.app-header__right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    min-width: 160px;
+    flex: 0 0 auto;
 }
 
 
 /* Profile Widget - Card Layout */
+.app-header__right .profile-widget {
+    position: relative;
+    top: auto;
+    right: auto;
+    z-index: 60;
+    min-width: 280px;
+    max-width: 320px;
+    margin: 0;
+}
+
+/* Fallback for profile widget if not in header */
 .profile-widget {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
+    position: relative;
+    top: auto;
+    right: auto;
+    z-index: 60;
     min-width: 280px;
     max-width: 320px;
 }
@@ -120,8 +163,9 @@ header {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    overflow: visible;
+    position: relative;
 }
 
 .profile-card-header {
@@ -239,6 +283,8 @@ header {
     transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
     overflow: hidden;
     opacity: 1;
+    position: relative;
+    z-index: 61;
 }
 
 .profile-settings-body.collapsed {
@@ -1331,15 +1377,10 @@ header {
 .scanner-placeholder {
     text-align: center;
     padding: 80px 40px;
-}
-
-.scanner-placeholder-text {
-    font-family: var(--font-heading);
-    font-size: 2rem;
-    color: var(--text);
-    margin-bottom: 16px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
 }
 
 .scanner-placeholder-description {
@@ -1348,6 +1389,40 @@ header {
     color: var(--text-muted);
     line-height: 1.7;
     margin: 0;
+    max-width: 600px;
+}
+
+.scanner-upload-btn {
+    font-family: var(--font-body);
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px 48px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: none;
+    opacity: 0.6;
+    min-width: 240px;
+    justify-content: center;
+}
+
+.scanner-upload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.scanner-upload-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.scanner-upload-text {
+    font-family: var(--font-body);
 }
 
 .forecast-intro {
@@ -2445,6 +2520,38 @@ header {
         padding: 0 20px;
     }
 
+    .app-header {
+        padding: 0 16px;
+        height: 56px;
+        min-height: 56px;
+        max-height: 56px;
+    }
+
+    .app-header__center {
+        margin: 0 12px;
+    }
+
+    .app-header__right {
+        min-width: 140px;
+    }
+
+    .header-logo-text {
+        font-size: 1.4rem;
+        letter-spacing: 0.08em;
+    }
+
+    .drawer-toggle-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .app-header__right .profile-widget,
+    .profile-widget {
+        min-width: 240px;
+        max-width: 280px;
+    }
+
     .brand-logo {
         width: clamp(100px, 20vw, 150px);
         height: clamp(100px, 20vw, 150px);
@@ -2513,14 +2620,17 @@ header {
 
     .scanner-placeholder {
         padding: 60px 20px;
-    }
-
-    .scanner-placeholder-text {
-        font-size: 1.5rem;
+        gap: 24px;
     }
 
     .scanner-placeholder-description {
         font-size: 1rem;
+    }
+
+    .scanner-upload-btn {
+        padding: 20px 32px;
+        font-size: 0.95rem;
+        min-width: 200px;
     }
 
     .profile-widget {
@@ -2861,18 +2971,9 @@ input[type="text"]:focus, input[type="search"]:focus, .recipe-search-input:focus
 }
 
 /* ===== Click/Layering Safety Patch ===== */
-header, .header-brand-row, .header-brand, .header-banner, .header-logo {
+header, .app-header, .header-logo-container, .header-logo-text {
     position: relative;
     z-index: 1;
-}
-
-/* If the big banner image is decorative, it must not steal clicks */
-.brand-banner,
-.header-banner,
-.header-banner img,
-.header-logo,
-#header-logo {
-    pointer-events: none;
 }
 
 /* Controls must always be clickable and above decorative layers */
@@ -3536,19 +3637,7 @@ body:has(#recipes-view:not(.hidden)) #log-fab {
     gap: 48px;
 }
 
-.home-logo {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 8px;
-}
-
-.home-logo-img {
-    max-width: 300px;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-}
+/* Home logo removed - using header text logo instead */
 
 .home-hero {
     width: 100%;
@@ -3657,10 +3746,6 @@ body:has(#recipes-view:not(.hidden)) #log-fab {
         gap: 32px;
     }
 
-    .home-logo-img {
-        max-width: 240px;
-    }
-
     .home-headline {
         font-size: 2rem;
     }
@@ -3681,35 +3766,15 @@ body:has(#recipes-view:not(.hidden)) #log-fab {
 }
 
 /* ===== Navigation Drawer (YouTube-style) ===== */
-.drawer-toggle-btn {
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: var(--font-body);
-    color: var(--text);
-    font-size: 1.5rem;
-    padding: 0;
-    z-index: 100;
-}
+/* Drawer toggle button styles are defined in .app-header section above */
 
 .drawer-toggle-btn:hover {
-    background: var(--surface-muted);
-    border-color: var(--text);
+    background: rgba(250, 248, 244, 0.15);
+    border-color: rgba(250, 248, 244, 0.6);
 }
 
 .drawer-toggle-btn:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: scale(0.95);
 }
 
 .drawer-toggle-btn:focus-visible {

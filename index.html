@@ -8,12 +8,17 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <div class="header-brand-row">
+        <header class="app-header">
+            <div class="app-header__left">
                 <button id="drawer-toggle-btn" class="drawer-toggle-btn" aria-label="Open navigation menu" title="Menu">
                     <span class="drawer-toggle-icon">☰</span>
                 </button>
-                <div class="brand-banner" role="img" aria-label="MeloryCook"></div>
+            </div>
+            <div class="app-header__center">
+                <h1 class="header-logo-text">MELORY</h1>
+            </div>
+            <div class="app-header__right" id="header-profile-container">
+                <!-- Profile widget will be moved here by JS -->
             </div>
         </header>
 
@@ -62,9 +67,6 @@
         <!-- Home View -->
         <div id="home-view" class="view-section">
             <div class="home-container">
-                <div class="home-logo">
-                    <img src="images/brand/logo.png" alt="MeloryCook" class="home-logo-img">
-                </div>
                 <div class="home-hero">
                     <img src="images/brand/home-hero.jpg" alt="Delicious meals" class="home-hero-img">
                 </div>
@@ -158,10 +160,16 @@
         <!-- Scanner View (Placeholder) -->
         <div id="scanner-view" class="view-section hidden">
             <div class="scanner-container">
-                <h2 class="section-title">📷 Scanner</h2>
+                <h2 class="section-title">📷 Ingredient Scanner</h2>
                 <div class="scanner-placeholder">
-                    <p class="scanner-placeholder-text">Scanner feature coming soon</p>
-                    <p class="scanner-placeholder-description">This feature will allow you to scan ingredients and recipes.</p>
+                    <p class="scanner-placeholder-description">
+                        Scan ingredient labels to automatically detect allergens and dietary information. 
+                        This feature is currently in development and will be available soon.
+                    </p>
+                    <button class="scanner-upload-btn" disabled>
+                        <span class="scanner-upload-icon">📤</span>
+                        <span class="scanner-upload-text">Upload Label Image</span>
+                    </button>
                 </div>
             </div>
         </div>
