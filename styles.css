@@ -507,6 +507,24 @@ header {
     z-index: 9999;
 }
 
+/* Profile Dropdown Backdrop Overlay */
+.profile-dropdown-backdrop {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9998 !important;
+    pointer-events: auto !important;
+    animation: fadeInOverlay 0.2s ease;
+}
+
+.profile-dropdown-backdrop.hidden {
+    display: none;
+}
+
 /* Dropdown positioning when in overlay-root (escapes stacking contexts) */
 #overlay-root .profile-settings-body {
     position: fixed !important;
@@ -523,7 +541,8 @@ header {
     filter: none !important;
     mix-blend-mode: normal !important;
     opacity: 1 !important;
-    z-index: 10000 !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
     box-sizing: border-box;
     padding: 20px;
     padding-right: 36px;

@@ -766,9 +766,17 @@ const Profiles = {
             document.body.appendChild(widget);
         }
 
-        // Create dropdown body in overlay-root to escape stacking contexts
+        // Create dropdown body and backdrop in overlay-root to escape stacking contexts
         const overlayRoot = document.getElementById('overlay-root');
         if (overlayRoot) {
+            // Create backdrop overlay
+            const backdrop = document.createElement('div');
+            backdrop.className = 'profile-dropdown-backdrop hidden';
+            backdrop.id = 'profile-dropdown-backdrop';
+            backdrop.setAttribute('aria-hidden', 'true');
+            overlayRoot.appendChild(backdrop);
+
+            // Create dropdown body
             const dropdownBody = document.createElement('div');
             dropdownBody.className = 'profile-settings-body collapsed';
             dropdownBody.id = 'profile-settings-body';
@@ -830,6 +838,14 @@ const Profiles = {
         };
         window.addEventListener('resize', updatePosition);
         window.addEventListener('scroll', updatePosition, true);
+
+        // Backdrop click handler to close dropdown
+        const backdrop = $('#profile-dropdown-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', () => {
+                this.closeProfilePanel();
+            });
+        }
 
         $('#profile-select').addEventListener('change', (e) => this.switchProfile(e.target.value));
         $('#profile-add-btn').addEventListener('click', () => this.addProfile());
@@ -917,6 +933,7 @@ const Profiles = {
             body.classList.remove('collapsed');
             btn.setAttribute('aria-expanded', 'true');
             this.updateDropdownPosition();
+            this.showBackdrop();
             this.setupOutsideClickHandler();
         } else {
             this.closeProfilePanel();
@@ -942,6 +959,7 @@ const Profiles = {
             body.classList.add('collapsed');
             btn.setAttribute('aria-expanded', 'false');
         }
+        this.hideBackdrop();
         this.removeOutsideClickHandler();
     },
 
@@ -958,6 +976,12 @@ const Profiles = {
             const profileSettingsBody = $('#profile-settings-body');
             
             if (!profileWidget || !profileSettingsBtn || !profileSettingsBody) {
+                return;
+            }
+            
+            const backdrop = $('#profile-dropdown-backdrop');
+            // Exclude backdrop clicks (backdrop has its own handler)
+            if (backdrop && backdrop.contains(e.target)) {
                 return;
             }
             
@@ -979,6 +1003,22 @@ const Profiles = {
         if (this.outsideClickHandler) {
             document.removeEventListener('click', this.outsideClickHandler, true);
             this.outsideClickHandler = null;
+        }
+    },
+
+    showBackdrop() {
+        const backdrop = $('#profile-dropdown-backdrop');
+        if (backdrop) {
+            backdrop.classList.remove('hidden');
+            backdrop.setAttribute('aria-hidden', 'false');
+        }
+    },
+
+    hideBackdrop() {
+        const backdrop = $('#profile-dropdown-backdrop');
+        if (backdrop) {
+            backdrop.classList.add('hidden');
+            backdrop.setAttribute('aria-hidden', 'true');
         }
     },
 
