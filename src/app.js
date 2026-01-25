@@ -805,10 +805,8 @@ const Profiles = {
                     <div class="profile-menu__section">
                         <div class="profile-menu__sectionTitle">New profile</div>
                         <div class="profile-section">
-                            <div class="profile-add-section">
-                                <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
-                                <button id="profile-add-btn" class="profile-menu__button profile-btn">Add</button>
-                            </div>
+                            <input type="text" id="profile-name-input" class="profile-input" placeholder="Enter name...">
+                            <button id="profile-add-btn" class="profile-menu__button profile-btn">Add</button>
                         </div>
                     </div>
                     <div class="profile-menu__section">

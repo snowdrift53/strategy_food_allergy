@@ -682,6 +682,15 @@ body.profile-menu-open #overlay-root .profile-settings-body {
     font-size: 0.85rem !important; /* Slightly smaller font */
 }
 
+/* Add button: similar size to Clear button, positioned below input */
+.profile-section #profile-add-btn {
+    margin-top: 8px;
+    min-height: 32px !important; /* Match Clear button height */
+    padding: 6px 12px !important; /* Match Clear button padding */
+    font-size: 0.85rem !important; /* Match Clear button font size */
+    width: auto;
+}
+
 /* Screen reader only class */
 .sr-only {
     position: absolute;
