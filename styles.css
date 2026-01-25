@@ -4123,15 +4123,27 @@ body:has(#recipes-view:not(.hidden)) #log-fab {
 }
 
 /* ===== Navigation Drawer (YouTube-style) ===== */
-/* Drawer toggle button styles are defined in .app-header section above */
+.drawer-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 8px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    color: #faf8f4;
+}
 
 .drawer-toggle-btn:hover {
-    background: rgba(250, 248, 244, 0.15);
-    border-color: rgba(250, 248, 244, 0.6);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .drawer-toggle-btn:active {
-    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .drawer-toggle-btn:focus-visible {
@@ -4140,7 +4152,16 @@ body:has(#recipes-view:not(.hidden)) #log-fab {
 }
 
 .drawer-toggle-icon {
-    line-height: 1;
+    width: 24px;
+    height: 3px;
+    position: relative;
+    display: block;
+    background-color: #faf8f4;
+    border-radius: 2px;
+    /* Create three bars using box-shadow */
+    box-shadow: 
+        0 7.5px 0 0 #faf8f4,
+        0 -7.5px 0 0 #faf8f4;
 }
 
 .drawer-overlay {
