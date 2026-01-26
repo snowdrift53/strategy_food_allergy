@@ -4019,78 +4019,170 @@ const AllergyInfo = {
         }
 
         let replacements = [];
+        let matchedAllergy = null;
         const searchTermLower = searchTerm.toLowerCase();
+        const normalizedSearch = Recipes.normalizeIngredient(searchTerm);
         
-        // Use the same logic as Recipes.getSubstitutionsForProblem
-        // First, try to find matching allergen by canonical name
-        const canonicalAllergen = ALLERGEN_CANONICAL[searchTermLower] || searchTermLower;
-        
-        // Check if search term matches an allergen key in SUBSTITUTION_RULES
-        if (SUBSTITUTION_RULES.hasOwnProperty(canonicalAllergen)) {
-            const rules = SUBSTITUTION_RULES[canonicalAllergen];
-            const normalizedSearch = Recipes.normalizeIngredient(searchTerm);
+        // First, check if search term matches any allergen in commonAllergies
+        for (const allergy of commonAllergies) {
+            const allergyNameLower = allergy.name.toLowerCase();
+            const commonFoodsLower = allergy.commonFoods.toLowerCase();
             
-            // Check each rule for matches (same logic as recipes)
-            for (const rule of rules.rules) {
-                const hasMatch = rule.match.some(keyword => normalizedSearch.includes(keyword.toLowerCase()));
-                if (hasMatch) {
-                    // Found a match - use this rule's suggestions
-                    replacements = [...rule.suggest];
-                    break;
+            // Check if search term matches allergy name or common foods
+            if (allergyNameLower.includes(searchTermLower) || 
+                searchTermLower.includes(allergyNameLower) ||
+                commonFoodsLower.includes(searchTermLower) ||
+                searchTermLower.split(' ').some(word => allergyNameLower.includes(word) || commonFoodsLower.includes(word))) {
+                matchedAllergy = allergy;
+                
+                // Try to get substitutions for this allergen
+                // Map allergy name to canonical allergen key
+                let allergenKey = allergyNameLower;
+                if (allergyNameLower.includes('milk') || allergyNameLower.includes('dairy')) {
+                    allergenKey = 'dairy';
+                } else if (allergyNameLower.includes('egg')) {
+                    allergenKey = 'eggs';
+                } else if (allergyNameLower.includes('peanut')) {
+                    allergenKey = 'peanuts';
+                } else if (allergyNameLower.includes('tree nut') || allergyNameLower.includes('nut')) {
+                    allergenKey = 'nuts';
+                } else if (allergyNameLower.includes('wheat') || allergyNameLower.includes('gluten')) {
+                    allergenKey = allergyNameLower.includes('gluten') ? 'gluten' : 'wheat';
+                } else if (allergyNameLower.includes('soy')) {
+                    allergenKey = 'soy';
+                } else if (allergyNameLower.includes('fish') && !allergyNameLower.includes('shell')) {
+                    allergenKey = 'fish';
+                } else if (allergyNameLower.includes('shellfish')) {
+                    allergenKey = 'shellfish';
+                } else if (allergyNameLower.includes('sesame')) {
+                    allergenKey = 'sesame';
                 }
+                
+                // Get substitutions using the same logic as recipes
+                const canonicalAllergen = ALLERGEN_CANONICAL[allergenKey] || allergenKey;
+                
+                if (SUBSTITUTION_RULES.hasOwnProperty(canonicalAllergen)) {
+                    const rules = SUBSTITUTION_RULES[canonicalAllergen];
+                    
+                    // Check each rule for matches
+                    for (const rule of rules.rules) {
+                        const hasMatch = rule.match.some(keyword => normalizedSearch.includes(keyword.toLowerCase()));
+                        if (hasMatch) {
+                            replacements = [...rule.suggest];
+                            break;
+                        }
+                    }
+                    
+                    // If no rule matched, use fallback
+                    if (replacements.length === 0 && rules.fallback) {
+                        replacements = [...rules.fallback];
+                    }
+                } else if (allergyReplacements.hasOwnProperty(allergenKey)) {
+                    // Fallback to allergyReplacements if SUBSTITUTION_RULES doesn't have it
+                    replacements = [...allergyReplacements[allergenKey]];
+                }
+                break;
             }
+        }
+        
+        // If no match in commonAllergies, use the existing SUBSTITUTION_RULES logic
+        if (!matchedAllergy) {
+            const canonicalAllergen = ALLERGEN_CANONICAL[searchTermLower] || searchTermLower;
             
-            // If no rule matched, use fallback
-            if (replacements.length === 0 && rules.fallback) {
-                replacements = [...rules.fallback];
-            }
-        } else {
-            // Search term might be an ingredient, not an allergen
-            // Check all allergens in SUBSTITUTION_RULES to find ingredient matches
-            const normalizedSearch = Recipes.normalizeIngredient(searchTerm);
-            
-            for (const [allergenKey, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
-                // Check if search term matches any rule's match keywords
-                for (const rule of ruleData.rules) {
+            // Check if search term matches an allergen key in SUBSTITUTION_RULES
+            if (SUBSTITUTION_RULES.hasOwnProperty(canonicalAllergen)) {
+                const rules = SUBSTITUTION_RULES[canonicalAllergen];
+                
+                // Check each rule for matches (same logic as recipes)
+                for (const rule of rules.rules) {
                     const hasMatch = rule.match.some(keyword => normalizedSearch.includes(keyword.toLowerCase()));
                     if (hasMatch) {
-                        // Found ingredient match - use this rule's suggestions
+                        // Found a match - use this rule's suggestions
                         replacements = [...rule.suggest];
                         break;
                     }
                 }
-                if (replacements.length > 0) break;
-            }
-            
-            // If still no match, try checking if search term is a keyword for any allergen
-            if (replacements.length === 0) {
+                
+                // If no rule matched, use fallback
+                if (replacements.length === 0 && rules.fallback) {
+                    replacements = [...rules.fallback];
+                }
+            } else {
+                // Search term might be an ingredient, not an allergen
+                // Check all allergens in SUBSTITUTION_RULES to find ingredient matches
                 for (const [allergenKey, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
-                    // Check if search term matches allergen name or keywords
-                    if (allergenKey.includes(searchTermLower) || searchTermLower.includes(allergenKey)) {
-                        // Collect all suggestions from all rules plus fallback
-                        ruleData.rules.forEach(rule => {
-                            rule.suggest.forEach(s => {
-                                if (!replacements.includes(s)) replacements.push(s);
-                            });
-                        });
-                        if (ruleData.fallback) {
-                            ruleData.fallback.forEach(s => {
-                                if (!replacements.includes(s)) replacements.push(s);
-                            });
+                    // Check if search term matches any rule's match keywords
+                    for (const rule of ruleData.rules) {
+                        const hasMatch = rule.match.some(keyword => normalizedSearch.includes(keyword.toLowerCase()));
+                        if (hasMatch) {
+                            // Found ingredient match - use this rule's suggestions
+                            replacements = [...rule.suggest];
+                            break;
                         }
-                        break;
+                    }
+                    if (replacements.length > 0) break;
+                }
+                
+                // If still no match, try checking if search term is a keyword for any allergen
+                if (replacements.length === 0) {
+                    for (const [allergenKey, ruleData] of Object.entries(SUBSTITUTION_RULES)) {
+                        // Check if search term matches allergen name or keywords
+                        if (allergenKey.includes(searchTermLower) || searchTermLower.includes(allergenKey)) {
+                            // Collect all suggestions from all rules plus fallback
+                            ruleData.rules.forEach(rule => {
+                                rule.suggest.forEach(s => {
+                                    if (!replacements.includes(s)) replacements.push(s);
+                                });
+                            });
+                            if (ruleData.fallback) {
+                                ruleData.fallback.forEach(s => {
+                                    if (!replacements.includes(s)) replacements.push(s);
+                                });
+                            }
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        if (replacements.length > 0) {
-            resultDiv.innerHTML = `
-                <h4>Replacements for "${input.value}":</h4>
-                <ul class="replacement-list">
-                    ${replacements.map(rep => `<li>${rep}</li>`).join('')}
-                </ul>
-            `;
+        // Build result HTML
+        if (matchedAllergy || replacements.length > 0) {
+            let html = '';
+            
+            // Show allergen information if matched
+            if (matchedAllergy) {
+                html += `
+                    <div class="allergy-search-info">
+                        <h4>${matchedAllergy.name}</h4>
+                        <div class="allergy-search-details">
+                            <p><strong>Symptoms:</strong> ${matchedAllergy.symptoms}</p>
+                            <p><strong>Common Foods:</strong> ${matchedAllergy.commonFoods}</p>
+                            <p><strong>Severity:</strong> ${matchedAllergy.severity}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show replacements
+            if (replacements.length > 0) {
+                html += `
+                    <div class="allergy-search-replacements">
+                        <h4>Suggested Replacements:</h4>
+                        <ul class="replacement-list">
+                            ${replacements.map(rep => `<li>${rep}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else if (matchedAllergy) {
+                html += `
+                    <div class="allergy-search-replacements">
+                        <p class="no-replacements">No specific replacements found. Please consult with a healthcare professional or nutritionist for personalized advice.</p>
+                    </div>
+                `;
+            }
+            
+            resultDiv.innerHTML = html;
         } else {
             resultDiv.innerHTML = `
                 <p class="no-result">No specific replacements found for "${input.value}".
